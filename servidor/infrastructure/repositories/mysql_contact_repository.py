@@ -123,6 +123,6 @@ class MySQLContactRepository(IContactRepository):
     def _raise_db_error(self, exc: Exception) -> None:
         if isinstance(exc, ProgrammingError) and exc.args and exc.args[0] == 1146:
             raise DatabaseError(
-                "Tabla 'contacts' no existe. Ejecutá scripts/schema.sql en la base configurada."
+                "Tabla 'contacts' no existe. Ejecutá servidor/scripts/schema.sql en la base configurada."
             ) from exc
         raise DatabaseError("Error de base de datos") from exc

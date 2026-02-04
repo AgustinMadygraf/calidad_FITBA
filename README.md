@@ -1,14 +1,16 @@
 # CRUD Contactos (Python 3.11+)
 
-Arquitectura Clean Architecture + DDD, CLI estilo AS/400 con `rich`.
+Proyecto dividido en dos carpetas principales:
+- `servidor/`: Backend FastAPI + Clean Architecture + MySQL.
+- `cliente/`: CLI estilo AS/400 que consume la API.
 
 ## Setup
 
 1. Crear entorno virtual e instalar dependencias
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -20,18 +22,27 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=secret
 DB_NAME=contacts
+API_BASE_URL=http://localhost:8000
 ```
 
-3. Crear esquema en MySQL
+## Servidor (FastAPI)
+
+El servidor crea el esquema automáticamente al iniciar (si no existe).
 
 ```bash
-mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME < scripts/schema.sql
+python -m servidor.app
 ```
 
-## Ejecutar CLI
+Health check:
 
 ```bash
-python -m app
+curl http://localhost:8000/health
+```
+
+## Cliente (CLI)
+
+```bash
+python -m cliente.app
 ```
 
 ## Tests
@@ -40,7 +51,7 @@ python -m app
 pytest -q
 ```
 
-Para tests de integración:
+Para tests de integración (MySQL):
 
 ```bash
 pytest -q -m integration
