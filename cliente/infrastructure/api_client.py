@@ -1,6 +1,12 @@
+"""
+Path: cliente/infrastructure/api_client.py
+"""
+
 import os
 import httpx
 from cliente.dtos.contact_dto import ContactDTO
+
+HARD_CODED_NGROK_URL = "subdominio.ngrok-free.app" # Sólo para build local sin .env
 
 
 class ApiError(Exception):
@@ -12,7 +18,7 @@ class ApiError(Exception):
 
 class ApiClient:
     def __init__(self, base_url: str | None = None, timeout: float = 10.0) -> None:
-        ngrok = os.getenv("NGROK_URL")
+        ngrok = os.getenv("NGROK_URL") or HARD_CODED_NGROK_URL
         port = os.getenv("API_PORT", "8000")
         if ngrok:
             default_base = f"https://{ngrok}"
@@ -80,6 +86,6 @@ class ApiClient:
             raise ApiError(r.status_code, "Respuesta HTML inesperada desde la API")
         try:
             detail = r.json().get("detail", r.text)
-        except Exception:
+        except (ValueError, AttributeError):
             detail = r.text
         raise ApiError(r.status_code, detail)
