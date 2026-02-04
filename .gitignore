@@ -6,4 +6,4 @@ __pycache__/
 .env
 build/
 cliente_cli.spec
-dist/cliente_cli.exe
+dist/
