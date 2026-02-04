@@ -12,7 +12,13 @@ class ApiError(Exception):
 
 class ApiClient:
     def __init__(self, base_url: str | None = None, timeout: float = 10.0) -> None:
-        self.base_url = base_url or os.getenv("API_BASE_URL", "http://localhost:8000")
+        ngrok = os.getenv("NGROK_URL")
+        port = os.getenv("API_PORT", "8000")
+        if ngrok:
+            default_base = f"https://{ngrok}"
+        else:
+            default_base = f"http://localhost:{port}"
+        self.base_url = base_url or default_base
         self._client = httpx.Client(base_url=self.base_url, timeout=timeout)
 
     def close(self) -> None:
@@ -63,6 +69,15 @@ class ApiClient:
         return ContactDTO(**r.json())
 
     def _raise(self, r: httpx.Response) -> None:
+        content_type = r.headers.get("content-type", "")
+        if "text/html" in content_type:
+            text = r.text or ""
+            if "ERR_NGROK_3200" in text:
+                raise ApiError(
+                    r.status_code,
+                    "El túnel de ngrok está offline. Ejecutá run_ngrok_tunnel.py y reintentá.",
+                )
+            raise ApiError(r.status_code, "Respuesta HTML inesperada desde la API")
         try:
             detail = r.json().get("detail", r.text)
         except Exception:

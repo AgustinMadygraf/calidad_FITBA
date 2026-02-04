@@ -22,7 +22,8 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=secret
 DB_NAME=contacts
-API_BASE_URL=http://localhost:8000
+NGROK_URL=your-subdomain.ngrok-free.app
+API_PORT=8000
 ```
 
 ## Servidor (FastAPI)
@@ -37,6 +38,12 @@ Health check:
 
 ```bash
 curl http://localhost:8000/health
+```
+
+## Túnel ngrok
+
+```bash
+python run_ngrok_tunnel.py
 ```
 
 ## Cliente (CLI)
