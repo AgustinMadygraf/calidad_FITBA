@@ -10,7 +10,31 @@ Proyecto dividido en dos carpetas principales:
 
 ```bash
 python -m venv venv
+```
+
+Activación según shell:
+
+PowerShell (Windows):
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+CMD (Windows):
+
+```cmd
+venv\Scripts\activate.bat
+```
+
+Git Bash / WSL / Linux / macOS:
+
+```bash
 source venv/bin/activate
+```
+
+Luego instalar dependencias:
+
+```bash
 pip install -r requirements.txt
 ```
 
@@ -28,7 +52,7 @@ API_PORT=8000
 
 ## Servidor (FastAPI)
 
-El servidor crea el esquema automÃ¡ticamente al iniciar (si no existe).
+El servidor crea el esquema automáticamente al iniciar (si no existe).
 
 ```bash
 python -m servidor.app
@@ -40,7 +64,7 @@ Health check:
 curl http://localhost:8000/health
 ```
 
-## TÃºnel ngrok
+## Túnel ngrok
 
 ```bash
 python run_ngrok_tunnel.py
@@ -58,7 +82,7 @@ python -m cliente.app
 pytest -q
 ```
 
-Para tests de integraciÃ³n (MySQL):
+Para tests de integración (MySQL):
 
 ```bash
 pytest -q -m integration
