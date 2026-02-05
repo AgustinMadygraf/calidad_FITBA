@@ -25,5 +25,7 @@ def run() -> None:
     api = ApiClient()
     try:
         main_menu(api)
+    except Exception as exc:
+        print(f"Error inesperado: {exc}")
     finally:
         api.close()

@@ -1,4 +1,4 @@
-# CRUD Contactos (Python 3.11+)
+ï»¿# CRUD Odoo-like (Python 3.11+)
 
 Proyecto dividido en dos carpetas principales:
 - `servidor/`: Backend FastAPI + Clean Architecture + MySQL.
@@ -12,7 +12,7 @@ Proyecto dividido en dos carpetas principales:
 python -m venv venv
 ```
 
-Activación según shell:
+ActivaciÃ³n segÃºn shell:
 
 PowerShell (Windows):
 
@@ -45,14 +45,14 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=secret
-DB_NAME=contacts
+DB_NAME=odoo_like
 NGROK_URL=your-subdomain.ngrok-free.app
 API_PORT=8000
 ```
 
 ## Servidor (FastAPI)
 
-El servidor crea el esquema automáticamente al iniciar (si no existe).
+El servidor crea el esquema automÃ¡ticamente al iniciar (si no existe).
 
 ```bash
 python -m servidor.app
@@ -64,7 +64,7 @@ Health check:
 curl http://localhost:8000/health
 ```
 
-## Túnel ngrok
+## TÃºnel ngrok
 
 ```bash
 python run_ngrok_tunnel.py
@@ -82,8 +82,9 @@ python -m cliente.app
 pytest -q
 ```
 
-Para tests de integración (MySQL):
+Para tests de integraciÃ³n (MySQL):
 
 ```bash
 pytest -q -m integration
 ```
+

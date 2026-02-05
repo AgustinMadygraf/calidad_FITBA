@@ -5,9 +5,5 @@ class ApplicationError(Exception):
 class NotFoundError(ApplicationError):
     pass
 
-
-from domain.exceptions import DuplicateEmailError
-
-
 class DatabaseError(ApplicationError):
     pass

@@ -24,7 +24,7 @@ class MySQLConnectionFactory:
         port = int(os.getenv("DB_PORT", "3306"))
         user = os.getenv("DB_USER", "root")
         password = os.getenv("DB_PASSWORD", "")
-        db = os.getenv("DB_NAME", "contacts")
+        db = os.getenv("DB_NAME", "odoo_like")
         return cls(MySQLConfig(host, port, user, password, db))
 
     def connect(self) -> Connection:

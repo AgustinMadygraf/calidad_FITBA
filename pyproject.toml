@@ -1,7 +1,7 @@
-[project]
-name = "contacts-crud"
+﻿[project]
+name = "odoo-like-crud"
 version = "0.2.0"
-description = "CRUD de Contactos con Clean Architecture, FastAPI y MySQL"
+description = "CRUD Odoo-like con Clean Architecture, FastAPI y MySQL"
 requires-python = ">=3.11"
 dependencies = [
   "PyMySQL>=1.1.0",
@@ -21,5 +21,6 @@ test = [
 testpaths = ["servidor/tests"]
 pythonpath = ["servidor", "cliente", "."]
 markers = [
-  "integration: tests de integración (requiere DB configurada)"
+  "integration: tests de integraciÃ³n (requiere DB configurada)"
 ]
+
