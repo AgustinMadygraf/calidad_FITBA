@@ -18,13 +18,37 @@ def _post_execute(session_id: str, command: str, args: dict[str, Any] | None = N
         "command": command,
         "args": args or {},
     }
-    response = httpx.post(f"{settings.base_url}/terminal/execute", json=payload, timeout=20)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = httpx.post(f"{settings.base_url}/terminal/execute", json=payload, timeout=20)
+        response.raise_for_status()
+        return response.json()
+    except httpx.RequestError as exc:
+        return {
+            "session_id": session_id,
+            "screen": f"Error de conexion: {exc.__class__.__name__}. Verifique BASE_URL.",
+            "next_actions": [],
+        }
+    except httpx.HTTPStatusError as exc:
+        status = exc.response.status_code
+        return {
+            "session_id": session_id,
+            "screen": f"Error HTTP {status}. Intente nuevamente.",
+            "next_actions": [],
+        }
+    except ValueError:
+        return {
+            "session_id": session_id,
+            "screen": "Respuesta invalida del servidor.",
+            "next_actions": [],
+        }
 
 
 def _prompt(text: str) -> str:
-    return input(text).strip()
+    try:
+        return input(text).strip()
+    except (EOFError, KeyboardInterrupt):
+        print("\nSaliendo...")
+        sys.exit(0)
 
 
 def _double_confirm() -> bool:
@@ -45,7 +69,11 @@ def _product_menu(session_id: str) -> None:
             name = _prompt("Nombre: ")
             sku = _prompt("SKU (opcional): ") or None
             price_raw = _prompt("Precio (opcional): ") or None
-            price = float(price_raw) if price_raw else None
+            try:
+                price = float(price_raw) if price_raw else None
+            except ValueError:
+                print("Precio invalido.")
+                continue
             args = {"external_id": external_id, "name": name, "sku": sku, "price": price}
             resp = _post_execute(session_id, "CREATE product", args)
             print(resp["screen"])
@@ -54,7 +82,11 @@ def _product_menu(session_id: str) -> None:
             name = _prompt("Nombre (opcional): ") or None
             sku = _prompt("SKU (opcional): ") or None
             price_raw = _prompt("Precio (opcional): ") or None
-            price = float(price_raw) if price_raw else None
+            try:
+                price = float(price_raw) if price_raw else None
+            except ValueError:
+                print("Precio invalido.")
+                continue
             args = {"external_id": external_id, "name": name, "sku": sku, "price": price}
             resp = _post_execute(session_id, "UPDATE product", args)
             print(resp["screen"])
