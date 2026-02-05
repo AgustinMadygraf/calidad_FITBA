@@ -76,6 +76,10 @@ python run_ngrok_tunnel.py
 python -m cliente.app
 ```
 
+## Documentación
+- Usuarios: `docs/usuarios/README.md`
+- Desarrolladores: `docs/desarrolladores/README.md`
+
 ## Tests
 
 ```bash
