@@ -24,16 +24,24 @@ class FakeUoW(IUnitOfWork):
         pass
 
 
-def test_create_and_list_api(monkeypatch):
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+
+@pytest.mark.anyio
+async def test_create_and_list_api(monkeypatch):
+    uow = FakeUoW()
+
     def _uow_factory():
-        return FakeUoW()
+        return uow
 
     monkeypatch.setattr("servidor.app.main.uow_factory", _uow_factory)
     app = create_app()
 
     transport = httpx.ASGITransport(app=app)
-    with httpx.Client(transport=transport, base_url="http://test") as client:
-        r = client.post(
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        r = await client.post(
             "/api/v1/res-partners",
             json={"name": "Ana", "email": "ana@example.com"},
         )
@@ -41,7 +49,13 @@ def test_create_and_list_api(monkeypatch):
         data = r.json()
         assert data["email"] == "ana@example.com"
 
-        r = client.get("/api/v1/res-partners")
+        r = await client.get("/api/v1/res-partners")
         assert r.status_code == 200
         items = r.json()["items"]
         assert len(items) == 1
+
+        r = await client.put(f"/api/v1/res-partners/{data['id']}", json={"name": "Ana B"})
+        assert r.status_code == 200
+
+        r = await client.delete(f"/api/v1/res-partners/{data['id']}")
+        assert r.status_code == 204

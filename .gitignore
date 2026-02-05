@@ -7,3 +7,4 @@ __pycache__/
 build/
 cliente_cli.spec
 dist/
+.coverage

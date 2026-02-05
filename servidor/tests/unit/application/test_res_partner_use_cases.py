@@ -4,6 +4,7 @@ from application.use_cases.update_res_partner import UpdateResPartner
 from application.use_cases.delete_res_partner import DeleteResPartner
 from application.use_cases.get_res_partner_by_id import GetResPartnerById
 from application.use_cases.list_res_partners import ListResPartners
+from application.exceptions import NotFoundError
 
 
 def test_create_and_get_partner():
@@ -36,3 +37,13 @@ def test_delete_partner():
     delete_uc.execute(created.id)
     items = list_uc.execute(limit=10, offset=0)
     assert items == []
+
+
+def test_get_partner_not_found():
+    repo = InMemoryResPartnerRepository()
+    get_uc = GetResPartnerById(repo)
+    try:
+        get_uc.execute(999)
+        assert False, "Expected NotFoundError"
+    except NotFoundError:
+        assert True

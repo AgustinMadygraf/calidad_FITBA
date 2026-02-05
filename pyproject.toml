@@ -1,4 +1,4 @@
-﻿[project]
+[project]
 name = "odoo-like-crud"
 version = "0.2.0"
 description = "CRUD Odoo-like con Clean Architecture, FastAPI y MySQL"
@@ -24,3 +24,10 @@ markers = [
   "integration: tests de integraciÃ³n (requiere DB configurada)"
 ]
 
+
+[tool.coverage.run]
+omit = [
+  "servidor/app/__main__.py",
+  "servidor/infrastructure/db/mysql_connection.py",
+  "servidor/infrastructure/repositories/mysql_*"
+]
