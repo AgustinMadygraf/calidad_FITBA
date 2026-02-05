@@ -79,6 +79,7 @@ python -m cliente.app
 ## Documentación
 - Usuarios: `docs/usuarios/README.md`
 - Desarrolladores: `docs/desarrolladores/README.md`
+- Pendientes: `docs/todo.md`
 
 ## Tests
 

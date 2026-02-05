@@ -3,6 +3,8 @@
 ## Objetivo
 Registrar el peso total de cajas con estructura Odoo-like para migracion futura,
 manteniendo una trazabilidad basica entre cliente, entrega y paquete.
+Este documento cubre el flujo de **entregas (salida)**. El flujo de **materia prima (bobinas)**
+esta pendiente de definicion y se lista en `docs/todo.md`.
 
 ## Alcance
 - Se registra **peso total** en `stock_quant_package.shipping_weight`.
