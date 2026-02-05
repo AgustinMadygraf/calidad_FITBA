@@ -7,4 +7,5 @@ Este espacio contiene detalles tecnicos del modelo Odoo-like, API y arquitectura
 - `api.md`
 - `arquitectura.md`
 - `pruebas_y_cobertura.md`
+- `build_exe.md`
 - `../todo.md`
