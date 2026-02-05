@@ -10,9 +10,13 @@ from server.application.use_cases import (
     GetProduct,
     ListProducts,
     UpdateProduct,
+    SyncPullProduct,
 )
 from server.infrastructure.clients.xubio_api_client import XubioApiClient
 from server.app.settings import settings
+from server.infrastructure.repositories.integration_record_repository import (
+    IntegrationRecordRepository,
+)
 
 
 @dataclass
@@ -49,7 +53,8 @@ def _render_entity_menu(entity_type: str) -> str:
             "3) Baja",
             "4) Consultar por ID",
             "5) Listar",
-            "6) Volver",
+            "6) Sincronizar (bajar)",
+            "7) Volver",
         ]
     )
 
@@ -64,6 +69,7 @@ def execute_command(
     command: str,
     args: dict[str, Any],
     client: XubioApiClient,
+    repository: IntegrationRecordRepository,
 ) -> tuple[str, str, list[str]]:
     session = SESSIONS.setdefault(session_id, TerminalSession())
     tokens = command.strip().split()
@@ -86,7 +92,7 @@ def execute_command(
             return session_id, _render_entity_menu(entity_type), []
         return session_id, _render_stub(), []
 
-    if verb in {"CREATE", "UPDATE", "DELETE", "GET", "LIST"}:
+    if verb in {"CREATE", "UPDATE", "DELETE", "GET", "LIST", "SYNC_PULL"}:
         entity_type = (tokens[1] if len(tokens) > 1 else args.get("entity_type", "")).lower()
         if entity_type != "product":
             return session_id, _render_stub(), []
@@ -141,5 +147,11 @@ def execute_command(
             for item in items:
                 lines.append(f"- {item.external_id} | {item.name}")
             return session_id, "\n".join(lines), []
+
+        if verb == "SYNC_PULL":
+            result = SyncPullProduct(client, repository).execute(settings.xubio_mode)
+            if result.get("status") == "error":
+                return session_id, f"Sync pull ERROR: {result.get('detail', 'desconocido')}", []
+            return session_id, f"Sync pull OK: {result['status']}", []
 
     return session_id, "Comando desconocido.", []

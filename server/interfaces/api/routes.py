@@ -10,6 +10,7 @@ from server.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
 from server.interfaces.terminal import execute_command
+from server.application.use_cases import SyncPullProduct
 
 router = APIRouter()
 
@@ -25,12 +26,14 @@ def terminal_execute(
     db: Session = Depends(get_db),
 ) -> TerminalExecuteResponse:
     client = get_xubio_client(db)
+    repository = IntegrationRecordRepository(db)
     session_id = payload.session_id or "default"
     session_id, screen, next_actions = execute_command(
         session_id=session_id,
         command=payload.command,
         args=payload.args,
         client=client,
+        repository=repository,
     )
     return TerminalExecuteResponse(session_id=session_id, screen=screen, next_actions=next_actions)
 
@@ -40,34 +43,8 @@ def sync_pull_product(
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     client = get_xubio_client(db)
-    if settings.xubio_mode == "mock":
-        repository = IntegrationRecordRepository(db)
-        if not list(repository.list(entity_type="product", limit=1, offset=0)):
-            repository.create(
-                entity_type="product",
-                operation="create",
-                external_id="demo-1",
-                payload_json={"external_id": "demo-1", "name": "Producto demo"},
-                status="synced",
-            )
-        return {"status": "ok"}
-
-    items = client.list_products()
     repository = IntegrationRecordRepository(db)
-    for item in items:
-        existing = repository.get_by_external_id("product", item.external_id)
-        payload = item.model_dump()
-        if existing:
-            repository.update(existing, operation="update", payload_json=payload, status="synced")
-        else:
-            repository.create(
-                entity_type="product",
-                operation="create",
-                external_id=item.external_id,
-                payload_json=payload,
-                status="synced",
-            )
-    return {"status": "ok"}
+    return SyncPullProduct(client, repository).execute(settings.xubio_mode)
 
 
 @router.post("/sync/push/product")

@@ -105,6 +105,9 @@ def _product_menu(session_id: str) -> None:
             resp = _post_execute(session_id, "LIST product", {})
             print(resp["screen"])
         elif choice == "6":
+            resp = _post_execute(session_id, "SYNC_PULL product", {})
+            print(resp["screen"])
+        elif choice == "7":
             _post_execute(session_id, "BACK")
             return
         else:

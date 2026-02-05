@@ -42,3 +42,40 @@ class ListProducts:
 
     def execute(self, limit: int = 50, offset: int = 0) -> list[ProductOut]:
         return self.client.list_products(limit=limit, offset=offset)
+
+
+class SyncPullProduct:
+    def __init__(self, client: XubioApiClient, repository) -> None:
+        self.client = client
+        self.repository = repository
+
+    def execute(self, mode: str) -> dict[str, str]:
+        try:
+            if mode == "mock":
+                if not list(self.repository.list(entity_type="product", limit=1, offset=0)):
+                    self.repository.create(
+                        entity_type="product",
+                        operation="create",
+                        external_id="demo-1",
+                        payload_json={"external_id": "demo-1", "name": "Producto demo"},
+                        status="synced",
+                    )
+                return {"status": "ok"}
+
+            items = self.client.list_products()
+            for item in items:
+                existing = self.repository.get_by_external_id("product", item.external_id)
+                payload = item.model_dump()
+                if existing:
+                    self.repository.update(existing, operation="update", payload_json=payload, status="synced")
+                else:
+                    self.repository.create(
+                        entity_type="product",
+                        operation="create",
+                        external_id=item.external_id,
+                        payload_json=payload,
+                        status="synced",
+                    )
+            return {"status": "ok"}
+        except Exception as exc:
+            return {"status": "error", "detail": str(exc)}

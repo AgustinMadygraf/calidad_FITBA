@@ -76,5 +76,5 @@ class MockXubioApiClient:
             payload = dict(record.payload_json)
             external_id = record.external_id or payload.get("external_id") or ""
             payload["external_id"] = external_id
-            items.append(ProductOut(**payload, external_id=external_id))
+            items.append(ProductOut(**payload))
         return items
