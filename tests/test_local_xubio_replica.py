@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from shared.schemas import ProductOut
-from server.infrastructure.clients.real_xubio_api_client import RealXubioApiClient
+from src.shared.schemas import ProductOut
+from src.server.infrastructure.clients.real_xubio_api_client import RealXubioApiClient
 
 
 def test_xubio_like_product_crud(client) -> None:

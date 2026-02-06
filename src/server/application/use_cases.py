@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from shared.schemas import ProductCreate, ProductOut, ProductUpdate
-from server.infrastructure.clients.xubio_api_client import XubioApiClient
+from src.shared.schemas import ProductCreate, ProductOut, ProductUpdate
+from src.server.infrastructure.clients.xubio_api_client import XubioApiClient
 
 
 class CreateProduct:

@@ -8,12 +8,12 @@ from typing import Callable
 
 import typer
 
-from client.app.product_gateway import (
+from src.client.app.product_gateway import (
     LocalFastApiProductGateway,
     ProductGateway,
     XubioDirectProductGateway,
 )
-from client.app.settings import settings
+from src.client.app.settings import settings
 
 app = typer.Typer(add_completion=False)
 _CURRENT_SESSION_ID = "-"

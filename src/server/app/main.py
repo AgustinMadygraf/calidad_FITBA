@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from server.infrastructure.db.models import Base
-from server.infrastructure.db.session import engine
-from server.interfaces.api.routes import router
+from src.server.infrastructure.db.models import Base
+from src.server.infrastructure.db.session import engine
+from src.server.interfaces.api.routes import router
 
 
 def create_app() -> FastAPI:

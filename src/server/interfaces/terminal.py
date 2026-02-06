@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from shared.schemas import ProductCreate, ProductUpdate
-from server.application.use_cases import (
+from src.shared.schemas import ProductCreate, ProductUpdate
+from src.server.application.use_cases import (
     CreateProduct,
     DeleteProduct,
     GetProduct,
@@ -12,9 +12,9 @@ from server.application.use_cases import (
     UpdateProduct,
     SyncPullProduct,
 )
-from server.infrastructure.clients.xubio_api_client import XubioApiClient
-from server.app.settings import settings
-from server.infrastructure.repositories.integration_record_repository import (
+from src.server.infrastructure.clients.xubio_api_client import XubioApiClient
+from src.server.app.settings import settings
+from src.server.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
 

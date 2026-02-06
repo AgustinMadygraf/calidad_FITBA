@@ -6,16 +6,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from shared.schemas import TerminalExecuteRequest, TerminalExecuteResponse, ProductCreate, ProductUpdate
-from server.app.deps import get_db, get_xubio_client
-from server.app.settings import settings
-from server.infrastructure.clients.mock_xubio_api_client import MockXubioApiClient
-from server.infrastructure.clients.real_xubio_api_client import RealXubioApiClient
-from server.infrastructure.repositories.integration_record_repository import (
+from src.shared.schemas import TerminalExecuteRequest, TerminalExecuteResponse, ProductCreate, ProductUpdate
+from src.server.app.deps import get_db, get_xubio_client
+from src.server.app.settings import settings
+from src.server.infrastructure.clients.mock_xubio_api_client import MockXubioApiClient
+from src.server.infrastructure.clients.real_xubio_api_client import RealXubioApiClient
+from src.server.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
-from server.interfaces.terminal import execute_command
-from server.application.use_cases import SyncPullProduct
+from src.server.interfaces.terminal import execute_command
+from src.server.application.use_cases import SyncPullProduct
 
 router = APIRouter()
 

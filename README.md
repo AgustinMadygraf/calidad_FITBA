@@ -46,20 +46,20 @@ En modo real, el cliente requiere `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
 ## Ejecutar servidor
 
 ```bash
-python -m server.app
+python -m src.server.app
 ```
 
 ## Ejecutar cliente
 
 ```bash
-python -m client.app
+python -m src.client.app
 ```
 
 Override por argumento (prioridad sobre `.env`):
 
 ```bash
-python -m client.app --IS_PROD=true
-python -m client.app --IS_PROD=false
+python -m src.client.app --IS_PROD=true
+python -m src.client.app --IS_PROD=false
 ```
 
 Replica Xubio local (MVP, sin token) en FastAPI:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from shared.schemas import ProductCreate, ProductOut, ProductUpdate
-from server.infrastructure.repositories.integration_record_repository import (
+from src.shared.schemas import ProductCreate, ProductOut, ProductUpdate
+from src.server.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
 

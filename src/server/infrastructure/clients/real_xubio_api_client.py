@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Any
 import httpx
 
-from shared.schemas import ProductCreate, ProductOut, ProductUpdate
-from server.app.settings import settings
+from src.shared.schemas import ProductCreate, ProductOut, ProductUpdate
+from src.server.app.settings import settings
 
 BASE_URL = "https://xubio.com/API/1.1"
 TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
