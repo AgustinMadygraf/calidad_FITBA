@@ -29,6 +29,7 @@ DISABLE_DELETE_IN_REAL=true
 PORT=8000
 
 # Cliente
+IS_PROD=false
 BASE_URL=http://localhost:8000
 ```
 
@@ -36,8 +37,11 @@ Nota: `IS_PROD` acepta `true/false`, `1/0`, `yes/no`.
 En modo real, `XUBIO_BASE_URL`, `XUBIO_TOKEN_ENDPOINT` y `XUBIO_PRODUCT_ENDPOINT`
 estan hardcodeados en `server/infrastructure/clients/real_xubio_api_client.py`.
 
-Modo real en el cliente: el CLI consume directamente la API de Xubio
-(no usa el server local) y requiere `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
+Modo en cliente y servidor:
+- `IS_PROD=false`: el cliente consume la API local (`BASE_URL`) y el server usa mock/local DB.
+- `IS_PROD=true`: el cliente consume Xubio en forma directa y el server usa cliente real de Xubio.
+
+En modo real, el cliente requiere `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
 
 ## Ejecutar servidor
 

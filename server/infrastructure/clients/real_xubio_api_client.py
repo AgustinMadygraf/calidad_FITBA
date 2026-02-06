@@ -62,7 +62,7 @@ class RealXubioApiClient:
 
     def update_product(self, external_id: str, payload: ProductUpdate) -> ProductOut:
         response = self._request(
-            "PUT",
+            "PATCH",
             f"{PRODUCT_ENDPOINT}/{external_id}",
             json=payload.model_dump(exclude_none=True),
         )

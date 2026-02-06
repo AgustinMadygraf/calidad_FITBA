@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import tempfile
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,8 +10,9 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture()
 def client() -> TestClient:
-    os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
-    os.environ["XUBIO_MODE"] = "mock"
+    temp_db = tempfile.NamedTemporaryFile(suffix=".db")
+    os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{temp_db.name}"
+    os.environ["IS_PROD"] = "false"
 
     import server.app.settings as settings_module
     import server.infrastructure.db.session as session_module
@@ -26,4 +28,9 @@ def client() -> TestClient:
 
     app = create_app()
     models_module.Base.metadata.create_all(bind=session_module.engine)
-    return TestClient(app)
+    test_client = TestClient(app)
+    try:
+        yield test_client
+    finally:
+        test_client.close()
+        temp_db.close()

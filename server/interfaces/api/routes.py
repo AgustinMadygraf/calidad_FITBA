@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from shared.schemas import TerminalExecuteRequest, TerminalExecuteResponse, ProductCreate, ProductUpdate
@@ -54,7 +54,7 @@ def sync_push_product(
     client = get_xubio_client(db)
     repository = IntegrationRecordRepository(db)
     records = list(repository.list(entity_type="product", status="local", limit=100, offset=0))
-    if settings.xubio_mode == "mock":
+    if not settings.IS_PROD:
         for record in records:
             repository.update(record, operation=record.operation, status="synced")
         return {"status": "ok"}

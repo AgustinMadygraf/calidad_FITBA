@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+import shutil
 import sys
 import uuid
-from typing import Any
-import shutil
+from typing import Any, Callable
 
 import httpx
 import typer
 
+from client.app.product_gateway import (
+    LocalFastApiProductGateway,
+    ProductGateway,
+    XubioDirectProductGateway,
+)
 from client.app.settings import settings
-from .real_xubio_client import RealXubioClient
 
 app = typer.Typer(add_completion=False)
 
@@ -70,7 +74,6 @@ def _term_width(min_width: int = 60) -> int:
 
 
 def _apply_theme(text: str) -> str:
-    # Black background, green foreground
     return f"\033[32;40m{text}\033[0m"
 
 
@@ -122,13 +125,31 @@ def _read_price() -> float | None:
         return None
 
 
-def _get_real_client() -> RealXubioClient:
-    if not settings.xubio_client_id or not settings.xubio_secret_id:
-        raise ValueError("Faltan XUBIO_CLIENT_ID / XUBIO_SECRET_ID")
-    return RealXubioClient(settings.xubio_client_id, settings.xubio_secret_id)
+def _main_menu_body() -> str:
+    return "\n".join(
+        [
+            "=== TERMINAL FITBA/XUBIO ===",
+            "",
+            "1) PRODUCTO",
+            "2) CLIENTE (stub)",
+            "3) PROVEEDOR (stub)",
+            "4) COMPROBANTES (stub)",
+            "5) PESADAS (stub)",
+            "",
+            "Seleccione una opcion.",
+        ]
+    )
 
 
-def _run_real(action_name: str, func) -> Any | None:
+def _build_product_gateway() -> ProductGateway:
+    if settings.IS_PROD:
+        if not settings.xubio_client_id or not settings.xubio_secret_id:
+            raise ValueError("Faltan XUBIO_CLIENT_ID / XUBIO_SECRET_ID")
+        return XubioDirectProductGateway(settings.xubio_client_id, settings.xubio_secret_id)
+    return LocalFastApiProductGateway(_post_execute)
+
+
+def _run_action(action_name: str, func: Callable[[], str]) -> str | None:
     try:
         return func()
     except Exception as exc:
@@ -137,50 +158,11 @@ def _run_real(action_name: str, func) -> Any | None:
         return None
 
 
-def _map_product_screen(item: dict[str, Any]) -> str:
-    external_id = item.get("productoid") or item.get("productoId") or item.get("id") or item.get("external_id")
-    name = item.get("nombre") or item.get("name") or item.get("descripcion") or "SIN_NOMBRE"
-    sku = item.get("codigo") or item.get("sku") or "-"
-    price = item.get("precioVenta") or item.get("price") or "-"
-    return "\n".join(
-        [
-            "Producto:",
-            f"ID: {external_id}",
-            f"Nombre: {name}",
-            f"SKU: {sku}",
-            f"Precio: {price}",
-        ]
-    )
-
-
-def _render_product_menu_real() -> None:
-    body = "\n".join(
-        [
-            "1) Alta",
-            "2) Modificar",
-            "3) Baja",
-            "4) Consultar por ID",
-            "5) Listar",
-            "6) Sincronizar (bajar)",
-            "7) Volver",
-        ]
-    )
-    _render_screen("PRODUCTO (XUBIO REAL)", body)
-
-
-def _render_product_menu_mock(session_id: str) -> None:
-    resp = _post_execute(session_id, "ENTER product")
-    _render_screen("PRODUCTO (LOCAL)", resp["screen"])
-
-
-def _product_menu(session_id: str) -> None:
+def _product_menu(session_id: str, gateway: ProductGateway) -> None:
     while True:
         try:
             _clear()
-            if settings.is_xubio_mode_mock:
-                _render_product_menu_mock(session_id)
-            else:
-                _render_product_menu_real()
+            _render_screen(gateway.title, gateway.render_menu(session_id))
             choice = _prompt("> ")
             if choice == "1":
                 external_id = _field_prompt("ID", required=False)
@@ -191,23 +173,19 @@ def _product_menu(session_id: str) -> None:
                 price = _read_price()
                 if price is None and _prompt("Continuar sin precio? (S/N): ").upper() not in {"S", "SI"}:
                     continue
-                if settings.is_xubio_mode_mock:
-                    args = {"external_id": external_id, "name": name, "sku": sku, "price": price}
-                    resp = _post_execute(session_id, "CREATE product", args)
-                    _render_screen("RESULTADO", resp["screen"], "ENTER para continuar")
+                screen = _run_action(
+                    "Alta producto",
+                    lambda: gateway.create(
+                        session_id=session_id,
+                        external_id=external_id,
+                        name=name,
+                        sku=sku,
+                        price=price,
+                    ),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
                     _pause()
-                else:
-                    def _action():
-                        client = _get_real_client()
-                        payload = {"nombre": name, "codigo": sku, "precioVenta": price}
-                        if external_id:
-                            payload["productoid"] = external_id
-                        return client.create_product(payload)
-
-                    result = _run_real("Alta producto", _action)
-                    if result is not None:
-                        _render_screen("RESULTADO", _map_product_screen(result), "ENTER para continuar")
-                        _pause()
             elif choice == "2":
                 external_id = _field_prompt("ID", required=True)
                 if external_id is None:
@@ -215,94 +193,56 @@ def _product_menu(session_id: str) -> None:
                 name = _field_prompt("Nombre", required=False)
                 sku = _field_prompt("SKU", required=False)
                 price = _read_price()
-                if settings.is_xubio_mode_mock:
-                    args = {"external_id": external_id, "name": name, "sku": sku, "price": price}
-                    resp = _post_execute(session_id, "UPDATE product", args)
-                    _render_screen("RESULTADO", resp["screen"], "ENTER para continuar")
+                screen = _run_action(
+                    "Modificar producto",
+                    lambda: gateway.update(
+                        session_id=session_id,
+                        external_id=external_id,
+                        name=name,
+                        sku=sku,
+                        price=price,
+                    ),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
                     _pause()
-                else:
-                    def _action():
-                        client = _get_real_client()
-                        payload = {"nombre": name, "codigo": sku, "precioVenta": price}
-                        return client.update_product(external_id, payload)
-
-                    result = _run_real("Modificar producto", _action)
-                    if result is not None:
-                        _render_screen("RESULTADO", _map_product_screen(result), "ENTER para continuar")
-                        _pause()
             elif choice == "3":
                 external_id = _field_prompt("ID", required=True)
                 if external_id is None:
                     continue
-                if not settings.is_xubio_mode_mock and not _double_confirm():
+                if settings.IS_PROD and not _double_confirm():
                     print("Baja cancelada.")
                     continue
-                if settings.is_xubio_mode_mock:
-                    resp = _post_execute(session_id, "DELETE product", {"external_id": external_id})
-                    _render_screen("RESULTADO", resp["screen"], "ENTER para continuar")
+                screen = _run_action(
+                    "Baja producto",
+                    lambda: gateway.delete(session_id=session_id, external_id=external_id),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
                     _pause()
-                else:
-                    def _action():
-                        client = _get_real_client()
-                        client.delete_product(external_id)
-                        return True
-
-                    if _run_real("Baja producto", _action):
-                        _render_screen("RESULTADO", "Producto eliminado.", "ENTER para continuar")
-                        _pause()
             elif choice == "4":
                 external_id = _field_prompt("ID", required=True)
                 if external_id is None:
                     continue
-                if settings.is_xubio_mode_mock:
-                    resp = _post_execute(session_id, "GET product", {"external_id": external_id})
-                    _render_screen("RESULTADO", resp["screen"], "ENTER para continuar")
+                screen = _run_action(
+                    "Consultar producto",
+                    lambda: gateway.get(session_id=session_id, external_id=external_id),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
                     _pause()
-                else:
-                    def _action():
-                        client = _get_real_client()
-                        return client.get_product(external_id)
-
-                    result = _run_real("Consultar producto", _action)
-                    if result is not None:
-                        _render_screen("RESULTADO", _map_product_screen(result), "ENTER para continuar")
-                        _pause()
             elif choice == "5":
-                if settings.is_xubio_mode_mock:
-                    resp = _post_execute(session_id, "LIST product", {})
-                    _render_screen("LISTADO", resp["screen"], "ENTER para continuar")
+                screen = _run_action("Listar productos", lambda: gateway.list(session_id=session_id))
+                if screen is not None:
+                    _render_screen("LISTADO", screen, "ENTER para continuar")
                     _pause()
-                else:
-                    def _action():
-                        client = _get_real_client()
-                        return client.list_products()
-
-                    items = _run_real("Listar productos", _action)
-                    if items is None:
-                        continue
-                    if not items:
-                        _render_screen("LISTADO", "Sin productos.", "ENTER para continuar")
-                        _pause()
-                    else:
-                        lines = ["Productos:"]
-                        for item in items:
-                            external_id = item.get("productoid") or item.get("productoId") or item.get("id")
-                            name = item.get("nombre") or item.get("name") or item.get("descripcion") or "SIN_NOMBRE"
-                            lines.append(f"- {external_id} | {name}")
-                        _render_screen("LISTADO", "\n".join(lines), "ENTER para continuar")
-                        _pause()
             elif choice == "6":
-                if settings.is_xubio_mode_mock:
-                    resp = _post_execute(session_id, "SYNC_PULL product", {})
-                    _render_screen("SYNC", resp["screen"], "ENTER para continuar")
+                screen = _run_action("Sync pull", lambda: gateway.sync_pull(session_id=session_id))
+                if screen is not None:
+                    _render_screen("SYNC", screen, "ENTER para continuar")
                     _pause()
-                    continue
-                _render_screen("SYNC", "No disponible en modo real desde el cliente.", "ENTER para continuar")
-                _pause()
-                continue
             elif choice == "7":
-                if settings.is_xubio_mode_mock:
-                    _post_execute(session_id, "BACK")
+                gateway.on_back(session_id)
                 return
             else:
                 _render_screen("ERROR", "Opcion invalida.", "ENTER para continuar")
@@ -313,27 +253,31 @@ def _product_menu(session_id: str) -> None:
 
 
 def _stub_screen(session_id: str, entity_type: str) -> None:
-    if settings.is_xubio_mode_mock:
-        resp = _post_execute(session_id, f"ENTER {entity_type}")
-        _render_screen("INFO", resp["screen"], "ENTER para continuar")
-        _pause()
-    else:
+    if settings.IS_PROD:
         _render_screen("INFO", "No implementado aun.", "ENTER para continuar")
         _pause()
+        return
+    resp = _post_execute(session_id, f"ENTER {entity_type}")
+    _render_screen("INFO", resp["screen"], "ENTER para continuar")
+    _pause()
 
 
 @app.command()
 def run() -> None:
     session_id = str(uuid.uuid4())
+    gateway = _build_product_gateway()
     while True:
         try:
             _clear()
-            resp = _post_execute(session_id, "MENU")
-            mode_label = "DEV" if settings.is_xubio_mode_mock else "PROD"
-            _render_screen(f"TERMINAL FITBA/XUBIO [{mode_label}]", resp["screen"])
+            if settings.IS_PROD:
+                menu_screen = _main_menu_body()
+            else:
+                menu_screen = _post_execute(session_id, "MENU")["screen"]
+            mode_label = "PROD" if settings.IS_PROD else "DEV"
+            _render_screen(f"TERMINAL FITBA/XUBIO [{mode_label}]", menu_screen)
             choice = _prompt("> ")
             if choice == "1":
-                _product_menu(session_id)
+                _product_menu(session_id, gateway)
             elif choice == "2":
                 _stub_screen(session_id, "client")
             elif choice == "3":

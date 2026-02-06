@@ -12,11 +12,11 @@ class ClientSettings(BaseSettings):
     )
 
     base_url: str = "http://localhost:8000"
-    is_xubio_mode_mock: bool = True
+    IS_PROD: bool = False
     xubio_client_id: str | None = None
     xubio_secret_id: str | None = None
 
-    @field_validator("is_xubio_mode_mock", mode="before")
+    @field_validator("IS_PROD", mode="before")
     @classmethod
     def _validate_bool(cls, value: object) -> object:
         if isinstance(value, bool):
@@ -25,7 +25,7 @@ class ClientSettings(BaseSettings):
             normalized = value.strip().lower()
             if normalized in {"true", "false", "1", "0", "yes", "no"}:
                 return normalized in {"true", "1", "yes"}
-        raise ValueError("IS_XUBIO_MODE_MOCK debe ser booleano (true/false).")
+        raise ValueError("IS_PROD debe ser booleano (true/false).")
 
 
 settings = ClientSettings()

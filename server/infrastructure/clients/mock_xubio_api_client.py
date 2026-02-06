@@ -23,7 +23,7 @@ class MockXubioApiClient:
                     payload_json=updated_payload,
                     status="local",
                 )
-                return ProductOut(**updated_payload, external_id=payload.external_id)
+                return ProductOut(**updated_payload)
 
         external_id = payload.external_id or f"local-{id(payload)}"
         record_payload: dict[str, Any] = payload.model_dump()
@@ -35,7 +35,7 @@ class MockXubioApiClient:
             payload_json=record_payload,
             status="local",
         )
-        return ProductOut(**record_payload, external_id=external_id)
+        return ProductOut(**record_payload)
 
     def update_product(self, external_id: str, payload: ProductUpdate) -> ProductOut:
         existing = self.repository.get_by_external_id("product", external_id)
@@ -49,7 +49,7 @@ class MockXubioApiClient:
             payload_json=updated_payload,
             status="local",
         )
-        return ProductOut(**updated_payload, external_id=external_id)
+        return ProductOut(**updated_payload)
 
     def delete_product(self, external_id: str) -> None:
         existing = self.repository.get_by_external_id("product", external_id)
@@ -63,7 +63,7 @@ class MockXubioApiClient:
             raise ValueError("Producto no encontrado")
         payload = dict(existing.payload_json)
         payload["external_id"] = external_id
-        return ProductOut(**payload, external_id=external_id)
+        return ProductOut(**payload)
 
     def list_products(self, limit: int = 50, offset: int = 0) -> list[ProductOut]:
         records = self.repository.list(
