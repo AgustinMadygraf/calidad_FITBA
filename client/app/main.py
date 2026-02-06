@@ -3,9 +3,9 @@ from __future__ import annotations
 import shutil
 import sys
 import uuid
-from typing import Any, Callable
+from datetime import datetime
+from typing import Callable
 
-import httpx
 import typer
 
 from client.app.product_gateway import (
@@ -16,37 +16,27 @@ from client.app.product_gateway import (
 from client.app.settings import settings
 
 app = typer.Typer(add_completion=False)
+_CURRENT_SESSION_ID = "-"
+_IS_PROD_OVERRIDE: bool | None = None
 
 
-def _post_execute(session_id: str, command: str, args: dict[str, Any] | None = None) -> dict[str, Any]:
-    payload = {
-        "session_id": session_id,
-        "command": command,
-        "args": args or {},
-    }
-    try:
-        response = httpx.post(f"{settings.base_url}/terminal/execute", json=payload, timeout=20)
-        response.raise_for_status()
-        return response.json()
-    except httpx.RequestError as exc:
-        return {
-            "session_id": session_id,
-            "screen": f"Error de conexion: {exc.__class__.__name__}. Verifique BASE_URL.",
-            "next_actions": [],
-        }
-    except httpx.HTTPStatusError as exc:
-        status = exc.response.status_code
-        return {
-            "session_id": session_id,
-            "screen": f"Error HTTP {status}. Intente nuevamente.",
-            "next_actions": [],
-        }
-    except ValueError:
-        return {
-            "session_id": session_id,
-            "screen": "Respuesta invalida del servidor.",
-            "next_actions": [],
-        }
+def _parse_bool_option(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    if not normalized:
+        return None
+    if normalized in {"true", "1", "yes"}:
+        return True
+    if normalized in {"false", "0", "no"}:
+        return False
+    raise typer.BadParameter("IS_PROD debe ser booleano (true/false).")
+
+
+def _is_prod_enabled() -> bool:
+    if _IS_PROD_OVERRIDE is not None:
+        return _IS_PROD_OVERRIDE
+    return settings.IS_PROD
 
 
 def _prompt(text: str) -> str:
@@ -73,14 +63,33 @@ def _term_width(min_width: int = 60) -> int:
     return max(shutil.get_terminal_size(fallback=(min_width, 24)).columns, min_width)
 
 
+def _term_height(min_height: int = 20) -> int:
+    return max(shutil.get_terminal_size(fallback=(80, min_height)).lines, min_height)
+
+
 def _apply_theme(text: str) -> str:
     return f"\033[32;40m{text}\033[0m"
 
 
+def _status_line() -> str:
+    mode = "PROD" if _is_prod_enabled() else "DEV"
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return f"MODO:{mode} | SESION:{_CURRENT_SESSION_ID[:8]} | {now}"
+
+
+def _fit_text(text: str, width: int) -> str:
+    if len(text) <= width:
+        return text.ljust(width)
+    if width <= 3:
+        return text[:width]
+    return f"{text[: width - 3]}..."
+
+
 def _render_screen(title: str, body: str, footer: str = "") -> None:
     lines = body.splitlines() if body else [""]
+    status = _status_line()
     width = min(
-        max(len(title) + 4, *(len(line) for line in lines), len(footer), 40),
+        max(len(title) + 4, *(len(line) for line in lines), len(footer), len(status), 40),
         _term_width() - 4,
     )
     top = "+" + "-" * (width + 2) + "+"
@@ -88,11 +97,45 @@ def _render_screen(title: str, body: str, footer: str = "") -> None:
     print(_apply_theme(f"| {title.center(width)} |"))
     print(_apply_theme("+" + "-" * (width + 2) + "+"))
     for line in lines:
-        print(_apply_theme(f"| {line.ljust(width)} |"))
+        print(_apply_theme(f"| {_fit_text(line, width)} |"))
+    print(_apply_theme("+" + "-" * (width + 2) + "+"))
     if footer:
+        print(_apply_theme(f"| {_fit_text(footer, width)} |"))
         print(_apply_theme("+" + "-" * (width + 2) + "+"))
-        print(_apply_theme(f"| {footer.ljust(width)} |"))
+    print(_apply_theme(f"| {_fit_text(status, width)} |"))
     print(_apply_theme(top))
+
+
+def _render_paginated_screen(title: str, body: str, footer: str = "ENTER para continuar") -> None:
+    lines = body.splitlines() if body else [""]
+    lines_per_page = max(5, _term_height() - 10)
+    total_pages = (len(lines) + lines_per_page - 1) // lines_per_page
+    current_page = 0
+
+    while True:
+        start = current_page * lines_per_page
+        end = start + lines_per_page
+        chunk = lines[start:end]
+        page_footer = footer
+        if total_pages > 1:
+            page_footer = f"ENTER sig. | B ant. | Q salir | Pag {current_page + 1}/{total_pages}"
+        _render_screen(title, "\n".join(chunk), page_footer)
+
+        if total_pages == 1:
+            _pause()
+            return
+
+        cmd = _prompt("> ").strip().lower()
+        if cmd in {"q", "quit", "salir"}:
+            return
+        if cmd == "b":
+            current_page = max(0, current_page - 1)
+            _clear()
+            continue
+        if current_page >= total_pages - 1:
+            return
+        current_page += 1
+        _clear()
 
 
 def _pause() -> None:
@@ -142,11 +185,11 @@ def _main_menu_body() -> str:
 
 
 def _build_product_gateway() -> ProductGateway:
-    if settings.IS_PROD:
+    if _is_prod_enabled():
         if not settings.xubio_client_id or not settings.xubio_secret_id:
             raise ValueError("Faltan XUBIO_CLIENT_ID / XUBIO_SECRET_ID")
         return XubioDirectProductGateway(settings.xubio_client_id, settings.xubio_secret_id)
-    return LocalFastApiProductGateway(_post_execute)
+    return LocalFastApiProductGateway(settings.base_url)
 
 
 def _run_action(action_name: str, func: Callable[[], str]) -> str | None:
@@ -210,7 +253,7 @@ def _product_menu(session_id: str, gateway: ProductGateway) -> None:
                 external_id = _field_prompt("ID", required=True)
                 if external_id is None:
                     continue
-                if settings.IS_PROD and not _double_confirm():
+                if _is_prod_enabled() and not _double_confirm():
                     print("Baja cancelada.")
                     continue
                 screen = _run_action(
@@ -234,14 +277,13 @@ def _product_menu(session_id: str, gateway: ProductGateway) -> None:
             elif choice == "5":
                 screen = _run_action("Listar productos", lambda: gateway.list(session_id=session_id))
                 if screen is not None:
-                    _render_screen("LISTADO", screen, "ENTER para continuar")
-                    _pause()
-            elif choice == "6":
+                    _render_paginated_screen("LISTADO", screen)
+            elif choice == "6" and gateway.show_sync_pull:
                 screen = _run_action("Sync pull", lambda: gateway.sync_pull(session_id=session_id))
                 if screen is not None:
                     _render_screen("SYNC", screen, "ENTER para continuar")
                     _pause()
-            elif choice == "7":
+            elif choice == gateway.back_option:
                 gateway.on_back(session_id)
                 return
             else:
@@ -253,27 +295,30 @@ def _product_menu(session_id: str, gateway: ProductGateway) -> None:
 
 
 def _stub_screen(session_id: str, entity_type: str) -> None:
-    if settings.IS_PROD:
-        _render_screen("INFO", "No implementado aun.", "ENTER para continuar")
-        _pause()
-        return
-    resp = _post_execute(session_id, f"ENTER {entity_type}")
-    _render_screen("INFO", resp["screen"], "ENTER para continuar")
+    _ = (session_id, entity_type)
+    _render_screen("INFO", "No implementado aun.", "ENTER para continuar")
     _pause()
 
 
 @app.command()
-def run() -> None:
+def run(
+    is_prod: str | None = typer.Option(
+        None,
+        "--IS_PROD",
+        "--is-prod",
+        help="Sobrescribe IS_PROD del .env (true/false).",
+    ),
+) -> None:
+    global _CURRENT_SESSION_ID, _IS_PROD_OVERRIDE
+    _IS_PROD_OVERRIDE = _parse_bool_option(is_prod)
     session_id = str(uuid.uuid4())
+    _CURRENT_SESSION_ID = session_id
     gateway = _build_product_gateway()
     while True:
         try:
             _clear()
-            if settings.IS_PROD:
-                menu_screen = _main_menu_body()
-            else:
-                menu_screen = _post_execute(session_id, "MENU")["screen"]
-            mode_label = "PROD" if settings.IS_PROD else "DEV"
+            menu_screen = _main_menu_body()
+            mode_label = "PROD" if _is_prod_enabled() else "DEV"
             _render_screen(f"TERMINAL FITBA/XUBIO [{mode_label}]", menu_screen)
             choice = _prompt("> ")
             if choice == "1":
@@ -297,4 +342,4 @@ def run() -> None:
 
 
 if __name__ == "__main__":
-    run()
+    app()

@@ -38,7 +38,7 @@ En modo real, `XUBIO_BASE_URL`, `XUBIO_TOKEN_ENDPOINT` y `XUBIO_PRODUCT_ENDPOINT
 estan hardcodeados en `server/infrastructure/clients/real_xubio_api_client.py`.
 
 Modo en cliente y servidor:
-- `IS_PROD=false`: el cliente consume la API local (`BASE_URL`) y el server usa mock/local DB.
+- `IS_PROD=false`: el cliente consume la API local (`BASE_URL`) con formato Xubio y el server usa mock/local DB.
 - `IS_PROD=true`: el cliente consume Xubio en forma directa y el server usa cliente real de Xubio.
 
 En modo real, el cliente requiere `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
@@ -54,6 +54,21 @@ python -m server.app
 ```bash
 python -m client.app
 ```
+
+Override por argumento (prioridad sobre `.env`):
+
+```bash
+python -m client.app --IS_PROD=true
+python -m client.app --IS_PROD=false
+```
+
+Replica Xubio local (MVP, sin token) en FastAPI:
+- `GET /API/1.1/ProductoVentaBean`
+- `GET /API/1.1/ProductoVentaBean/{id}`
+- `POST /API/1.1/ProductoVentaBean`
+- `PATCH /API/1.1/ProductoVentaBean/{id}`
+- `DELETE /API/1.1/ProductoVentaBean/{id}`
+- `POST /sync/pull/product/from-xubio` (solo `IS_PROD=false`, sincroniza DB local leyendo Xubio real)
 
 ## Ejemplo de sesion CLI
 
