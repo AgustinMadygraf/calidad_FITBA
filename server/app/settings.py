@@ -12,13 +12,13 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "mysql+pymysql://user:pass@localhost:3306/xubio_like"
-    is_xubio_mode_mock: bool = True
+    IS_XUBIO_MODE_DEV: bool = True
     xubio_client_id: str | None = None
     xubio_secret_id: str | None = None
     disable_delete_in_real: bool = True
     port: int = 8000
 
-    @field_validator("is_xubio_mode_mock", mode="before")
+    @field_validator("IS_XUBIO_MODE_DEV", mode="before")
     @classmethod
     def _validate_bool(cls, value: object) -> object:
         if isinstance(value, bool):
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
             normalized = value.strip().lower()
             if normalized in {"true", "false", "1", "0", "yes", "no"}:
                 return normalized in {"true", "1", "yes"}
-        raise ValueError("IS_XUBIO_MODE_MOCK debe ser booleano (true/false).")
+        raise ValueError("IS_XUBIO_MODE_DEV debe ser booleano (true/false).")
 
 
 settings = Settings()

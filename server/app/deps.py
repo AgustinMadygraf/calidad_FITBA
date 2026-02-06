@@ -23,7 +23,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def get_xubio_client(db: Session) -> XubioApiClient:
-    if not settings.is_xubio_mode_mock:
+    if not settings.IS_XUBIO_MODE_DEV:
         return RealXubioApiClient()
     repository = IntegrationRecordRepository(db)
     return MockXubioApiClient(repository)

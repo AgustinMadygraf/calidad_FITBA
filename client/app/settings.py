@@ -13,6 +13,8 @@ class ClientSettings(BaseSettings):
 
     base_url: str = "http://localhost:8000"
     is_xubio_mode_mock: bool = True
+    xubio_client_id: str | None = None
+    xubio_secret_id: str | None = None
 
     @field_validator("is_xubio_mode_mock", mode="before")
     @classmethod

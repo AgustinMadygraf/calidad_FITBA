@@ -116,7 +116,7 @@ def execute_command(
             external_id = args.get("external_id")
             if not external_id:
                 return session_id, "Falta external_id.", []
-            if not settings.is_xubio_mode_mock and settings.disable_delete_in_real:
+            if not settings.IS_XUBIO_MODE_DEV and settings.disable_delete_in_real:
                 return session_id, "Baja deshabilitada por configuracion.", []
             DeleteProduct(client).execute(external_id)
             return session_id, "Producto eliminado.", []
@@ -143,13 +143,13 @@ def execute_command(
             items = ListProducts(client).execute(limit=limit, offset=offset)
             if not items:
                 return session_id, "Sin productos.", []
-            lines = ["Productos:"]
+            lines = ["Productos:", "ID | Nombre"]
             for item in items:
                 lines.append(f"- {item.external_id} | {item.name}")
             return session_id, "\n".join(lines), []
 
         if verb == "SYNC_PULL":
-            result = SyncPullProduct(client, repository).execute(settings.is_xubio_mode_mock)
+            result = SyncPullProduct(client, repository).execute(settings.IS_XUBIO_MODE_DEV)
             if result.get("status") == "error":
                 return session_id, f"Sync pull ERROR: {result.get('detail', 'desconocido')}", []
             return session_id, f"Sync pull OK: {result['status']}", []
