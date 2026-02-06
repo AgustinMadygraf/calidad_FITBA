@@ -286,6 +286,8 @@ def _product_menu(session_id: str, gateway: ProductGateway) -> None:
             elif choice == gateway.back_option:
                 gateway.on_back(session_id)
                 return
+            elif choice.lower() in {"q", "quit", "salir"}:
+                sys.exit(0)
             else:
                 _render_screen("ERROR", "Opcion invalida.", "ENTER para continuar")
                 _pause()

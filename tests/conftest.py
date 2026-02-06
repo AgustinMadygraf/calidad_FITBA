@@ -10,8 +10,9 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture()
 def client() -> TestClient:
-    temp_db = tempfile.NamedTemporaryFile(suffix=".db")
-    os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{temp_db.name}"
+    fd, db_path = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{db_path}"
     os.environ["IS_PROD"] = "false"
 
     import src.server.app.settings as settings_module
@@ -33,4 +34,7 @@ def client() -> TestClient:
         yield test_client
     finally:
         test_client.close()
-        temp_db.close()
+        try:
+            os.remove(db_path)
+        except OSError:
+            pass
