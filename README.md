@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 ```
 DATABASE_URL=mysql+pymysql://user:pass@localhost:3306/xubio_like
-IS_XUBIO_MODE_DEV=true
+IS_PROD=false
 XUBIO_CLIENT_ID=...
 XUBIO_SECRET_ID=...
 DISABLE_DELETE_IN_REAL=true
@@ -32,7 +32,7 @@ PORT=8000
 BASE_URL=http://localhost:8000
 ```
 
-Nota: `IS_XUBIO_MODE_DEV` acepta `true/false`, `1/0`, `yes/no`.
+Nota: `IS_PROD` acepta `true/false`, `1/0`, `yes/no`.
 En modo real, `XUBIO_BASE_URL`, `XUBIO_TOKEN_ENDPOINT` y `XUBIO_PRODUCT_ENDPOINT`
 estan hardcodeados en `server/infrastructure/clients/real_xubio_api_client.py`.
 

@@ -329,7 +329,8 @@ def run() -> None:
         try:
             _clear()
             resp = _post_execute(session_id, "MENU")
-            _render_screen("TERMINAL FITBA/XUBIO", resp["screen"])
+            mode_label = "DEV" if settings.is_xubio_mode_mock else "PROD"
+            _render_screen(f"TERMINAL FITBA/XUBIO [{mode_label}]", resp["screen"])
             choice = _prompt("> ")
             if choice == "1":
                 _product_menu(session_id)

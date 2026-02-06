@@ -3,7 +3,7 @@
 ### Decisiones acordadas
 - Monorepo Python con `server/` (FastAPI) y `client/` (CLI AS400).
 - MVP: PRODUCTO funcional. Otros entity_type en menu como stub.
-- Modo mock vs real por env: `IS_XUBIO_MODE_DEV=true|false`.
+- Modo mock vs real por env: `IS_PROD=true|false`.
 - Tabla unica `integration_records` para iterar rapido.
 
 ### Base de datos (MySQL)
