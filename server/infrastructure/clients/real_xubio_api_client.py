@@ -74,10 +74,23 @@ class RealXubioApiClient:
         return ProductOut(**data)
 
     def list_products(self, limit: int = 50, offset: int = 0) -> list[ProductOut]:
-        response = self._request(
-            "GET",
-            settings.xubio_product_endpoint,
-            params={"limit": limit, "offset": offset},
-        )
+        response = self._request("GET", settings.xubio_product_endpoint)
         data = response.json()
-        return [ProductOut(**item) for item in data]
+        return [self._map_product(item) for item in data]
+
+    def _map_product(self, item: dict[str, Any]) -> ProductOut:
+        external_id = (
+            item.get("productoid")
+            or item.get("productoId")
+            or item.get("id")
+            or item.get("external_id")
+        )
+        name = item.get("nombre") or item.get("name") or item.get("descripcion") or "SIN_NOMBRE"
+        sku = item.get("codigo") or item.get("sku")
+        price = item.get("precioVenta") or item.get("price")
+        return ProductOut(
+            external_id=str(external_id),
+            name=name,
+            sku=sku,
+            price=price,
+        )

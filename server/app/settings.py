@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     xubio_token_endpoint: str = "https://xubio.com/API/1.1/TokenEndpoint"
     xubio_client_id: str | None = None
     xubio_secret_id: str | None = None
-    xubio_product_endpoint: str = "/Products"  # TODO: confirmar endpoint real
+    xubio_product_endpoint: str = "/ProductoVentaBean"
     disable_delete_in_real: bool = True
 
 
