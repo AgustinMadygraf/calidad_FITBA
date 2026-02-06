@@ -92,7 +92,7 @@ def _product_menu(session_id: str) -> None:
             print(resp["screen"])
         elif choice == "3":
             external_id = _prompt("ID: ")
-            if settings.xubio_mode == "real" and not _double_confirm():
+            if not settings.is_xubio_mode_mock and not _double_confirm():
                 print("Baja cancelada.")
                 continue
             resp = _post_execute(session_id, "DELETE product", {"external_id": external_id})

@@ -49,9 +49,9 @@ class SyncPullProduct:
         self.client = client
         self.repository = repository
 
-    def execute(self, mode: str) -> dict[str, str]:
+    def execute(self, is_mock: bool) -> dict[str, str]:
         try:
-            if mode == "mock":
+            if is_mock:
                 if not list(self.repository.list(entity_type="product", limit=1, offset=0)):
                     self.repository.create(
                         entity_type="product",

@@ -44,7 +44,7 @@ def sync_pull_product(
 ) -> dict[str, str]:
     client = get_xubio_client(db)
     repository = IntegrationRecordRepository(db)
-    return SyncPullProduct(client, repository).execute(settings.xubio_mode)
+    return SyncPullProduct(client, repository).execute(settings.is_xubio_mode_mock)
 
 
 @router.post("/sync/push/product")

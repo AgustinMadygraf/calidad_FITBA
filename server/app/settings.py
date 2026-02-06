@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,13 +12,22 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "mysql+pymysql://user:pass@localhost:3306/xubio_like"
-    xubio_mode: str = "mock"  # mock | real
-    xubio_base_url: str = "https://xubio.com/API/1.1"
-    xubio_token_endpoint: str = "https://xubio.com/API/1.1/TokenEndpoint"
+    is_xubio_mode_mock: bool = True
     xubio_client_id: str | None = None
     xubio_secret_id: str | None = None
-    xubio_product_endpoint: str = "/ProductoVentaBean"
     disable_delete_in_real: bool = True
+    port: int = 8000
+
+    @field_validator("is_xubio_mode_mock", mode="before")
+    @classmethod
+    def _validate_bool(cls, value: object) -> object:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "false", "1", "0", "yes", "no"}:
+                return normalized in {"true", "1", "yes"}
+        raise ValueError("IS_XUBIO_MODE_MOCK debe ser booleano (true/false).")
 
 
 settings = Settings()

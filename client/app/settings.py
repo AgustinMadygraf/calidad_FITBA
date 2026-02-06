@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +12,18 @@ class ClientSettings(BaseSettings):
     )
 
     base_url: str = "http://localhost:8000"
-    xubio_mode: str = "mock"
+    is_xubio_mode_mock: bool = True
+
+    @field_validator("is_xubio_mode_mock", mode="before")
+    @classmethod
+    def _validate_bool(cls, value: object) -> object:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "false", "1", "0", "yes", "no"}:
+                return normalized in {"true", "1", "yes"}
+        raise ValueError("IS_XUBIO_MODE_MOCK debe ser booleano (true/false).")
 
 
 settings = ClientSettings()
