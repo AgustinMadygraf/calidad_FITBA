@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from src.interface_adapter.controller.api.app.settings import settings as server_settings
 from src.infrastructure.db.models import Base
 from src.infrastructure.repositories.integration_record_repository import (
-    IntegrationRecordRepository,
+    ProductRepository,
 )
 from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
 from src.interface_adapter.controller.terminal import execute_command
@@ -14,11 +14,11 @@ from src.interface_adapter.controller.api import routes
 from src.entities.schemas import ProductCreate, ProductUpdate
 
 
-def _make_repo() -> IntegrationRecordRepository:
+def _make_repo() -> ProductRepository:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
     session = sessionmaker(bind=engine)()
-    return IntegrationRecordRepository(session)
+    return ProductRepository(session)
 
 
 def test_execute_command_menu_and_product_flow(monkeypatch) -> None:

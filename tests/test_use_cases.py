@@ -44,26 +44,22 @@ class _FakeClient:
 class _FakeRepo:
     def __init__(self) -> None:
         self.created: list[dict[str, Any]] = []
-        self.updated: list[dict[str, Any]] = []
         self.records: list[dict[str, Any]] = []
 
-    def list(self, entity_type: str, limit: int = 50, offset: int = 0):
+    def list(self, limit: int = 50, offset: int = 0):
         _ = (limit, offset)
-        return [r for r in self.records if r["entity_type"] == entity_type]
+        return self.records
 
-    def create(self, **kwargs):
-        self.created.append(kwargs)
-        self.records.append(kwargs)
-
-    def get_by_external_id(self, entity_type: str, external_id: str):
-        for record in self.records:
-            if record["entity_type"] == entity_type and record["external_id"] == external_id:
-                return record
-        return None
-
-    def update(self, record, **kwargs):
-        self.updated.append({"record": record, **kwargs})
-        record.update(kwargs)
+    def upsert(self, productoid: str, payload: dict[str, Any]):
+        existing = next((r for r in self.records if r["productoid"] == productoid), None)
+        if existing:
+            existing.update(payload)
+            return existing
+        payload = dict(payload)
+        payload["productoid"] = productoid
+        self.created.append(payload)
+        self.records.append(payload)
+        return payload
 
 
 def test_use_cases_basic_crud() -> None:

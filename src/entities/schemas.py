@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -44,12 +44,3 @@ class ProductOut(ProductBase):
 class ProductList(BaseModel):
     items: list[ProductOut]
 
-
-class IntegrationRecordOut(BaseModel):
-    id: int
-    entity_type: str
-    operation: str
-    external_id: str | None
-    payload_json: dict[str, Any]
-    status: Literal["local", "synced", "error"]
-    last_error: str | None

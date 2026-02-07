@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from src.entities.schemas import ProductCreate, ProductOut, ProductUpdate
 from src.interface_adapter.gateways.xubio_api_client import XubioApiClient
+from src.interface_adapter.presenters.product_presenter import to_xubio as present_product_to_xubio
 
 
 class CreateProduct:
@@ -52,30 +53,17 @@ class SyncPullProduct:
     def execute(self, is_mock: bool) -> dict[str, str]:
         try:
             if is_mock:
-                if not list(self.repository.list(entity_type="product", limit=1, offset=0)):
-                    self.repository.create(
-                        entity_type="product",
-                        operation="create",
-                        external_id="demo-1",
-                        payload_json={"external_id": "demo-1", "name": "Producto demo"},
-                        status="synced",
+                if not list(self.repository.list(limit=1, offset=0)):
+                    self.repository.upsert(
+                        "demo-1",
+                        {"productoid": "demo-1", "nombre": "Producto demo"},
                     )
                 return {"status": "ok"}
 
             items = self.client.list_products()
             for item in items:
-                existing = self.repository.get_by_external_id("product", item.external_id)
-                payload = item.model_dump()
-                if existing:
-                    self.repository.update(existing, operation="update", payload_json=payload, status="synced")
-                else:
-                    self.repository.create(
-                        entity_type="product",
-                        operation="create",
-                        external_id=item.external_id,
-                        payload_json=payload,
-                        status="synced",
-                    )
+                payload = present_product_to_xubio(item)
+                self.repository.upsert(str(item.external_id), payload)
             return {"status": "ok"}
         except Exception as exc:
             return {"status": "error", "detail": str(exc)}

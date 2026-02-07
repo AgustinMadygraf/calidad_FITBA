@@ -5,6 +5,7 @@ import httpx
 
 from src.entities.schemas import ProductCreate, ProductOut, ProductUpdate
 from src.interface_adapter.controller.api.app.settings import settings
+from src.shared.logger import get_logger
 
 BASE_URL = "https://xubio.com/API/1.1"
 TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
@@ -15,10 +16,12 @@ class RealXubioApiClient:
     def __init__(self) -> None:
         self._token: str | None = None
         self._client = httpx.Client(base_url=BASE_URL, timeout=20)
+        self._logger = get_logger(__name__)
 
     def _get_token(self) -> str:
         if not settings.xubio_client_id or not settings.xubio_secret_id:
             raise ValueError("Faltan XUBIO_CLIENT_ID / XUBIO_SECRET_ID")
+        self._logger.info("Solicitando token OAuth2.")
         response = httpx.post(
             TOKEN_ENDPOINT,
             data={"grant_type": "client_credentials"},
@@ -31,6 +34,7 @@ class RealXubioApiClient:
         if not token:
             raise ValueError("No se obtuvo access_token")
         self._token = token
+        self._logger.info("Token OAuth2 obtenido.")
         return token
 
     def _is_invalid_token(self, response: httpx.Response) -> bool:
@@ -38,7 +42,7 @@ class RealXubioApiClient:
             return False
         try:
             data = response.json()
-        except Exception:
+        except ValueError:
             return False
         return data.get("error") == "invalid_token"
 
@@ -48,6 +52,7 @@ class RealXubioApiClient:
         headers["Authorization"] = f"Bearer {token}"
         response = self._client.request(method, url, headers=headers, **kwargs)
         if self._is_invalid_token(response):
+            self._logger.warning("Token invalido, reintentando autenticacion.")
             token = self._get_token()
             headers["Authorization"] = f"Bearer {token}"
             response = self._client.request(method, url, headers=headers, **kwargs)

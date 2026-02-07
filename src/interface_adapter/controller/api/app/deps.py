@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from src.interface_adapter.controller.api.app.settings import settings
 from src.infrastructure.db.session import SessionLocal
 from src.infrastructure.repositories.integration_record_repository import (
-    IntegrationRecordRepository,
+    ProductRepository,
 )
 from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
 from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
@@ -25,5 +25,5 @@ def get_db() -> Generator[Session, None, None]:
 def get_xubio_client(db: Session) -> XubioApiClient:
     if settings.IS_PROD:
         return RealXubioApiClient()
-    repository = IntegrationRecordRepository(db)
+    repository = ProductRepository(db)
     return MockXubioApiClient(repository)

@@ -39,25 +39,12 @@ def test_sync_pull_from_xubio_error(monkeypatch, client) -> None:
 def test_sync_push_product_prod_branch(monkeypatch) -> None:
     class _FakeClient:
         def __init__(self) -> None:
-            self.created = 0
             self.updated = 0
-            self.deleted = 0
-
-        def create_product(self, payload):
-            name = payload.get("name") if isinstance(payload, dict) else getattr(payload, "name", None)
-            if name == "ERR":
-                raise RuntimeError("boom")
-            self.created += 1
-            return payload
 
         def update_product(self, external_id, payload):
             _ = external_id
             self.updated += 1
             return payload
-
-        def delete_product(self, external_id):
-            _ = external_id
-            self.deleted += 1
 
     fake = _FakeClient()
     import src.interface_adapter.controller.api.routes as routes
@@ -68,46 +55,19 @@ def test_sync_push_product_prod_branch(monkeypatch) -> None:
 
     from src.infrastructure.db.session import SessionLocal
     from src.infrastructure.repositories.integration_record_repository import (
-        IntegrationRecordRepository,
+        ProductRepository,
     )
 
     db = SessionLocal()
     try:
-        repo = IntegrationRecordRepository(db)
-        repo.create(
-            entity_type="product",
-            operation="create",
-            external_id="p-1",
-            payload_json={"external_id": "p-1", "name": "A"},
-            status="local",
-        )
-        repo.create(
-            entity_type="product",
-            operation="update",
-            external_id="p-2",
-            payload_json={"external_id": "p-2", "name": "B"},
-            status="local",
-        )
-        repo.create(
-            entity_type="product",
-            operation="delete",
-            external_id="p-3",
-            payload_json={"external_id": "p-3", "name": "C"},
-            status="local",
-        )
-        repo.create(
-            entity_type="product",
-            operation="create",
-            external_id="p-4",
-            payload_json={"external_id": "p-4", "name": "ERR"},
-            status="local",
-        )
+        repo = ProductRepository(db)
+        repo.create("p-1", {"productoid": "p-1", "nombre": "A"})
+        repo.create("p-2", {"productoid": "p-2", "nombre": "B"})
+        repo.create("p-3", {"productoid": "p-3", "nombre": "C"})
 
         result = routes.sync_push_product(db=db)
         assert result["status"] == "ok"
     finally:
         db.close()
 
-    assert fake.created == 1
-    assert fake.updated == 1
-    assert fake.deleted == 1
+    assert fake.updated == 3

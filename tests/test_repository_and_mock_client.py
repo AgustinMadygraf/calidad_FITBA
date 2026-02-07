@@ -5,41 +5,35 @@ from sqlalchemy.orm import sessionmaker
 
 from src.infrastructure.db.models import Base
 from src.infrastructure.repositories.integration_record_repository import (
-    IntegrationRecordRepository,
+    ProductRepository,
 )
 from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
 from src.entities.schemas import ProductCreate, ProductUpdate
 
 
-def _make_repo() -> IntegrationRecordRepository:
+def _make_repo() -> ProductRepository:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
     session = sessionmaker(bind=engine)()
-    return IntegrationRecordRepository(session)
+    return ProductRepository(session)
 
 
 def test_repository_crud() -> None:
     repo = _make_repo()
-    record = repo.create(
-        entity_type="product",
-        operation="create",
-        external_id="p-1",
-        payload_json={"external_id": "p-1", "name": "Test"},
-        status="local",
-    )
-    assert record.id is not None
-    assert repo.get_by_external_id("product", "p-1") is not None
+    record = repo.create("p-1", {"productoid": "p-1", "nombre": "Test"})
+    assert record.productoid == "p-1"
+    assert repo.get("p-1") is not None
 
-    repo.update(record, operation="update", payload_json={"external_id": "p-1", "name": "Updated"}, status="synced")
-    updated = repo.get_by_external_id("product", "p-1")
+    repo.update(record, {"productoid": "p-1", "nombre": "Updated"})
+    updated = repo.get("p-1")
     assert updated is not None
-    assert updated.payload_json["name"] == "Updated"
+    assert updated.nombre == "Updated"
 
-    items = list(repo.list(entity_type="product", status="synced", limit=10, offset=0))
+    items = list(repo.list(limit=10, offset=0))
     assert len(items) == 1
 
     repo.delete(record)
-    assert repo.get_by_external_id("product", "p-1") is None
+    assert repo.get("p-1") is None
 
 
 def test_mock_client_create_update_delete() -> None:

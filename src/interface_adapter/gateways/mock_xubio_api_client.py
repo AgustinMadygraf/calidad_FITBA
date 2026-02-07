@@ -4,12 +4,12 @@ from typing import Any
 
 from src.entities.schemas import ProductCreate, ProductOut, ProductUpdate
 from src.infrastructure.repositories.integration_record_repository import (
-    IntegrationRecordRepository,
+    ProductRepository,
 )
 
 
 class MockXubioApiClient:
-    def __init__(self, repository: IntegrationRecordRepository):
+    def __init__(self, repository: ProductRepository):
         self.repository = repository
 
     def _build_xubio_payload(
@@ -50,77 +50,50 @@ class MockXubioApiClient:
         if not external_id and payload.xubio_payload:
             external_id = payload.xubio_payload.get("productoid")
         external_id = str(external_id) if external_id is not None else None
-
-        if external_id:
-            existing = self.repository.get_by_external_id("product", external_id)
-            if existing:
-                updated_payload = self._build_xubio_payload(
-                    existing_payload=existing.payload_json,
-                    payload=payload,
-                    external_id=external_id,
-                )
-                self.repository.update(
-                    existing,
-                    operation="update",
-                    payload_json=updated_payload,
-                    status="local",
-                )
-                return self._to_product_out(updated_payload, external_id)
-
         external_id = external_id or f"local-{id(payload)}"
+
         record_payload = self._build_xubio_payload(
             existing_payload=None,
             payload=payload,
             external_id=external_id,
         )
-        self.repository.create(
-            entity_type="product",
-            operation="create",
-            external_id=external_id,
-            payload_json=record_payload,
-            status="local",
-        )
-        return self._to_product_out(record_payload, external_id)
+        product = self.repository.upsert(external_id, record_payload)
+        payload_dict = self.repository.to_payload(product)
+        return self._to_product_out(payload_dict, external_id)
 
     def update_product(self, external_id: str, payload: ProductUpdate) -> ProductOut:
-        existing = self.repository.get_by_external_id("product", external_id)
+        existing = self.repository.get(external_id)
         if not existing:
             raise ValueError("Producto no encontrado")
         updated_payload = self._build_xubio_payload(
-            existing_payload=existing.payload_json,
+            existing_payload=self.repository.to_payload(existing),
             payload=payload,
             external_id=external_id,
         )
-        self.repository.update(
-            existing,
-            operation="update",
-            payload_json=updated_payload,
-            status="local",
-        )
-        return self._to_product_out(updated_payload, external_id)
+        product = self.repository.update(existing, updated_payload)
+        payload_dict = self.repository.to_payload(product)
+        return self._to_product_out(payload_dict, external_id)
 
     def delete_product(self, external_id: str) -> None:
-        existing = self.repository.get_by_external_id("product", external_id)
+        existing = self.repository.get(external_id)
         if not existing:
             raise ValueError("Producto no encontrado")
         self.repository.delete(existing)
 
     def get_product(self, external_id: str) -> ProductOut:
-        existing = self.repository.get_by_external_id("product", external_id)
+        existing = self.repository.get(external_id)
         if not existing:
             raise ValueError("Producto no encontrado")
-        payload = dict(existing.payload_json)
+        payload = self.repository.to_payload(existing)
         return self._to_product_out(payload, external_id)
 
     def list_products(self, limit: int = 50, offset: int = 0) -> list[ProductOut]:
-        records = self.repository.list(
-            entity_type="product",
-            limit=limit,
-            offset=offset,
-        )
+        records = self.repository.list(limit=limit, offset=offset)
         items: list[ProductOut] = []
         for record in records:
-            payload = dict(record.payload_json)
-            external_id = record.external_id or payload.get("external_id") or payload.get("productoid") or ""
+            payload = self.repository.to_payload(record)
+            external_id = self.repository.external_id_of(record)
+            if external_id is None:
+                external_id = "unknown"
             items.append(self._to_product_out(payload, str(external_id)))
         return items

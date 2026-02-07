@@ -17,14 +17,14 @@ def test_sync_push_marks_local_as_synced(client) -> None:
 
     from src.infrastructure.db.session import SessionLocal
     from src.infrastructure.repositories.integration_record_repository import (
-        IntegrationRecordRepository,
+        ProductRepository,
     )
 
     db = SessionLocal()
     try:
-        repo = IntegrationRecordRepository(db)
-        record = repo.get_by_external_id("product", "p-10")
-        assert record is not None
-        assert record.status == "synced"
+        repo = ProductRepository(db)
+        product = repo.get("p-10")
+        assert product is not None
+        assert product.nombre == "Producto A"
     finally:
         db.close()

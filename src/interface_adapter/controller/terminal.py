@@ -15,7 +15,7 @@ from src.use_case.use_cases import (
 from src.interface_adapter.gateways.xubio_api_client import XubioApiClient
 from src.interface_adapter.controller.api.app.settings import settings
 from src.infrastructure.repositories.integration_record_repository import (
-    IntegrationRecordRepository,
+    ProductRepository,
 )
 
 
@@ -69,7 +69,7 @@ def execute_command(
     command: str,
     args: dict[str, Any],
     client: XubioApiClient,
-    repository: IntegrationRecordRepository,
+    repository: ProductRepository,
 ) -> tuple[str, str, list[str]]:
     session = SESSIONS.setdefault(session_id, TerminalSession())
     tokens = command.strip().split()

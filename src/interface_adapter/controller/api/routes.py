@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import ProgrammingError
 
 from src.entities.schemas import TerminalExecuteRequest, TerminalExecuteResponse, ProductCreate, ProductUpdate
 from src.interface_adapter.controller.api.app.deps import get_db, get_xubio_client
@@ -12,13 +13,15 @@ from src.interface_adapter.controller.api.app.settings import settings
 from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
 from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
 from src.interface_adapter.presenters.product_presenter import to_xubio as present_product_to_xubio
+from src.shared.logger import get_logger
 from src.infrastructure.repositories.integration_record_repository import (
-    IntegrationRecordRepository,
+    ProductRepository,
 )
 from src.interface_adapter.controller.terminal import execute_command
 from src.use_case.use_cases import SyncPullProduct
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 class XubioUnidadMedida(BaseModel):
@@ -101,7 +104,7 @@ def _to_product_update(payload: ProductoVentaBean) -> ProductUpdate:
 
 
 def _local_product_client(db: Session) -> MockXubioApiClient:
-    repository = IntegrationRecordRepository(db)
+    repository = ProductRepository(db)
     return MockXubioApiClient(repository)
 
 
@@ -147,18 +150,29 @@ def health() -> dict[str, str]:
 def sync_pull_product_from_xubio(
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
-    repository = IntegrationRecordRepository(db)
+    repository = ProductRepository(db)
+    logger.info("Sync pull from Xubio started.")
     result = SyncPullProduct(RealXubioApiClient(), repository).execute(False)
     if result.get("status") != "ok":
+        logger.error("Sync pull from Xubio failed: %s", result.get("detail", "Error de sync pull."))
         raise HTTPException(status_code=502, detail=result.get("detail", "Error de sync pull."))
+    logger.info("Sync pull from Xubio completed.")
     return {"status": "ok", "source": "xubio"}
 
 
 @router.get("/API/1.1/ProductoVentaBean")
 def xubio_list_products(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
     client = _local_product_client(db)
-    items = client.list_products(limit=1000, offset=0)
-    return [_map_to_xubio(item) for item in items]
+    try:
+        items = client.list_products(limit=1000, offset=0)
+        return [_map_to_xubio(item) for item in items]
+    except ProgrammingError as exc:
+        logger.warning("DB no inicializada (tabla integration_records inexistente).")
+        logger.error("Detalle DB error: %s", exc)
+        raise HTTPException(status_code=500, detail="DB no inicializada: falta tabla integration_records.") from exc
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.error("Error listando productos: %s", exc)
+        raise HTTPException(status_code=500, detail="Error interno listando productos.") from exc
 
 
 @router.get("/API/1.1/ProductoVentaBean/{external_id}")
@@ -207,8 +221,9 @@ def terminal_execute(
     db: Session = Depends(get_db),
 ) -> TerminalExecuteResponse:
     client = get_xubio_client(db)
-    repository = IntegrationRecordRepository(db)
+    repository = ProductRepository(db)
     session_id = payload.session_id or "default"
+    logger.info("Terminal execute: session=%s command=%s", session_id, payload.command)
     session_id, screen, next_actions = execute_command(
         session_id=session_id,
         command=payload.command,
@@ -224,7 +239,8 @@ def sync_pull_product(
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     client = get_xubio_client(db)
-    repository = IntegrationRecordRepository(db)
+    repository = ProductRepository(db)
+    logger.info("Sync pull started (is_prod=%s).", settings.IS_PROD)
     return SyncPullProduct(client, repository).execute(not settings.IS_PROD)
 
 
@@ -233,26 +249,25 @@ def sync_push_product(
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     client = get_xubio_client(db)
-    repository = IntegrationRecordRepository(db)
-    records = list(repository.list(entity_type="product", status="local", limit=100, offset=0))
+    repository = ProductRepository(db)
+    products = list(repository.list(limit=100, offset=0))
     if not settings.IS_PROD:
-        for record in records:
-            repository.update(record, operation=record.operation, status="synced")
+        logger.info("Sync push in mock mode: %d products skipped.", len(products))
         return {"status": "ok"}
 
-    for record in records:
+    for product in products:
+        external_id = None
         try:
-            payload = record.payload_json
-            external_id = record.external_id
-            if record.operation == "create":
-                dto = client.create_product(_to_product_create_from_payload(payload, external_id))
-                repository.update(record, operation="create", payload_json=dto.model_dump(), status="synced")
-            elif record.operation == "update" and external_id:
+            payload = repository.to_payload(product)
+            external_id = repository.external_id_of(product)
+            if not payload.get("nombre"):
+                logger.warning("Producto %s sin nombre, se omite en sync push.", external_id)
+                continue
+            if external_id:
                 dto = client.update_product(external_id, _to_product_update_from_payload(payload))
-                repository.update(record, operation="update", payload_json=dto.model_dump(), status="synced")
-            elif record.operation == "delete" and external_id:
-                client.delete_product(external_id)
-                repository.update(record, operation="delete", status="synced")
-        except Exception as exc:
-            repository.update(record, operation=record.operation, status="error", last_error=str(exc))
+            else:
+                dto = client.create_product(_to_product_create_from_payload(payload, None))
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error("Sync push failed for product %s: %s", external_id, exc)
+    logger.info("Sync push completed (products=%d).", len(products))
     return {"status": "ok"}
