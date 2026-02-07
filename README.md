@@ -59,14 +59,14 @@ python -m src.server.app
 ## Ejecutar cliente
 
 ```bash
-python -m src.client.app
+python -m src.interface_adapter.controller.cli
 ```
 
 Override por argumento (prioridad sobre `.env`):
 
 ```bash
-python -m src.client.app --IS_PROD=true
-python -m src.client.app --IS_PROD=false
+python -m src.interface_adapter.controller.cli --IS_PROD=true
+python -m src.interface_adapter.controller.cli --IS_PROD=false
 ```
 
 Replica Xubio local (MVP, sin token) en FastAPI:

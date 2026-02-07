@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-import src.client.app.main as main_module
-from src.client.app.product_gateway import LocalFastApiProductGateway, XubioDirectProductGateway
+import src.interface_adapter.controller.cli.main as main_module
+from src.interface_adapter.controller.cli.product_gateway import LocalFastApiProductGateway, XubioDirectProductGateway
 
 
 class _FakeGateway:

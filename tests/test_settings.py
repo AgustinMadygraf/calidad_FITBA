@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.client.app.settings import ClientSettings
+from src.interface_adapter.controller.cli.settings import ClientSettings
 from src.server.app.settings import Settings
 
 

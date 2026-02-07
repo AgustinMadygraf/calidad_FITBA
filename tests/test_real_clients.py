@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 import pytest
 
-from src.client.app.real_xubio_client import RealXubioClient
+from src.interface_adapter.controller.cli.real_xubio_client import RealXubioClient
 from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
 from src.server.app.settings import settings as server_settings
 from src.entities.schemas import ProductCreate, ProductUpdate

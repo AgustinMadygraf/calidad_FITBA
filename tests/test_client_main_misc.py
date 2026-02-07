@@ -4,7 +4,7 @@ import builtins
 
 import pytest
 
-import src.client.app.main as main_module
+import src.interface_adapter.controller.cli.main as main_module
 
 
 def test_prompt_handles_eof(monkeypatch) -> None:

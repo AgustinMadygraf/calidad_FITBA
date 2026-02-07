@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-import src.client.app.main as main_module
+import src.interface_adapter.controller.cli.main as main_module
 
 
 def test_parse_bool_option() -> None:

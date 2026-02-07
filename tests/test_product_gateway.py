@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.client.app.product_gateway import (
+from src.interface_adapter.controller.cli.product_gateway import (
     LocalFastApiProductGateway,
     XubioDirectProductGateway,
     map_product_screen,

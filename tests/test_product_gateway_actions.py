@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.client.app.product_gateway import LocalFastApiProductGateway, XubioDirectProductGateway
+from src.interface_adapter.controller.cli.product_gateway import LocalFastApiProductGateway, XubioDirectProductGateway
 
 
 def test_local_gateway_actions(monkeypatch) -> None:

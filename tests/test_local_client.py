@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from src.client.app.local_xubio_client import LocalXubioClient
+from src.interface_adapter.controller.cli.local_xubio_client import LocalXubioClient
 
 
 def _response(status_code: int, payload: dict, url: str) -> httpx.Response:
