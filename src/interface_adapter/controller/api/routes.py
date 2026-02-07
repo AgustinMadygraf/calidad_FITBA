@@ -3,66 +3,139 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
-from src.shared.schemas import TerminalExecuteRequest, TerminalExecuteResponse, ProductCreate, ProductUpdate
+from src.entities.schemas import TerminalExecuteRequest, TerminalExecuteResponse, ProductCreate, ProductUpdate
 from src.server.app.deps import get_db, get_xubio_client
 from src.server.app.settings import settings
-from src.server.infrastructure.clients.mock_xubio_api_client import MockXubioApiClient
-from src.server.infrastructure.clients.real_xubio_api_client import RealXubioApiClient
-from src.server.infrastructure.repositories.integration_record_repository import (
+from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
+from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
+from src.interface_adapter.presenters.product_presenter import to_xubio as present_product_to_xubio
+from src.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
-from src.server.interfaces.terminal import execute_command
-from src.server.application.use_cases import SyncPullProduct
+from src.interface_adapter.controller.terminal import execute_command
+from src.use_case.use_cases import SyncPullProduct
 
 router = APIRouter()
 
 
-class XubioProductPayload(BaseModel):
+class XubioUnidadMedida(BaseModel):
+    codigo: str | None = None
+    nombre: str | None = None
+    ID: int | None = None
+
+
+class XubioTasaIva(BaseModel):
+    codigo: str | None = None
+    nombre: str | None = None
+    tasaDefault: float | None = None
+    porcentaje: float | None = None
+    ID: int | None = None
+
+
+class XubioCuentaContable(BaseModel):
+    ID: int | None = None
+    nombre: str | None = None
+    codigo: str | None = None
+    id: int | None = None
+
+
+class XubioActividadEconomica(BaseModel):
+    ID: int | None = None
+    nombre: str | None = None
+    codigo: str | None = None
+    id: int | None = None
+
+
+class ProductoVentaBean(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     productoid: str | int | None = None
     nombre: str | None = None
     codigo: str | None = None
+    usrcode: str | None = None
+    codigoBarra: str | None = None
+    unidadMedida: XubioUnidadMedida | None = None
+    categoria: int | None = None
+    stockNegativo: bool | None = None
+    tasaIva: XubioTasaIva | None = None
+    cuentaContable: XubioCuentaContable | None = None
+    catFormIVA2002: int | None = None
+    precioUltCompra: float | None = None
     precioVenta: float | None = None
-    name: str | None = None
-    sku: str | None = None
-    price: float | None = None
+    activo: int | bool | None = None
+    actividadEconomica: XubioActividadEconomica | None = None
+    sincronizaStock: int | bool | None = None
+    noObjetoImpuesto: int | bool | None = None
+    tipoOperacionIvaSimple: int | None = None
 
 
 def _map_to_xubio(dto) -> dict[str, Any]:
-    return {
-        "productoid": dto.external_id,
-        "nombre": dto.name,
-        "codigo": dto.sku,
-        "precioVenta": dto.price,
-    }
+    return present_product_to_xubio(dto)
 
 
-def _to_product_create(payload: XubioProductPayload) -> ProductCreate:
-    name = payload.nombre or payload.name
+def _to_product_create(payload: ProductoVentaBean) -> ProductCreate:
+    name = payload.nombre
     if not name:
         raise HTTPException(status_code=422, detail="Falta nombre.")
     external_id = str(payload.productoid) if payload.productoid is not None else None
+    price = payload.precioVenta if payload.precioVenta is not None else payload.precioUltCompra
     return ProductCreate(
         external_id=external_id,
         name=name,
-        sku=payload.codigo or payload.sku,
-        price=payload.precioVenta if payload.precioVenta is not None else payload.price,
+        sku=payload.codigo,
+        price=price,
+        xubio_payload=payload.model_dump(exclude_none=True),
     )
 
 
-def _to_product_update(payload: XubioProductPayload) -> ProductUpdate:
+def _to_product_update(payload: ProductoVentaBean) -> ProductUpdate:
     return ProductUpdate(
-        name=payload.nombre or payload.name,
-        sku=payload.codigo or payload.sku,
-        price=payload.precioVenta if payload.precioVenta is not None else payload.price,
+        name=payload.nombre,
+        sku=payload.codigo,
+        price=payload.precioVenta if payload.precioVenta is not None else payload.precioUltCompra,
+        xubio_payload=payload.model_dump(exclude_none=True),
     )
 
 
 def _local_product_client(db: Session) -> MockXubioApiClient:
     repository = IntegrationRecordRepository(db)
     return MockXubioApiClient(repository)
+
+
+def _to_product_create_from_payload(payload: dict[str, Any], external_id: str | None) -> ProductCreate:
+    name = payload.get("name") or payload.get("nombre")
+    if not name:
+        raise ValueError("Falta nombre.")
+    sku = payload.get("sku") or payload.get("codigo")
+    price = payload.get("price")
+    if price is None:
+        price = payload.get("precioVenta") if payload.get("precioVenta") is not None else payload.get("precioUltCompra")
+    ext = external_id or payload.get("external_id") or payload.get("productoid")
+    ext_str = str(ext) if ext is not None else None
+    return ProductCreate(
+        external_id=ext_str,
+        name=name,
+        sku=sku,
+        price=price,
+        xubio_payload=payload,
+    )
+
+
+def _to_product_update_from_payload(payload: dict[str, Any]) -> ProductUpdate:
+    name = payload.get("name") or payload.get("nombre")
+    sku = payload.get("sku") or payload.get("codigo")
+    price = payload.get("price")
+    if price is None:
+        price = payload.get("precioVenta") if payload.get("precioVenta") is not None else payload.get("precioUltCompra")
+    return ProductUpdate(
+        name=name,
+        sku=sku,
+        price=price,
+        xubio_payload=payload,
+    )
 
 
 @router.get("/health")
@@ -99,7 +172,7 @@ def xubio_get_product(external_id: str, db: Session = Depends(get_db)) -> dict[s
 
 
 @router.post("/API/1.1/ProductoVentaBean")
-def xubio_create_product(payload: XubioProductPayload, db: Session = Depends(get_db)) -> dict[str, Any]:
+def xubio_create_product(payload: ProductoVentaBean, db: Session = Depends(get_db)) -> dict[str, Any]:
     client = _local_product_client(db)
     dto = client.create_product(_to_product_create(payload))
     return _map_to_xubio(dto)
@@ -108,7 +181,7 @@ def xubio_create_product(payload: XubioProductPayload, db: Session = Depends(get
 @router.patch("/API/1.1/ProductoVentaBean/{external_id}")
 def xubio_update_product(
     external_id: str,
-    payload: XubioProductPayload,
+    payload: ProductoVentaBean,
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     client = _local_product_client(db)
@@ -172,10 +245,10 @@ def sync_push_product(
             payload = record.payload_json
             external_id = record.external_id
             if record.operation == "create":
-                dto = client.create_product(ProductCreate(**payload))
+                dto = client.create_product(_to_product_create_from_payload(payload, external_id))
                 repository.update(record, operation="create", payload_json=dto.model_dump(), status="synced")
             elif record.operation == "update" and external_id:
-                dto = client.update_product(external_id, ProductUpdate(**payload))
+                dto = client.update_product(external_id, _to_product_update_from_payload(payload))
                 repository.update(record, operation="update", payload_json=dto.model_dump(), status="synced")
             elif record.operation == "delete" and external_id:
                 client.delete_product(external_id)

@@ -4,9 +4,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from src.server.infrastructure.db.models import Base
-from src.server.infrastructure.db.session import engine
-from src.server.interfaces.api.routes import router
+from src.infrastructure.db.models import Base
+from src.infrastructure.db.session import engine
+from src.interface_adapter.controller.api.routes import router
 
 
 @asynccontextmanager

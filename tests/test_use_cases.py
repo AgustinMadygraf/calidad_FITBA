@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.server.application.use_cases import (
+from src.use_case.use_cases import (
     CreateProduct,
     DeleteProduct,
     GetProduct,
@@ -10,7 +10,7 @@ from src.server.application.use_cases import (
     UpdateProduct,
     SyncPullProduct,
 )
-from src.shared.schemas import ProductCreate, ProductOut, ProductUpdate
+from src.entities.schemas import ProductCreate, ProductOut, ProductUpdate
 
 
 class _FakeClient:

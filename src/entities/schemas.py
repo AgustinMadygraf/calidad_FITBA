@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class TerminalExecuteRequest(BaseModel):
@@ -17,10 +17,12 @@ class TerminalExecuteResponse(BaseModel):
 
 
 class ProductBase(BaseModel):
+    model_config = ConfigDict(extra="allow")
     external_id: str | None = None
     name: str
     sku: str | None = None
     price: float | None = None
+    xubio_payload: dict[str, Any] | None = Field(default=None, exclude=True)
 
 
 class ProductCreate(ProductBase):
@@ -28,9 +30,11 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
+    model_config = ConfigDict(extra="allow")
     name: str | None = None
     sku: str | None = None
     price: float | None = None
+    xubio_payload: dict[str, Any] | None = Field(default=None, exclude=True)
 
 
 class ProductOut(ProductBase):

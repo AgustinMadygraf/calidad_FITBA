@@ -16,8 +16,8 @@ def client() -> TestClient:
     os.environ["IS_PROD"] = "false"
 
     import src.server.app.settings as settings_module
-    import src.server.infrastructure.db.session as session_module
-    import src.server.infrastructure.db.models as models_module
+    import src.infrastructure.db.session as session_module
+    import src.infrastructure.db.models as models_module
     import src.server.app.deps as deps_module
 
     importlib.reload(settings_module)

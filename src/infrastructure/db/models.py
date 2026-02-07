@@ -14,7 +14,7 @@ def utcnow() -> datetime:
 
 
 class IntegrationRecord(Base):
-    __tablename__ = "integration_records"
+    __tablename__ = "productoVenta"
 
     id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer, "sqlite"),

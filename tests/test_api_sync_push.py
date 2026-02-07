@@ -15,8 +15,8 @@ def test_sync_push_marks_local_as_synced(client) -> None:
     assert sync_resp.status_code == 200
     assert sync_resp.json()["status"] == "ok"
 
-    from src.server.infrastructure.db.session import SessionLocal
-    from src.server.infrastructure.repositories.integration_record_repository import (
+    from src.infrastructure.db.session import SessionLocal
+    from src.infrastructure.repositories.integration_record_repository import (
         IntegrationRecordRepository,
     )
 

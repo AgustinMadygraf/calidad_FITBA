@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from src.shared.schemas import ProductCreate, ProductOut, ProductUpdate
+from src.entities.schemas import ProductCreate, ProductOut, ProductUpdate
 
 
 class XubioApiClient(Protocol):

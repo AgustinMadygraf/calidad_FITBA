@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 import httpx
 
-from src.shared.schemas import ProductCreate, ProductOut, ProductUpdate
+from src.entities.schemas import ProductCreate, ProductOut, ProductUpdate
 from src.server.app.settings import settings
 
 BASE_URL = "https://xubio.com/API/1.1"
@@ -91,7 +91,7 @@ class RealXubioApiClient:
         )
         name = item.get("nombre") or item.get("name") or item.get("descripcion") or "SIN_NOMBRE"
         sku = item.get("codigo") or item.get("sku")
-        price = item.get("precioVenta") or item.get("price")
+        price = item.get("precioVenta") or item.get("precioUltCompra") or item.get("price")
         return ProductOut(
             external_id=str(external_id),
             name=name,

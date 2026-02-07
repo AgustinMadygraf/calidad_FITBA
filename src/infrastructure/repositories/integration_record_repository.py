@@ -4,7 +4,7 @@ from typing import Any, Iterable
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.server.infrastructure.db.models import IntegrationRecord
+from src.infrastructure.db.models import IntegrationRecord
 
 
 class IntegrationRecordRepository:

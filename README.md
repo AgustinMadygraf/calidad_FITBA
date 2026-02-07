@@ -4,6 +4,13 @@ Monorepo Python con 2 componentes:
 - `server/`: FastAPI (API local Xubio-like + terminal AS400 style).
 - `client/`: CLI estilo terminal AS400.
 
+Estructura Clean Architecture (resumen):
+- `src/entities/`: esquemas y entidades.
+- `src/use_case/`: casos de uso.
+- `src/interface_adapter/`: controllers (API/CLI), gateways y presenters.
+- `src/infrastructure/`: DB y repositorios.
+- `src/shared/`: helpers comunes (config/logger).
+
 El MVP implementa PRODUCTO de forma funcional y deja stubs para el resto.
 
 ## Requisitos
@@ -35,7 +42,7 @@ BASE_URL=http://localhost:8000
 
 Nota: `IS_PROD` acepta `true/false`, `1/0`, `yes/no`.
 En modo real, `XUBIO_BASE_URL`, `XUBIO_TOKEN_ENDPOINT` y `XUBIO_PRODUCT_ENDPOINT`
-estan hardcodeados en `server/infrastructure/clients/real_xubio_api_client.py`.
+estan hardcodeados en `src/interface_adapter/gateways/real_xubio_api_client.py`.
 
 Modo en cliente y servidor:
 - `IS_PROD=false`: el cliente consume la API local (`BASE_URL`) con formato Xubio y el server usa mock/local DB.
@@ -99,3 +106,4 @@ pytest -q
 ## Notas
 - En modo real, la baja de recursos impacta datos reales en Xubio.
 - En modo real, el cliente exige doble confirmacion para BAJA.
+- La tabla principal de persistencia es `productoVenta`.

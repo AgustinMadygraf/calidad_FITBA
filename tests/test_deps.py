@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 from src.server.app.settings import settings as server_settings
 from src.server.app import deps
-from src.server.infrastructure.clients.mock_xubio_api_client import MockXubioApiClient
-from src.server.infrastructure.clients.real_xubio_api_client import RealXubioApiClient
+from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
+from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
 
 
 def test_get_xubio_client_returns_mock(monkeypatch) -> None:

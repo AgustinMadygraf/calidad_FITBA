@@ -20,7 +20,7 @@ def test_sync_pull_product_mock_route(client) -> None:
 
 
 def test_sync_pull_from_xubio_error(monkeypatch, client) -> None:
-    import src.server.interfaces.api.routes as routes
+    import src.interface_adapter.controller.api.routes as routes
 
     class _FakeSync:
         def __init__(self, *args, **kwargs):
@@ -60,14 +60,14 @@ def test_sync_push_product_prod_branch(monkeypatch) -> None:
             self.deleted += 1
 
     fake = _FakeClient()
-    import src.server.interfaces.api.routes as routes
+    import src.interface_adapter.controller.api.routes as routes
 
     monkeypatch.setattr(server_settings, "IS_PROD", True)
     monkeypatch.setattr(routes.settings, "IS_PROD", True)
     monkeypatch.setattr(routes, "get_xubio_client", lambda db: fake)
 
-    from src.server.infrastructure.db.session import SessionLocal
-    from src.server.infrastructure.repositories.integration_record_repository import (
+    from src.infrastructure.db.session import SessionLocal
+    from src.infrastructure.repositories.integration_record_repository import (
         IntegrationRecordRepository,
     )
 

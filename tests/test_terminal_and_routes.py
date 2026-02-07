@@ -4,14 +4,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.server.app.settings import settings as server_settings
-from src.server.infrastructure.db.models import Base
-from src.server.infrastructure.repositories.integration_record_repository import (
+from src.infrastructure.db.models import Base
+from src.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
-from src.server.infrastructure.clients.mock_xubio_api_client import MockXubioApiClient
-from src.server.interfaces.terminal import execute_command
-from src.server.interfaces.api import routes
-from src.shared.schemas import ProductCreate, ProductUpdate
+from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
+from src.interface_adapter.controller.terminal import execute_command
+from src.interface_adapter.controller.api import routes
+from src.entities.schemas import ProductCreate, ProductUpdate
 
 
 def _make_repo() -> IntegrationRecordRepository:
@@ -218,7 +218,7 @@ def test_render_helpers_and_enter_paths(monkeypatch) -> None:
     repo = _make_repo()
     client = MockXubioApiClient(repo)
 
-    from src.server.interfaces import terminal as terminal_module
+    from src.interface_adapter.controller import terminal as terminal_module
 
     assert "TERMINAL FITBA/XUBIO" in terminal_module._render_main_menu()
     assert "PRODUCT" in terminal_module._render_entity_menu("product")
@@ -255,7 +255,7 @@ def test_execute_command_sync_pull_error(monkeypatch) -> None:
             _ = is_mock
             return {"status": "error", "detail": "fallo"}
 
-    import src.server.interfaces.terminal as terminal_module
+    import src.interface_adapter.controller.terminal as terminal_module
 
     monkeypatch.setattr(terminal_module, "SyncPullProduct", _FakeSync)
 
@@ -270,24 +270,31 @@ def test_execute_command_sync_pull_error(monkeypatch) -> None:
 
 
 def test_routes_mapping_helpers() -> None:
-    payload = routes.XubioProductPayload(
+    payload = routes.ProductoVentaBean(
         productoid="p-1",
         nombre="Producto",
         codigo="SKU",
         precioVenta=1.5,
     )
     dto = routes._to_product_create(payload)
-    assert dto == ProductCreate(external_id="p-1", name="Producto", sku="SKU", price=1.5)
+    assert dto.external_id == "p-1"
+    assert dto.name == "Producto"
+    assert dto.sku == "SKU"
+    assert dto.price == 1.5
+    assert dto.xubio_payload["nombre"] == "Producto"
 
     dto_update = routes._to_product_update(payload)
-    assert dto_update == ProductUpdate(name="Producto", sku="SKU", price=1.5)
+    assert dto_update.name == "Producto"
+    assert dto_update.sku == "SKU"
+    assert dto_update.price == 1.5
+    assert dto_update.xubio_payload["codigo"] == "SKU"
 
     mapped = routes._map_to_xubio(dto)
     assert mapped["productoid"] == "p-1"
 
 
 def test_routes_missing_name_raises() -> None:
-    payload = routes.XubioProductPayload(productoid="p-1")
+    payload = routes.ProductoVentaBean(productoid="p-1")
     try:
         routes._to_product_create(payload)
     except Exception as exc:

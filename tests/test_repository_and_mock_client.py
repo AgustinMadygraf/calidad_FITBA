@@ -3,12 +3,12 @@ from __future__ import annotations
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.server.infrastructure.db.models import Base
-from src.server.infrastructure.repositories.integration_record_repository import (
+from src.infrastructure.db.models import Base
+from src.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
-from src.server.infrastructure.clients.mock_xubio_api_client import MockXubioApiClient
-from src.shared.schemas import ProductCreate, ProductUpdate
+from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
+from src.entities.schemas import ProductCreate, ProductUpdate
 
 
 def _make_repo() -> IntegrationRecordRepository:

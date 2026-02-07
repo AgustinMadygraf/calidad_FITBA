@@ -6,9 +6,9 @@ import httpx
 import pytest
 
 from src.client.app.real_xubio_client import RealXubioClient
-from src.server.infrastructure.clients.real_xubio_api_client import RealXubioApiClient
+from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
 from src.server.app.settings import settings as server_settings
-from src.shared.schemas import ProductCreate, ProductUpdate
+from src.entities.schemas import ProductCreate, ProductUpdate
 
 
 def _response(status_code: int, payload: Any, url: str = "https://xubio.com/API/1.1/ProductoVentaBean") -> httpx.Response:
