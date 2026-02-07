@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import anyio
 
-import src.server.app.main as main_module
+import src.interface_adapter.controller.api.app.main as main_module
 
 
 def test_lifespan_creates_tables(monkeypatch) -> None:

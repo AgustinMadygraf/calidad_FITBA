@@ -7,8 +7,8 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from src.entities.schemas import TerminalExecuteRequest, TerminalExecuteResponse, ProductCreate, ProductUpdate
-from src.server.app.deps import get_db, get_xubio_client
-from src.server.app.settings import settings
+from src.interface_adapter.controller.api.app.deps import get_db, get_xubio_client
+from src.interface_adapter.controller.api.app.settings import settings
 from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
 from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
 from src.interface_adapter.presenters.product_presenter import to_xubio as present_product_to_xubio

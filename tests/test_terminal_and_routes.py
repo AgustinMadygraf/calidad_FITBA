@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.server.app.settings import settings as server_settings
+from src.interface_adapter.controller.api.app.settings import settings as server_settings
 from src.infrastructure.db.models import Base
 from src.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,

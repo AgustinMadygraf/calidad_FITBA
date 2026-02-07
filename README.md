@@ -1,8 +1,8 @@
 # FITBA Xubio-like (MVP)
 
 Monorepo Python con 2 componentes:
-- `server/`: FastAPI (API local Xubio-like + terminal AS400 style).
-- `client/`: CLI estilo terminal AS400.
+- FastAPI (API local Xubio-like + terminal AS400 style).
+- CLI estilo terminal AS400.
 
 Estructura Clean Architecture (resumen):
 - `src/entities/`: esquemas y entidades.
@@ -53,7 +53,7 @@ En modo real, el cliente requiere `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
 ## Ejecutar servidor
 
 ```bash
-python -m src.server.app
+python -m src.interface_adapter.controller.api.app
 ```
 
 ## Ejecutar cliente

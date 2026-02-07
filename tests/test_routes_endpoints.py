@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.server.app.settings import settings as server_settings
+from src.interface_adapter.controller.api.app.settings import settings as server_settings
 
 def test_routes_not_found_paths(client) -> None:
     get_resp = client.get("/API/1.1/ProductoVentaBean/does-not-exist")

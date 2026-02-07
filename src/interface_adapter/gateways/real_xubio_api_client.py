@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 
 from src.entities.schemas import ProductCreate, ProductOut, ProductUpdate
-from src.server.app.settings import settings
+from src.interface_adapter.controller.api.app.settings import settings
 
 BASE_URL = "https://xubio.com/API/1.1"
 TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"

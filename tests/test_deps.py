@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from src.server.app.settings import settings as server_settings
-from src.server.app import deps
+from src.interface_adapter.controller.api.app.settings import settings as server_settings
+from src.interface_adapter.controller.api.app import deps
 from src.interface_adapter.gateways.mock_xubio_api_client import MockXubioApiClient
 from src.interface_adapter.gateways.real_xubio_api_client import RealXubioApiClient
 

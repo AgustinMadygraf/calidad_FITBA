@@ -26,7 +26,7 @@ def test_server_entrypoint_calls_uvicorn(monkeypatch) -> None:
         called["kwargs"] = kwargs
 
     monkeypatch.setattr(uvicorn, "run", fake_run)
-    runpy.run_module("src.server.app.__main__", run_name="__main__")
+    runpy.run_module("src.interface_adapter.controller.api.app.__main__", run_name="__main__")
 
     assert called["args"]
     assert called["kwargs"]["host"] == "0.0.0.0"

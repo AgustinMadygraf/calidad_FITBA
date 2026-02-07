@@ -8,4 +8,4 @@ def test_import_client_main_module() -> None:
 
 
 def test_import_server_main_module() -> None:
-    importlib.import_module("src.server.app.__main__")
+    importlib.import_module("src.interface_adapter.controller.api.app.__main__")

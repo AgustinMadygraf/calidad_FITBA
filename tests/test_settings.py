@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from src.interface_adapter.controller.cli.settings import ClientSettings
-from src.server.app.settings import Settings
+from src.interface_adapter.controller.api.app.settings import Settings
 
 
 @pytest.mark.parametrize(

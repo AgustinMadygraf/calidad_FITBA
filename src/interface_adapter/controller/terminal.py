@@ -13,7 +13,7 @@ from src.use_case.use_cases import (
     SyncPullProduct,
 )
 from src.interface_adapter.gateways.xubio_api_client import XubioApiClient
-from src.server.app.settings import settings
+from src.interface_adapter.controller.api.app.settings import settings
 from src.infrastructure.repositories.integration_record_repository import (
     IntegrationRecordRepository,
 )
