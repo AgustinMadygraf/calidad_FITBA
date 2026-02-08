@@ -194,6 +194,29 @@ def test_stub_screen(monkeypatch) -> None:
     main_module._stub_screen("s", "client")
 
 
+def test_run_enters_unit_measure(monkeypatch) -> None:
+    calls = {"unit": 0}
+    inputs = iter(["43", "q"])
+
+    monkeypatch.setattr(main_module, "_prompt", lambda _: next(inputs))
+    monkeypatch.setattr(main_module, "_clear", lambda: None)
+    monkeypatch.setattr(main_module, "_render_screen", lambda *args, **kwargs: None)
+    monkeypatch.setattr(main_module, "_pause", lambda: None)
+    monkeypatch.setattr(main_module, "_build_product_gateway", lambda: _FakeGateway())
+    monkeypatch.setattr(main_module, "_build_unit_measure_gateway", lambda: _FakeGateway())
+
+    def _fake_unit_menu(session_id: str, gateway) -> None:
+        _ = (session_id, gateway)
+        calls["unit"] += 1
+
+    monkeypatch.setattr(main_module, "_unit_measure_menu", _fake_unit_menu)
+
+    with pytest.raises(SystemExit):
+        main_module.run(is_prod="false")
+
+    assert calls["unit"] == 1
+
+
 def test_run_action_error(monkeypatch) -> None:
     monkeypatch.setattr(main_module, "_render_screen", lambda *args, **kwargs: None)
     monkeypatch.setattr(main_module, "_pause", lambda: None)

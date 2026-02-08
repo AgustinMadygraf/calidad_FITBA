@@ -13,6 +13,7 @@ class LocalXubioClient:
         self._sync_client = httpx.Client(base_url=root_base, timeout=20)
         self._root_base = root_base
         self._product_endpoint = "/ProductoVentaBean"
+        self._unit_measure_endpoint = "/UnidadMedidaBean"
 
     def _request(self, client: httpx.Client, method: str, url: str, **kwargs) -> httpx.Response:
         try:
@@ -61,3 +62,31 @@ class LocalXubioClient:
     def sync_pull_from_xubio(self) -> dict[str, Any]:
         response = self._request(self._sync_client, "POST", "/sync/pull/product/from-xubio")
         return response.json()
+
+    def sync_pull_unit_measure_from_xubio(self) -> dict[str, Any]:
+        response = self._request(self._sync_client, "POST", "/sync/pull/unit-measure/from-xubio")
+        return response.json()
+
+    def list_unit_measures(self) -> list[dict[str, Any]]:
+        response = self._request(self._client, "GET", self._unit_measure_endpoint)
+        return response.json()
+
+    def get_unit_measure(self, external_id: str) -> dict[str, Any]:
+        response = self._request(self._client, "GET", f"{self._unit_measure_endpoint}/{external_id}")
+        return response.json()
+
+    def create_unit_measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        response = self._request(self._client, "POST", self._unit_measure_endpoint, json=payload)
+        return response.json()
+
+    def update_unit_measure(self, external_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        response = self._request(
+            self._client,
+            "PATCH",
+            f"{self._unit_measure_endpoint}/{external_id}",
+            json=payload,
+        )
+        return response.json()
+
+    def delete_unit_measure(self, external_id: str) -> None:
+        self._request(self._client, "DELETE", f"{self._unit_measure_endpoint}/{external_id}")

@@ -67,3 +67,31 @@ class SyncPullProduct:
             return {"status": "ok"}
         except Exception as exc:
             return {"status": "error", "detail": str(exc)}
+
+
+class SyncPullUnitMeasure:
+    def __init__(self, client, repository) -> None:
+        self.client = client
+        self.repository = repository
+
+    def execute(self, is_mock: bool) -> dict[str, str]:
+        try:
+            if is_mock:
+                if not list(self.repository.list(limit=1, offset=0)):
+                    self.repository.upsert(
+                        "demo-um-1",
+                        {"ID": "demo-um-1", "codigo": "UN", "nombre": "Unidad"},
+                    )
+                return {"status": "ok"}
+
+            items = self.client.list_unit_measures()
+            for item in items:
+                external_id = item.get("ID") or item.get("id") or item.get("external_id")
+                if external_id is None:
+                    continue
+                payload = dict(item)
+                payload.setdefault("ID", external_id)
+                self.repository.upsert(str(external_id), payload)
+            return {"status": "ok"}
+        except Exception as exc:
+            return {"status": "error", "detail": str(exc)}

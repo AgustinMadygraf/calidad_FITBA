@@ -16,9 +16,10 @@ from src.interface_adapter.presenters.product_presenter import to_xubio as prese
 from src.shared.logger import get_logger
 from src.infrastructure.repositories.integration_record_repository import (
     ProductRepository,
+    UnitMeasureRepository,
 )
 from src.interface_adapter.controller.terminal import execute_command
-from src.use_case.use_cases import SyncPullProduct
+from src.use_case.use_cases import SyncPullProduct, SyncPullUnitMeasure
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -27,7 +28,7 @@ logger = get_logger(__name__)
 class XubioUnidadMedida(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
-    ID: int | None = None
+    ID: int | str | None = None
 
 
 class XubioTasaIva(BaseModel):
@@ -108,6 +109,22 @@ def _local_product_client(db: Session) -> MockXubioApiClient:
     return MockXubioApiClient(repository)
 
 
+def _local_unit_measure_repository(db: Session) -> UnitMeasureRepository:
+    return UnitMeasureRepository(db)
+
+
+def _merge_unit_measure_payload(
+    existing_payload: dict[str, Any] | None,
+    update_payload: dict[str, Any],
+    *,
+    external_id: str,
+) -> dict[str, Any]:
+    merged = dict(existing_payload or {})
+    merged.update(update_payload)
+    merged.setdefault("ID", external_id)
+    return merged
+
+
 def _to_product_create_from_payload(payload: dict[str, Any], external_id: str | None) -> ProductCreate:
     name = payload.get("name") or payload.get("nombre")
     if not name:
@@ -157,6 +174,20 @@ def sync_pull_product_from_xubio(
         logger.error("Sync pull from Xubio failed: %s", result.get("detail", "Error de sync pull."))
         raise HTTPException(status_code=502, detail=result.get("detail", "Error de sync pull."))
     logger.info("Sync pull from Xubio completed.")
+    return {"status": "ok", "source": "xubio"}
+
+
+@router.post("/sync/pull/unit-measure/from-xubio")
+def sync_pull_unit_measure_from_xubio(
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    repository = UnitMeasureRepository(db)
+    logger.info("Sync pull unit measure from Xubio started.")
+    result = SyncPullUnitMeasure(RealXubioApiClient(), repository).execute(False)
+    if result.get("status") != "ok":
+        logger.error("Sync pull unit measure from Xubio failed: %s", result.get("detail", "Error de sync pull."))
+        raise HTTPException(status_code=502, detail=result.get("detail", "Error de sync pull.")) from None
+    logger.info("Sync pull unit measure from Xubio completed.")
     return {"status": "ok", "source": "xubio"}
 
 
@@ -215,6 +246,67 @@ def xubio_delete_product(external_id: str, db: Session = Depends(get_db)) -> Non
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+@router.get("/API/1.1/UnidadMedidaBean")
+def xubio_list_unit_measures(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    repository = _local_unit_measure_repository(db)
+    try:
+        records = repository.list(limit=1000, offset=0)
+        return [repository.to_payload(record) for record in records]
+    except ProgrammingError as exc:
+        logger.warning("DB no inicializada (tabla integration_records inexistente).")
+        logger.error("Detalle DB error: %s", exc)
+        raise HTTPException(status_code=500, detail="DB no inicializada: falta tabla integration_records.") from exc
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.error("Error listando unidades de medida: %s", exc)
+        raise HTTPException(status_code=500, detail="Error interno listando unidades de medida.") from exc
+
+
+@router.get("/API/1.1/UnidadMedidaBean/{external_id}")
+def xubio_get_unit_measure(external_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    repository = _local_unit_measure_repository(db)
+    record = repository.get(external_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Unidad de medida no encontrada")
+    return repository.to_payload(record)
+
+
+@router.post("/API/1.1/UnidadMedidaBean")
+def xubio_create_unit_measure(payload: XubioUnidadMedida, db: Session = Depends(get_db)) -> dict[str, Any]:
+    repository = _local_unit_measure_repository(db)
+    external_id = str(payload.ID) if payload.ID is not None else None
+    if external_id is None:
+        external_id = f"local-{id(payload)}"
+    payload_dict = payload.model_dump(exclude_none=True)
+    payload_dict.setdefault("ID", external_id)
+    record = repository.upsert(external_id, payload_dict)
+    return repository.to_payload(record)
+
+
+@router.patch("/API/1.1/UnidadMedidaBean/{external_id}")
+def xubio_update_unit_measure(
+    external_id: str,
+    payload: XubioUnidadMedida,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    repository = _local_unit_measure_repository(db)
+    existing = repository.get(external_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Unidad de medida no encontrada")
+    payload_dict = payload.model_dump(exclude_none=True)
+    merged = _merge_unit_measure_payload(repository.to_payload(existing), payload_dict, external_id=external_id)
+    record = repository.update(existing, merged)
+    return repository.to_payload(record)
+
+
+@router.delete("/API/1.1/UnidadMedidaBean/{external_id}", status_code=204)
+def xubio_delete_unit_measure(external_id: str, db: Session = Depends(get_db)) -> None:
+    repository = _local_unit_measure_repository(db)
+    existing = repository.get(external_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Unidad de medida no encontrada")
+    repository.delete(existing)
+
+
 @router.post("/terminal/execute", response_model=TerminalExecuteResponse)
 def terminal_execute(
     payload: TerminalExecuteRequest,
@@ -242,6 +334,16 @@ def sync_pull_product(
     repository = ProductRepository(db)
     logger.info("Sync pull started (is_prod=%s).", settings.IS_PROD)
     return SyncPullProduct(client, repository).execute(not settings.IS_PROD)
+
+
+@router.post("/sync/pull/unit-measure")
+def sync_pull_unit_measure(
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    client = get_xubio_client(db)
+    repository = UnitMeasureRepository(db)
+    logger.info("Sync pull unit measure started (is_prod=%s).", settings.IS_PROD)
+    return SyncPullUnitMeasure(client, repository).execute(not settings.IS_PROD)
 
 
 @router.post("/sync/push/product")

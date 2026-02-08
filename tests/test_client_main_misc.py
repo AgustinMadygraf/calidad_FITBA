@@ -26,7 +26,8 @@ def test_apply_theme_and_clear(capsys) -> None:
 
 def test_main_menu_body() -> None:
     body = main_module._main_menu_body()
-    assert "PRODUCTO" in body
+    assert "productoVenta" in body
+    assert "unidadMedida" in body
 
 
 def test_is_prod_enabled_override(monkeypatch) -> None:

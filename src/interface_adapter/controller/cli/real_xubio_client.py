@@ -7,6 +7,7 @@ import httpx
 BASE_URL = "https://xubio.com/API/1.1"
 TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
 PRODUCT_ENDPOINT = "/ProductoVentaBean"
+UNIT_MEASURE_ENDPOINT = "/UnidadMedidaBean"
 
 
 class RealXubioClient:
@@ -70,3 +71,22 @@ class RealXubioClient:
 
     def delete_product(self, external_id: str) -> None:
         self._request("DELETE", f"{PRODUCT_ENDPOINT}/{external_id}")
+
+    def list_unit_measures(self) -> list[dict[str, Any]]:
+        response = self._request("GET", UNIT_MEASURE_ENDPOINT)
+        return response.json()
+
+    def get_unit_measure(self, external_id: str) -> dict[str, Any]:
+        response = self._request("GET", f"{UNIT_MEASURE_ENDPOINT}/{external_id}")
+        return response.json()
+
+    def create_unit_measure(self, payload: dict[str, Any]) -> dict[str, Any]:
+        response = self._request("POST", UNIT_MEASURE_ENDPOINT, json=payload)
+        return response.json()
+
+    def update_unit_measure(self, external_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        response = self._request("PATCH", f"{UNIT_MEASURE_ENDPOINT}/{external_id}", json=payload)
+        return response.json()
+
+    def delete_unit_measure(self, external_id: str) -> None:
+        self._request("DELETE", f"{UNIT_MEASURE_ENDPOINT}/{external_id}")

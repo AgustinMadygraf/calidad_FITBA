@@ -10,6 +10,7 @@ from src.shared.logger import get_logger
 BASE_URL = "https://xubio.com/API/1.1"
 TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
 PRODUCT_ENDPOINT = "/ProductoVentaBean"
+UNIT_MEASURE_ENDPOINT = "/UnidadMedidaBean"
 
 
 class RealXubioApiClient:
@@ -103,3 +104,10 @@ class RealXubioApiClient:
             sku=sku,
             price=price,
         )
+
+    def list_unit_measures(self) -> list[dict[str, Any]]:
+        response = self._request("GET", UNIT_MEASURE_ENDPOINT)
+        data = response.json()
+        if isinstance(data, list):
+            return data
+        return []

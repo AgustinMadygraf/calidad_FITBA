@@ -13,6 +13,11 @@ from src.interface_adapter.controller.cli.product_gateway import (
     ProductGateway,
     XubioDirectProductGateway,
 )
+from src.interface_adapter.controller.cli.unit_measure_gateway import (
+    LocalFastApiUnitMeasureGateway,
+    UnitMeasureGateway,
+    XubioDirectUnitMeasureGateway,
+)
 from src.interface_adapter.controller.cli.settings import settings
 
 app = typer.Typer(add_completion=False)
@@ -173,11 +178,8 @@ def _main_menu_body() -> str:
         [
             "=== TERMINAL FITBA/XUBIO ===",
             "",
-            "1) PRODUCTO",
-            "2) CLIENTE (stub)",
-            "3) PROVEEDOR (stub)",
-            "4) COMPROBANTES (stub)",
-            "5) PESADAS (stub)",
+            "30 - productoVenta",
+            "43 - unidadMedida",
             "",
             "Seleccione una opcion.",
         ]
@@ -190,6 +192,14 @@ def _build_product_gateway() -> ProductGateway:
             raise ValueError("Faltan XUBIO_CLIENT_ID / XUBIO_SECRET_ID")
         return XubioDirectProductGateway(settings.xubio_client_id, settings.xubio_secret_id)
     return LocalFastApiProductGateway(settings.base_url)
+
+
+def _build_unit_measure_gateway() -> UnitMeasureGateway:
+    if _is_prod_enabled():
+        if not settings.xubio_client_id or not settings.xubio_secret_id:
+            raise ValueError("Faltan XUBIO_CLIENT_ID / XUBIO_SECRET_ID")
+        return XubioDirectUnitMeasureGateway(settings.xubio_client_id, settings.xubio_secret_id)
+    return LocalFastApiUnitMeasureGateway(settings.base_url)
 
 
 def _run_action(action_name: str, func: Callable[[], str]) -> str | None:
@@ -302,6 +312,93 @@ def _stub_screen(session_id: str, entity_type: str) -> None:
     _pause()
 
 
+def _unit_measure_menu(session_id: str, gateway: UnitMeasureGateway) -> None:
+    while True:
+        try:
+            _clear()
+            _render_screen(gateway.title, gateway.render_menu(session_id))
+            choice = _prompt("> ")
+            if choice == "1":
+                external_id = _field_prompt("ID", required=False)
+                code = _field_prompt("Codigo", required=False)
+                name = _field_prompt("Nombre", required=False)
+                screen = _run_action(
+                    "Alta unidad medida",
+                    lambda: gateway.create(
+                        session_id=session_id,
+                        external_id=external_id,
+                        code=code,
+                        name=name,
+                    ),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
+                    _pause()
+            elif choice == "2":
+                external_id = _field_prompt("ID", required=True)
+                if external_id is None:
+                    continue
+                code = _field_prompt("Codigo", required=False)
+                name = _field_prompt("Nombre", required=False)
+                screen = _run_action(
+                    "Modificar unidad medida",
+                    lambda: gateway.update(
+                        session_id=session_id,
+                        external_id=external_id,
+                        code=code,
+                        name=name,
+                    ),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
+                    _pause()
+            elif choice == "3":
+                external_id = _field_prompt("ID", required=True)
+                if external_id is None:
+                    continue
+                if _is_prod_enabled() and not _double_confirm():
+                    print("Baja cancelada.")
+                    continue
+                screen = _run_action(
+                    "Baja unidad medida",
+                    lambda: gateway.delete(session_id=session_id, external_id=external_id),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
+                    _pause()
+            elif choice == "4":
+                external_id = _field_prompt("ID", required=True)
+                if external_id is None:
+                    continue
+                screen = _run_action(
+                    "Consultar unidad medida",
+                    lambda: gateway.get(session_id=session_id, external_id=external_id),
+                )
+                if screen is not None:
+                    _render_screen("RESULTADO", screen, "ENTER para continuar")
+                    _pause()
+            elif choice == "5":
+                screen = _run_action("Listar unidades", lambda: gateway.list(session_id=session_id))
+                if screen is not None:
+                    _render_paginated_screen("LISTADO", screen)
+            elif choice == "6" and gateway.show_sync_pull:
+                screen = _run_action("Sync pull", lambda: gateway.sync_pull(session_id=session_id))
+                if screen is not None:
+                    _render_screen("SYNC", screen, "ENTER para continuar")
+                    _pause()
+            elif choice == gateway.back_option:
+                gateway.on_back(session_id)
+                return
+            elif choice.lower() in {"q", "quit", "salir"}:
+                sys.exit(0)
+            else:
+                _render_screen("ERROR", "Opcion invalida.", "ENTER para continuar")
+                _pause()
+        except Exception as exc:
+            _render_screen("ERROR", f"Fallo inesperado: {exc}", "ENTER para continuar")
+            _pause()
+
+
 @app.command()
 def run(
     is_prod: str | None = typer.Option(
@@ -316,6 +413,7 @@ def run(
     session_id = str(uuid.uuid4())
     _CURRENT_SESSION_ID = session_id
     gateway = _build_product_gateway()
+    unit_gateway = _build_unit_measure_gateway()
     while True:
         try:
             _clear()
@@ -323,16 +421,10 @@ def run(
             mode_label = "PROD" if _is_prod_enabled() else "DEV"
             _render_screen(f"TERMINAL FITBA/XUBIO [{mode_label}]", menu_screen)
             choice = _prompt("> ")
-            if choice == "1":
+            if choice == "30":
                 _product_menu(session_id, gateway)
-            elif choice == "2":
-                _stub_screen(session_id, "client")
-            elif choice == "3":
-                _stub_screen(session_id, "supplier")
-            elif choice == "4":
-                _stub_screen(session_id, "invoice")
-            elif choice == "5":
-                _stub_screen(session_id, "scale")
+            elif choice == "43":
+                _unit_measure_menu(session_id, unit_gateway)
             elif choice.lower() in {"q", "quit", "salir"}:
                 sys.exit(0)
             else:

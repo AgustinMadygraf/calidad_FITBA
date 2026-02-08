@@ -32,11 +32,8 @@ def _render_main_menu() -> str:
         [
             "=== TERMINAL FITBA/XUBIO ===",
             "",
-            "1) PRODUCTO",
-            "2) CLIENTE (stub)",
-            "3) PROVEEDOR (stub)",
-            "4) COMPROBANTES (stub)",
-            "5) PESADAS (stub)",
+            "30 - productoVenta",
+            "43 - unidadMedida",
             "",
             "Seleccione una opcion.",
         ]

@@ -75,17 +75,19 @@ Replica Xubio local (MVP, sin token) en FastAPI:
 - `POST /API/1.1/ProductoVentaBean`
 - `PATCH /API/1.1/ProductoVentaBean/{id}`
 - `DELETE /API/1.1/ProductoVentaBean/{id}`
+- `GET /API/1.1/UnidadMedidaBean`
+- `GET /API/1.1/UnidadMedidaBean/{id}`
+- `POST /API/1.1/UnidadMedidaBean`
+- `PATCH /API/1.1/UnidadMedidaBean/{id}`
+- `DELETE /API/1.1/UnidadMedidaBean/{id}`
 - `POST /sync/pull/product/from-xubio` (solo `IS_PROD=false`, sincroniza DB local leyendo Xubio real)
 
 ## Ejemplo de sesion CLI
 
 ```
 === TERMINAL FITBA/XUBIO ===
-1) PRODUCTO
-2) CLIENTE (stub)
-3) PROVEEDOR (stub)
-4) COMPROBANTES (stub)
-5) PESADAS (stub)
+30 - productoVenta
+43 - unidadMedida
 
 > 1
 === PRODUCTO ===
