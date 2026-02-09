@@ -13,6 +13,39 @@ Estructura Clean Architecture (resumen):
 
 El MVP implementa PRODUCTO de forma funcional y deja stubs para el resto.
 
+## Resumen Xubio API
+Xubio expone una API REST para integrar emisión de comprobantes electrónicos y otras operaciones sin reinventar funcionalidad existente.
+La API usa OAuth2 con `client_credentials` y se autentica con `Client-ID` y `Secret-ID` para obtener un `access_token`.
+
+## Documentación interna (técnica)
+- Estilo REST: operaciones CRUD vía HTTP (`POST`, `GET`, `PUT`, `DELETE`).
+- Autenticación: OAuth2 `client_credentials` con `Client-ID` y `Secret-ID`.
+- Token: se solicita contra el endpoint de Xubio y tiene un TTL de 3600 segundos.
+- Estrategias de refresh: pedir token en cada request o renovar ante `401/403` al consumir recursos.
+
+## Requisitos para módulo de autenticación
+- `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID` obligatorios en modo real.
+- Endpoint de token: `https://xubio.com/API/1.1/TokenEndpoint`.
+- `grant_type=client_credentials`.
+- Header `Authorization: Basic base64(client_id:secret_id)`.
+- Respuesta esperada incluye `access_token`, `token_type=Bearer`, `expires_in=3600`.
+
+## Pasos operativos (curl)
+Solicitud de token:
+
+```bash
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" \
+  -d 'grant_type=client_credentials' \
+  --user TU_CLIENT_ID:TU_SECRET_ID \
+  https://xubio.com/API/1.1/TokenEndpoint
+```
+
+Respuesta esperada:
+
+```json
+{"scope":"","expires_in":"3600","token_type":"Bearer","access_token":"TU_ACCESS_TOKEN"}
+```
+
 ## Requisitos
 - Python 3.11+
 - MySQL (para uso normal)
