@@ -27,3 +27,34 @@ def test_write_blocked_when_is_prod_false():
 
 def _make_payload():
     return RemitoVentaPayload(numeroRemito="R-1", clienteId=1, fecha="2026-02-09")
+
+
+def test_remito_entity_validation():
+    from src.entities.remito_venta import RemitoVenta
+
+    try:
+        RemitoVenta.from_dict({"fecha": "2026-13-40"})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Expected ValueError for invalid fecha")
+
+
+def test_remito_item_requires_positive_values():
+    from src.entities.remito_venta import RemitoVenta
+
+    try:
+        remito = RemitoVenta.from_dict(
+            {
+                "clienteId": 1,
+                "fecha": "2026-02-09",
+                "transaccionProductoItem": [
+                    {"cantidad": 0, "precio": 100},
+                ],
+            }
+        )
+        remito.validate()
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Expected ValueError for non-positive cantidad")

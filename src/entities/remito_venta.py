@@ -114,8 +114,8 @@ class RemitoVenta:
         _validate_fecha(self.fecha)
         _validate_positive(self.clienteId, "clienteId")
         for item in self.transaccionProductoItem:
-            _validate_non_negative(item.cantidad, "cantidad")
-            _validate_non_negative(item.precio, "precio")
+            _validate_positive(item.cantidad, "cantidad")
+            _validate_positive(item.precio, "precio")
             _validate_non_negative(item.iva, "iva")
             _validate_non_negative(item.importe, "importe")
             _validate_non_negative(item.total, "total")
