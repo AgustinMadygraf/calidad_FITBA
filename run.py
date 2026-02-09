@@ -1,21 +1,15 @@
 import os
-from pathlib import Path
 
 import uvicorn
 
+from src.shared.config import load_env
 from src.shared.logger import get_logger
 
 
 def main() -> int:
     logger = get_logger(__name__)
-    env_path = Path(__file__).with_name(".env")
-    if env_path.exists():
-        try:
-            from dotenv import load_dotenv
-        except ImportError:
-            logger.warning("python-dotenv no instalado; no se cargo .env")
-        else:
-            load_dotenv(env_path)
+    if not load_env():
+        logger.warning(".env no cargado (archivo inexistente o falta python-dotenv)")
 
     port = int(os.getenv("PORT", "8000"))
     logger.info("Iniciando FastAPI en 0.0.0.0:%d", port)

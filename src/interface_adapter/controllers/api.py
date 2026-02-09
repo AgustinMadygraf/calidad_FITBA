@@ -5,12 +5,11 @@ Path: src/interface_adapter/controllers/api.py
 import os
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI
 from pydantic import BaseModel
 
+from ...infrastructure.fastapi.app import app
+from ...shared.config import load_env
 from ...shared.logger import get_logger
-
-app = FastAPI(title="Xubio-like API", version="0.1.0")
 logger = get_logger(__name__)
 
 
@@ -46,6 +45,7 @@ def sync_push_product(body: SyncRequest) -> Dict[str, Any]:
 def run() -> None:
     import uvicorn
 
+    load_env()
     port = int(os.getenv("PORT", "8000"))
     uvicorn.run("src.interface_adapter.controllers.api:app", host="0.0.0.0", port=port, reload=True)
 
