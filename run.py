@@ -14,7 +14,7 @@ def main() -> int:
     port = int(os.getenv("PORT", "8000"))
     logger.info("Iniciando FastAPI en 0.0.0.0:%d", port)
     uvicorn.run(
-        "src.interface_adapter.controllers.api:app",
+        "src.infrastructure.fastapi.api:app",
         host="0.0.0.0",
         port=port,
         reload=True,

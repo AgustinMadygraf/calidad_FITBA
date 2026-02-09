@@ -100,11 +100,11 @@ En modo real, el cliente requiere `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
 ## Ejecutar servidor
 
 ```bash
-uvicorn src.interface_adapter.controllers.api:app --reload --port 8000
+uvicorn src.infrastructure.fastapi.api:app --reload --port 8000
 ```
 
 ```bash
-python -m src.interface_adapter.controllers.api
+python -m src.infrastructure.fastapi.api
 ```
 
 ```bash
