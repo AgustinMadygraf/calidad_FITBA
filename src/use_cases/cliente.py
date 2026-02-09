@@ -5,7 +5,7 @@ Path: src/use_cases/cliente.py
 from typing import List, Optional
 
 from ..entities.cliente import Cliente
-from ..interface_adapter.gateways.cliente_gateway import ClienteGateway
+from ..use_cases.ports.cliente_gateway import ClienteGateway
 
 
 def list_clientes(gateway: ClienteGateway) -> List[Cliente]:

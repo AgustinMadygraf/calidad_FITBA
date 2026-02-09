@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional
 
 from ...entities.cliente import Cliente
-from ...interface_adapter.gateways.cliente_gateway import ClienteGateway
 from ...interface_adapter.gateways.token_gateway import TokenGateway
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, token_inspect
+from ...use_cases.ports.cliente_gateway import ClienteGateway
 
 
 def root() -> Dict[str, str]:
@@ -25,8 +25,10 @@ def list_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
     return {"items": [x.to_dict(exclude_none=True) for x in items]}
 
 
-def list_clientes_raw(gateway: ClienteGateway) -> Any:
-    return gateway.list_raw()
+def debug_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
+    items = cliente.list_clientes(gateway)
+    sample = [x.to_dict(exclude_none=True) for x in items[:3]]
+    return {"count": len(items), "sample": sample}
 
 
 def get_cliente(gateway: ClienteGateway, cliente_id: int) -> Optional[Dict[str, Any]]:

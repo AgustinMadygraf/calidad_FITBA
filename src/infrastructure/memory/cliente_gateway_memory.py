@@ -4,7 +4,7 @@ Path: src/infrastructure/memory/cliente_gateway_memory.py
 
 from typing import Any, Dict, List, Optional
 
-from ...interface_adapter.gateways.cliente_gateway import ClienteGateway
+from ...use_cases.ports.cliente_gateway import ClienteGateway
 
 class InMemoryClienteGateway(ClienteGateway):
     def __init__(self) -> None:
@@ -13,9 +13,6 @@ class InMemoryClienteGateway(ClienteGateway):
 
     def list(self) -> List[Dict[str, Any]]:
         return [self._items[k] for k in sorted(self._items.keys())]
-
-    def list_raw(self) -> List[Dict[str, Any]]:
-        return self.list()
 
     def get(self, cliente_id: int) -> Optional[Dict[str, Any]]:
         return self._items.get(cliente_id)

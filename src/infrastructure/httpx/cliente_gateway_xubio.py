@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-from ...interface_adapter.gateways.cliente_gateway import ClienteGateway
+from ...use_cases.ports.cliente_gateway import ClienteGateway
 from ...shared.logger import get_logger
 from .token_client import request_with_token
 from ...use_cases.errors import ExternalServiceError
@@ -28,15 +28,6 @@ class XubioClienteGateway(ClienteGateway):
             resp = request_with_token("GET", url, timeout=self._timeout)
             logger.info("Xubio GET %s -> %s", url, resp.status_code)
             return _extract_list(resp)
-        except httpx.HTTPError as exc:
-            raise ExternalServiceError(str(exc)) from exc
-
-    def list_raw(self) -> httpx.Response:
-        url = self._url("/API/1.1/clienteBean")
-        try:
-            resp = request_with_token("GET", url, timeout=self._timeout)
-            logger.info("Xubio GET (raw) %s -> %s", url, resp.status_code)
-            return resp
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
 

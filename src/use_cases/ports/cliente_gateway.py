@@ -1,15 +1,8 @@
-"""
-Path: src/interface_adapter/gateways/cliente_gateway.py
-"""
-
 from typing import Any, Dict, List, Optional, Protocol
 
 
 class ClienteGateway(Protocol):
     def list(self) -> List[Dict[str, Any]]:
-        ...
-
-    def list_raw(self) -> Any:
         ...
 
     def get(self, cliente_id: int) -> Optional[Dict[str, Any]]:

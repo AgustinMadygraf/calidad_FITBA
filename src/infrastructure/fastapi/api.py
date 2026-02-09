@@ -73,8 +73,20 @@ class ClientePayload(BaseModel):
 
 load_env()
 token_gateway = HttpxTokenGateway()
-cliente_gateway = XubioClienteGateway() if is_prod() else InMemoryClienteGateway()
-logger.info("Cliente gateway: %s", "XubioClienteGateway" if is_prod() else "InMemoryClienteGateway")
+
+
+def _select_cliente_gateway():
+    return XubioClienteGateway() if is_prod() else InMemoryClienteGateway()
+
+
+def _get_cliente_gateway():
+    if not hasattr(app, "cliente_gateway"):
+        app.cliente_gateway = _select_cliente_gateway()
+        logger.info(
+            "Cliente gateway: %s",
+            "XubioClienteGateway" if is_prod() else "InMemoryClienteGateway",
+        )
+    return app.cliente_gateway
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 
@@ -94,6 +106,11 @@ def _ensure_write_allowed() -> None:
         raise HTTPException(status_code=403, detail="Modo solo lectura: IS_PROD debe ser true")
 
 
+def _ensure_debug_allowed() -> None:
+    if is_prod():
+        raise HTTPException(status_code=404, detail="Not found")
+
+
 @app.get("/token/inspect")
 def token_inspect() -> Dict[str, Any]:
     try:
@@ -110,7 +127,8 @@ def token_inspect() -> Dict[str, Any]:
 @app.get(CLIENTE_BASE_SLASH, include_in_schema=False)
 def cliente_list() -> Dict[str, Any]:
     try:
-        return handlers.list_clientes(cliente_gateway)
+        gateway = _get_cliente_gateway()
+        return handlers.list_clientes(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar clientes: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))
@@ -118,20 +136,10 @@ def cliente_list() -> Dict[str, Any]:
 
 @app.get("/debug/clienteBean")
 def cliente_list_debug() -> Dict[str, Any]:
+    _ensure_debug_allowed()
     try:
-        resp = handlers.list_clientes_raw(cliente_gateway)
-        # If in-memory, resp might be list; normalize for debug.
-        if isinstance(resp, list):
-            return {
-                "status_code": 200,
-                "content_type": "application/json",
-                "body_preview": resp[:3],
-            }
-        return {
-            "status_code": resp.status_code,
-            "content_type": resp.headers.get("content-type"),
-            "body_preview": resp.text[:500],
-        }
+        gateway = _get_cliente_gateway()
+        return handlers.debug_clientes(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error en debug cliente: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))
@@ -143,7 +151,8 @@ def cliente_create(body: ClientePayload) -> Dict[str, Any]:
     _ensure_write_allowed()
     try:
         data = body.model_dump(exclude_none=True)
-        return handlers.create_cliente(cliente_gateway, data)
+        gateway = _get_cliente_gateway()
+        return handlers.create_cliente(gateway, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except ExternalServiceError as exc:
@@ -155,7 +164,8 @@ def cliente_create(body: ClientePayload) -> Dict[str, Any]:
 @app.get(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
 def cliente_get(cliente_id: int) -> Dict[str, Any]:
     try:
-        item = handlers.get_cliente(cliente_gateway, cliente_id)
+        gateway = _get_cliente_gateway()
+        item = handlers.get_cliente(gateway, cliente_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al obtener cliente: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))
@@ -170,7 +180,8 @@ def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
     _ensure_write_allowed()
     try:
         data = body.model_dump(exclude_none=True)
-        item = handlers.update_cliente(cliente_gateway, cliente_id, data)
+        gateway = _get_cliente_gateway()
+        item = handlers.update_cliente(gateway, cliente_id, data)
     except ExternalServiceError as exc:
         logger.error("Gateway error al actualizar cliente: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))
@@ -184,7 +195,8 @@ def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
 def cliente_delete(cliente_id: int) -> Dict[str, Any]:
     _ensure_write_allowed()
     try:
-        ok = handlers.delete_cliente(cliente_gateway, cliente_id)
+        gateway = _get_cliente_gateway()
+        ok = handlers.delete_cliente(gateway, cliente_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al borrar cliente: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))
