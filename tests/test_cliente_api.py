@@ -1,10 +1,9 @@
 import os
 
-from src.infrastructure.fastapi.app import create_app
 from src.infrastructure.fastapi.api import cliente_list, cliente_create
 from src.infrastructure.fastapi.api import app as global_app
 from src.infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
-from src.infrastructure.fastapi.api import ClientePayload
+from src.interface_adapter.schemas.cliente import ClientePayload
 
 
 def test_get_clientes_returns_wrapper():
