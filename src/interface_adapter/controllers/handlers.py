@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
+from ...interface_adapter.presenter import token_presenter
 from ...use_cases import token_inspect
 
 
@@ -26,4 +27,5 @@ def sync_push_product(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any
 
 def inspect_token() -> Dict[str, Any]:
     gateway = HttpxTokenGateway()
-    return token_inspect.execute(gateway)
+    status = token_inspect.execute(gateway)
+    return token_presenter.present(status)
