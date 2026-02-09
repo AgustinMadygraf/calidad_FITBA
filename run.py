@@ -1,18 +1,30 @@
 import os
-import sys
+from pathlib import Path
 
-# Make ./src importable when running from repo root.
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+import uvicorn
 
-from shared.config import build_xubio_token
-from shared.logger import get_logger
+from src.shared.logger import get_logger
 
 
 def main() -> int:
     logger = get_logger(__name__)
-    token = build_xubio_token()
-    # Avoid logging secrets; only log the token length.
-    logger.info("Token generado (len=%d)", len(token))
+    env_path = Path(__file__).with_name(".env")
+    if env_path.exists():
+        try:
+            from dotenv import load_dotenv
+        except ImportError:
+            logger.warning("python-dotenv no instalado; no se cargo .env")
+        else:
+            load_dotenv(env_path)
+
+    port = int(os.getenv("PORT", "8000"))
+    logger.info("Iniciando FastAPI en 0.0.0.0:%d", port)
+    uvicorn.run(
+        "src.interface_adapter.controllers.api:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True,
+    )
     return 0
 
 

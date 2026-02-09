@@ -16,6 +16,7 @@ El MVP implementa PRODUCTO de forma funcional y deja stubs para el resto.
 ## Resumen Xubio API
 Xubio expone una API REST para integrar emisión de comprobantes electrónicos y otras operaciones sin reinventar funcionalidad existente.
 La API usa OAuth2 con `client_credentials` y se autentica con `Client-ID` y `Secret-ID` para obtener un `access_token`.
+Referencia rapida en `docs/xubio.md`.
 
 ## Documentación interna (técnica)
 - Estilo REST: operaciones CRUD vía HTTP (`POST`, `GET`, `PUT`, `DELETE`).
@@ -45,6 +46,19 @@ Respuesta esperada:
 ```json
 {"scope":"","expires_in":"3600","token_type":"Bearer","access_token":"TU_ACCESS_TOKEN"}
 ```
+
+Uso del token en un recurso:
+```bash
+curl -X GET --header "Accept: application/json" \
+  --header "Authorization: Bearer TU_ACCESS_TOKEN" \
+  "https://xubio.com/API/1.1/clienteBean"
+```
+
+Si el token expiro, la API responde:
+```json
+{"error":"invalid_token","error_description":"token died"}
+```
+En ese caso, pedir un token nuevo y reintentar el request.
 
 ## Requisitos
 - Python 3.11+
@@ -86,7 +100,15 @@ En modo real, el cliente requiere `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
 ## Ejecutar servidor
 
 ```bash
-python -m src.interface_adapter.controller.api.app
+uvicorn src.interface_adapter.controllers.api:app --reload --port 8000
+```
+
+```bash
+python -m src.interface_adapter.controllers.api
+```
+
+```bash
+python run.py
 ```
 
 ## Ejecutar cliente
