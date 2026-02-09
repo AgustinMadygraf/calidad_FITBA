@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+from ...entities.cliente import Cliente
 from ...interface_adapter.gateways.cliente_gateway import ClienteGateway
 from ...interface_adapter.gateways.token_gateway import TokenGateway
 from ...interface_adapter.presenter import token_presenter
@@ -33,7 +34,7 @@ def inspect_token(gateway: TokenGateway) -> Dict[str, Any]:
 
 def list_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
     items = cliente.list_clientes(gateway)
-    return {"items": items}
+    return {"items": [x.to_dict(exclude_none=True) for x in items]}
 
 
 def list_clientes_raw(gateway: ClienteGateway) -> Any:
@@ -41,17 +42,26 @@ def list_clientes_raw(gateway: ClienteGateway) -> Any:
 
 
 def get_cliente(gateway: ClienteGateway, cliente_id: int) -> Optional[Dict[str, Any]]:
-    return cliente.get_cliente(gateway, cliente_id)
+    entity = cliente.get_cliente(gateway, cliente_id)
+    if entity is None:
+        return None
+    return entity.to_dict(exclude_none=True)
 
 
 def create_cliente(gateway: ClienteGateway, data: Dict[str, Any]) -> Dict[str, Any]:
-    return cliente.create_cliente(gateway, data)
+    entity = Cliente.from_dict(data)
+    created = cliente.create_cliente(gateway, entity)
+    return created.to_dict(exclude_none=True)
 
 
 def update_cliente(
     gateway: ClienteGateway, cliente_id: int, data: Dict[str, Any]
 ) -> Optional[Dict[str, Any]]:
-    return cliente.update_cliente(gateway, cliente_id, data)
+    entity = Cliente.from_dict(data)
+    updated = cliente.update_cliente(gateway, cliente_id, entity)
+    if updated is None:
+        return None
+    return updated.to_dict(exclude_none=True)
 
 
 def delete_cliente(gateway: ClienteGateway, cliente_id: int) -> bool:
