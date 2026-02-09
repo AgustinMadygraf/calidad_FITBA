@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
 from ...entities.cliente import Cliente
-from ...interface_adapter.gateways.token_gateway import TokenGateway
+from ...use_cases.ports.token_gateway import TokenGateway
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, token_inspect
 from ...use_cases.ports.cliente_gateway import ClienteGateway

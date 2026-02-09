@@ -1,8 +1,5 @@
-from src.infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
-
-
-def test_memory_gateway_crud():
-    gw = InMemoryClienteGateway()
+def test_memory_gateway_crud(cliente_gateway):
+    gw = cliente_gateway
     created = gw.create({"nombre": "A", "cliente_id": 99})
     assert created["cliente_id"] == 1
 

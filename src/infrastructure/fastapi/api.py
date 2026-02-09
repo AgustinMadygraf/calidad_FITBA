@@ -8,32 +8,22 @@ from fastapi import HTTPException
 
 from ...interface_adapter.controllers import handlers
 from ...interface_adapter.schemas.cliente import ClientePayload
-from ...infrastructure.httpx.cliente_gateway_xubio import XubioClienteGateway
-from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
-from ...infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
 from ...shared.config import is_prod, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
+from .deps import get_cliente_gateway, get_token_gateway
 from .app import app
 
 logger = get_logger(__name__)
 
 
 load_env()
-token_gateway = HttpxTokenGateway()
-
-
-def _select_cliente_gateway():
-    return XubioClienteGateway() if is_prod() else InMemoryClienteGateway()
+token_gateway = get_token_gateway()
 
 
 def _get_cliente_gateway():
     if not hasattr(app, "cliente_gateway"):
-        app.cliente_gateway = _select_cliente_gateway()
-        logger.info(
-            "Cliente gateway: %s",
-            "XubioClienteGateway" if is_prod() else "InMemoryClienteGateway",
-        )
+        app.cliente_gateway = get_cliente_gateway()
     return app.cliente_gateway
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
