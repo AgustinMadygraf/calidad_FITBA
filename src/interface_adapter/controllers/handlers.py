@@ -36,6 +36,10 @@ def list_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
     return {"items": items}
 
 
+def list_clientes_raw(gateway: ClienteGateway) -> Any:
+    return gateway.list_raw()
+
+
 def get_cliente(gateway: ClienteGateway, cliente_id: int) -> Optional[Dict[str, Any]]:
     return cliente.get_cliente(gateway, cliente_id)
 

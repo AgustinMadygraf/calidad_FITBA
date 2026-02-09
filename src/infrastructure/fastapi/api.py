@@ -13,6 +13,7 @@ from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
 from ...infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
 from ...shared.config import is_prod, load_env
 from ...shared.logger import get_logger
+from ...use_cases.errors import ExternalServiceError
 from .app import app
 
 logger = get_logger(__name__)
@@ -81,6 +82,7 @@ class ClientePayload(BaseModel):
 load_env()
 token_gateway = HttpxTokenGateway()
 cliente_gateway = XubioClienteGateway() if is_prod() else InMemoryClienteGateway()
+logger.info("Cliente gateway: %s", "XubioClienteGateway" if is_prod() else "InMemoryClienteGateway")
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 
@@ -126,7 +128,32 @@ def token_inspect() -> Dict[str, Any]:
 @app.get(CLIENTE_BASE)
 @app.get(CLIENTE_BASE_SLASH, include_in_schema=False)
 def cliente_list() -> Dict[str, Any]:
-    return handlers.list_clientes(cliente_gateway)
+    try:
+        return handlers.list_clientes(cliente_gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar clientes: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.get("/debug/clienteBean")
+def cliente_list_debug() -> Dict[str, Any]:
+    try:
+        resp = handlers.list_clientes_raw(cliente_gateway)
+        # If in-memory, resp might be list; normalize for debug.
+        if isinstance(resp, list):
+            return {
+                "status_code": 200,
+                "content_type": "application/json",
+                "body_preview": resp[:3],
+            }
+        return {
+            "status_code": resp.status_code,
+            "content_type": resp.headers.get("content-type"),
+            "body_preview": resp.text[:500],
+        }
+    except ExternalServiceError as exc:
+        logger.error("Gateway error en debug cliente: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
 
 
 @app.post(CLIENTE_BASE)
@@ -137,12 +164,19 @@ def cliente_create(body: ClientePayload) -> Dict[str, Any]:
         return handlers.create_cliente(cliente_gateway, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al crear cliente: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
 
 
 @app.get(f"{CLIENTE_BASE}/{{cliente_id}}")
 @app.get(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
 def cliente_get(cliente_id: int) -> Dict[str, Any]:
-    item = handlers.get_cliente(cliente_gateway, cliente_id)
+    try:
+        item = handlers.get_cliente(cliente_gateway, cliente_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener cliente: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
     if item is None:
         raise HTTPException(status_code=404, detail="cliente no encontrado")
     return item
@@ -151,8 +185,12 @@ def cliente_get(cliente_id: int) -> Dict[str, Any]:
 @app.put(f"{CLIENTE_BASE}/{{cliente_id}}")
 @app.put(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
 def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
-    data = body.model_dump(exclude_none=True)
-    item = handlers.update_cliente(cliente_gateway, cliente_id, data)
+    try:
+        data = body.model_dump(exclude_none=True)
+        item = handlers.update_cliente(cliente_gateway, cliente_id, data)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al actualizar cliente: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
     if item is None:
         raise HTTPException(status_code=404, detail="cliente no encontrado")
     return item
@@ -161,7 +199,11 @@ def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
 @app.delete(f"{CLIENTE_BASE}/{{cliente_id}}")
 @app.delete(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
 def cliente_delete(cliente_id: int) -> Dict[str, Any]:
-    ok = handlers.delete_cliente(cliente_gateway, cliente_id)
+    try:
+        ok = handlers.delete_cliente(cliente_gateway, cliente_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al borrar cliente: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
     if not ok:
         raise HTTPException(status_code=404, detail="cliente no encontrado")
     return {"status": "deleted", "cliente_id": cliente_id}

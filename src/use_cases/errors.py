@@ -1,0 +1,2 @@
+class ExternalServiceError(RuntimeError):
+    pass

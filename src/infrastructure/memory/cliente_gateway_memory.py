@@ -14,6 +14,9 @@ class InMemoryClienteGateway(ClienteGateway):
     def list(self) -> List[Dict[str, Any]]:
         return [self._items[k] for k in sorted(self._items.keys())]
 
+    def list_raw(self) -> List[Dict[str, Any]]:
+        return self.list()
+
     def get(self, cliente_id: int) -> Optional[Dict[str, Any]]:
         return self._items.get(cliente_id)
 

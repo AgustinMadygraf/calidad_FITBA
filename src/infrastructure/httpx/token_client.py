@@ -1,3 +1,7 @@
+"""
+Path: src/infrastructure/httpx/token_client.py
+"""
+
 import os
 import time
 from typing import Any, Dict, Optional
@@ -105,7 +109,9 @@ def is_invalid_token_response(resp: httpx.Response) -> bool:
         payload = resp.json()
     except ValueError:
         return False
-    return payload.get("error") == "invalid_token"
+    if isinstance(payload, dict):
+        return payload.get("error") == "invalid_token"
+    return False
 
 
 def get_token_status(timeout: Optional[float] = 10.0) -> Dict[str, Any]:
