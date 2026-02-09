@@ -1,9 +1,11 @@
 from typing import Any, Dict, Optional
 
 from ...entities.cliente import Cliente
+from ...entities.remito_venta import RemitoVenta
 from ...use_cases.ports.token_gateway import TokenGateway
+from ...use_cases.ports.remito_gateway import RemitoGateway
 from ...interface_adapter.presenter import token_presenter
-from ...use_cases import cliente, token_inspect
+from ...use_cases import cliente, remito_venta, token_inspect
 from ...use_cases.ports.cliente_gateway import ClienteGateway
 
 
@@ -30,6 +32,37 @@ def debug_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
     sample = [x.to_dict(exclude_none=True) for x in items[:3]]
     return {"count": len(items), "sample": sample}
 
+
+def list_remitos(gateway: RemitoGateway) -> Dict[str, Any]:
+    items = remito_venta.list_remitos(gateway)
+    return {"items": [x.to_dict(exclude_none=True) for x in items]}
+
+
+def get_remito(gateway: RemitoGateway, transaccion_id: int) -> Optional[Dict[str, Any]]:
+    entity = remito_venta.get_remito(gateway, transaccion_id)
+    if entity is None:
+        return None
+    return entity.to_dict(exclude_none=True)
+
+
+def create_remito(gateway: RemitoGateway, data: Dict[str, Any]) -> Dict[str, Any]:
+    entity = RemitoVenta.from_dict(data)
+    created = remito_venta.create_remito(gateway, entity)
+    return created.to_dict(exclude_none=True)
+
+
+def update_remito(
+    gateway: RemitoGateway, transaccion_id: int, data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    entity = RemitoVenta.from_dict(data)
+    updated = remito_venta.update_remito(gateway, transaccion_id, entity)
+    if updated is None:
+        return None
+    return updated.to_dict(exclude_none=True)
+
+
+def delete_remito(gateway: RemitoGateway, transaccion_id: int) -> bool:
+    return remito_venta.delete_remito(gateway, transaccion_id)
 
 def get_cliente(gateway: ClienteGateway, cliente_id: int) -> Optional[Dict[str, Any]]:
     entity = cliente.get_cliente(gateway, cliente_id)

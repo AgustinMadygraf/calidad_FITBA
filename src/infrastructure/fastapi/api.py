@@ -8,10 +8,11 @@ from fastapi import HTTPException
 
 from ...interface_adapter.controllers import handlers
 from ...interface_adapter.schemas.cliente import ClientePayload
+from ...interface_adapter.schemas.remito_venta import RemitoVentaPayload
 from ...shared.config import is_prod, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
-from .deps import get_cliente_gateway, get_token_gateway
+from .deps import get_cliente_gateway, get_remito_gateway, get_token_gateway
 from .app import app
 
 logger = get_logger(__name__)
@@ -25,6 +26,12 @@ def _get_cliente_gateway():
     if not hasattr(app, "cliente_gateway"):
         app.cliente_gateway = get_cliente_gateway()
     return app.cliente_gateway
+
+
+def _get_remito_gateway():
+    if not hasattr(app, "remito_gateway"):
+        app.remito_gateway = get_remito_gateway()
+    return app.remito_gateway
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 
@@ -141,6 +148,81 @@ def cliente_delete(cliente_id: int) -> Dict[str, Any]:
     if not ok:
         raise HTTPException(status_code=404, detail="cliente no encontrado")
     return {"status": "deleted", "cliente_id": cliente_id}
+
+
+REMITO_BASE = "/API/1.1/remitoVentaBean"
+REMITO_BASE_SLASH = "/API/1.1/remitoVentaBean/"
+
+
+@app.get(REMITO_BASE)
+@app.get(REMITO_BASE_SLASH, include_in_schema=False)
+def remito_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_remito_gateway()
+        return handlers.list_remitos(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar remitos: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.post(REMITO_BASE)
+@app.post(REMITO_BASE_SLASH, include_in_schema=False)
+def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        data = body.model_dump(exclude_none=True)
+        gateway = _get_remito_gateway()
+        return handlers.create_remito(gateway, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al crear remito: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.get(f"{REMITO_BASE}/{{transaccion_id}}")
+@app.get(f"{REMITO_BASE}/{{transaccion_id}}/", include_in_schema=False)
+def remito_get(transaccion_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_remito_gateway()
+        item = handlers.get_remito(gateway, transaccion_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener remito: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    if item is None:
+        raise HTTPException(status_code=404, detail="remito no encontrado")
+    return item
+
+
+@app.put(f"{REMITO_BASE}/{{transaccion_id}}")
+@app.put(f"{REMITO_BASE}/{{transaccion_id}}/", include_in_schema=False)
+def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        data = body.model_dump(exclude_none=True)
+        gateway = _get_remito_gateway()
+        item = handlers.update_remito(gateway, transaccion_id, data)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al actualizar remito: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    if item is None:
+        raise HTTPException(status_code=404, detail="remito no encontrado")
+    return item
+
+
+@app.delete(f"{REMITO_BASE}/{{transaccion_id}}")
+@app.delete(f"{REMITO_BASE}/{{transaccion_id}}/", include_in_schema=False)
+def remito_delete(transaccion_id: int) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_remito_gateway()
+        ok = handlers.delete_remito(gateway, transaccion_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al borrar remito: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    if not ok:
+        raise HTTPException(status_code=404, detail="remito no encontrado")
+    return {"status": "deleted", "transaccionId": transaccion_id}
 
 
 def run() -> None:

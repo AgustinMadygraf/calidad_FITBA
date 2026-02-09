@@ -1,0 +1,18 @@
+from typing import Any, Dict, List, Optional, Protocol
+
+
+class RemitoGateway(Protocol):
+    def list(self) -> List[Dict[str, Any]]:
+        ...
+
+    def get(self, transaccion_id: int) -> Optional[Dict[str, Any]]:
+        ...
+
+    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        ...
+
+    def update(self, transaccion_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        ...
+
+    def delete(self, transaccion_id: int) -> bool:
+        ...
