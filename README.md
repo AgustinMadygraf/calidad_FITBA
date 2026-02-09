@@ -137,6 +137,16 @@ Replica Xubio local (MVP, sin token) en FastAPI:
 - `DELETE /API/1.1/UnidadMedidaBean/{id}`
 - `POST /sync/pull/product/from-xubio` (solo `IS_PROD=false`, sincroniza DB local leyendo Xubio real)
 
+Cliente (MVP, in-memory):
+- `GET /API/1.1/clienteBean`
+- `POST /API/1.1/clienteBean`
+- `GET /API/1.1/clienteBean/{id}`
+- `PUT /API/1.1/clienteBean/{id}`
+- `DELETE /API/1.1/clienteBean/{id}`
+
+Nota: si `IS_PROD=true`, estos endpoints actuan como proxy hacia Xubio real (base URL hardcodeada).
+Si `IS_PROD=false`, se usa un gateway in-memory temporal (hasta tener DB real).
+
 ## Ejemplo de sesion CLI
 
 ```

@@ -30,3 +30,8 @@ def load_env(env_path: Path | None = None) -> bool:
         return False
     load_dotenv(env_path)
     return True
+
+
+def is_prod() -> bool:
+    value = os.getenv("IS_PROD", "")
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}

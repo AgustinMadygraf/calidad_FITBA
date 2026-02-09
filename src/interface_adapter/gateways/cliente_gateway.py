@@ -1,0 +1,22 @@
+"""
+Path: src/interface_adapter/gateways/cliente_gateway.py
+"""
+
+from typing import Any, Dict, List, Optional, Protocol
+
+
+class ClienteGateway(Protocol):
+    def list(self) -> List[Dict[str, Any]]:
+        ...
+
+    def get(self, cliente_id: int) -> Optional[Dict[str, Any]]:
+        ...
+
+    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        ...
+
+    def update(self, cliente_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        ...
+
+    def delete(self, cliente_id: int) -> bool:
+        ...
