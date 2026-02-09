@@ -15,18 +15,6 @@ def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
-def terminal_execute(command: str) -> Dict[str, Any]:
-    return {"status": "stub", "echo": command}
-
-
-def sync_pull_product(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    return {"status": "stub", "action": "pull", "entity": "product", "payload": payload}
-
-
-def sync_push_product(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    return {"status": "stub", "action": "push", "entity": "product", "payload": payload}
-
-
 def inspect_token(gateway: TokenGateway) -> Dict[str, Any]:
     status = token_inspect.execute(gateway)
     return token_presenter.present(status)

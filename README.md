@@ -1,7 +1,7 @@
 # FITBA Xubio-like (MVP)
 
 Monorepo Python con 2 componentes:
-- FastAPI (API local Xubio-like + terminal AS400 style).
+- FastAPI (API local Xubio-like).
 - CLI estilo terminal AS400.
 
 Estructura Clean Architecture (resumen):
@@ -135,7 +135,6 @@ Replica Xubio local (MVP, sin token) en FastAPI:
 - `POST /API/1.1/UnidadMedidaBean`
 - `PATCH /API/1.1/UnidadMedidaBean/{id}`
 - `DELETE /API/1.1/UnidadMedidaBean/{id}`
-- `POST /sync/pull/product/from-xubio` (solo `IS_PROD=false`, sincroniza DB local leyendo Xubio real)
 
 Cliente (MVP, in-memory):
 - `GET /API/1.1/clienteBean`

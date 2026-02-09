@@ -19,14 +19,6 @@ from .app import app
 logger = get_logger(__name__)
 
 
-class TerminalExecuteRequest(BaseModel):
-    command: str
-
-
-class SyncRequest(BaseModel):
-    payload: Optional[Dict[str, Any]] = None
-
-
 class SimpleItem(BaseModel):
     ID: Optional[int] = None
     nombre: Optional[str] = None
@@ -97,20 +89,9 @@ def health() -> Dict[str, str]:
     return handlers.health()
 
 
-@app.post("/terminal/execute")
-def terminal_execute(body: TerminalExecuteRequest) -> Dict[str, Any]:
-    logger.info("Terminal command received: %s", body.command)
-    return handlers.terminal_execute(body.command)
-
-
-@app.post("/sync/pull/product")
-def sync_pull_product(body: SyncRequest) -> Dict[str, Any]:
-    return handlers.sync_pull_product(body.payload)
-
-
-@app.post("/sync/push/product")
-def sync_push_product(body: SyncRequest) -> Dict[str, Any]:
-    return handlers.sync_push_product(body.payload)
+def _ensure_write_allowed() -> None:
+    if not is_prod():
+        raise HTTPException(status_code=403, detail="Modo solo lectura: IS_PROD debe ser true")
 
 
 @app.get("/token/inspect")
@@ -159,6 +140,7 @@ def cliente_list_debug() -> Dict[str, Any]:
 @app.post(CLIENTE_BASE)
 @app.post(CLIENTE_BASE_SLASH, include_in_schema=False)
 def cliente_create(body: ClientePayload) -> Dict[str, Any]:
+    _ensure_write_allowed()
     try:
         data = body.model_dump(exclude_none=True)
         return handlers.create_cliente(cliente_gateway, data)
@@ -185,6 +167,7 @@ def cliente_get(cliente_id: int) -> Dict[str, Any]:
 @app.put(f"{CLIENTE_BASE}/{{cliente_id}}")
 @app.put(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
 def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
+    _ensure_write_allowed()
     try:
         data = body.model_dump(exclude_none=True)
         item = handlers.update_cliente(cliente_gateway, cliente_id, data)
@@ -199,6 +182,7 @@ def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
 @app.delete(f"{CLIENTE_BASE}/{{cliente_id}}")
 @app.delete(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
 def cliente_delete(cliente_id: int) -> Dict[str, Any]:
+    _ensure_write_allowed()
     try:
         ok = handlers.delete_cliente(cliente_gateway, cliente_id)
     except ExternalServiceError as exc:
