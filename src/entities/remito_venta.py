@@ -140,15 +140,15 @@ def _validate_fecha(value: Optional[str]) -> None:
         raise ValueError("fecha debe ser ISO YYYY-MM-DD") from exc
 
 
-def _validate_positive(value: Optional[float], field: str) -> None:
+def _validate_positive(value: Optional[float], field_name: str) -> None:
     if value is None:
         return
     if value <= 0:
-        raise ValueError(f"{field} debe ser > 0")
+        raise ValueError(f"{field_name} debe ser > 0")
 
 
-def _validate_non_negative(value: Optional[float], field: str) -> None:
+def _validate_non_negative(value: Optional[float], field_name: str) -> None:
     if value is None:
         return
     if value < 0:
-        raise ValueError(f"{field} debe ser >= 0")
+        raise ValueError(f"{field_name} debe ser >= 0")

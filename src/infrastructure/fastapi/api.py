@@ -172,7 +172,8 @@ def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
     try:
         data = body.model_dump(exclude_none=True)
         gateway = _get_remito_gateway()
-        return handlers.create_remito(gateway, data)
+        cliente_gateway = _get_cliente_gateway()
+        return handlers.create_remito(gateway, cliente_gateway, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except ExternalServiceError as exc:
@@ -201,7 +202,10 @@ def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, An
     try:
         data = body.model_dump(exclude_none=True)
         gateway = _get_remito_gateway()
-        item = handlers.update_remito(gateway, transaccion_id, data)
+        cliente_gateway = _get_cliente_gateway()
+        item = handlers.update_remito(gateway, cliente_gateway, transaccion_id, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except ExternalServiceError as exc:
         logger.error("Gateway error al actualizar remito: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))

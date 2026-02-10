@@ -45,17 +45,22 @@ def get_remito(gateway: RemitoGateway, transaccion_id: int) -> Optional[Dict[str
     return entity.to_dict(exclude_none=True)
 
 
-def create_remito(gateway: RemitoGateway, data: Dict[str, Any]) -> Dict[str, Any]:
+def create_remito(
+    gateway: RemitoGateway, cliente_gateway: ClienteGateway, data: Dict[str, Any]
+) -> Dict[str, Any]:
     entity = RemitoVenta.from_dict(data)
-    created = remito_venta.create_remito(gateway, entity)
+    created = remito_venta.create_remito(gateway, entity, cliente_gateway)
     return created.to_dict(exclude_none=True)
 
 
 def update_remito(
-    gateway: RemitoGateway, transaccion_id: int, data: Dict[str, Any]
+    gateway: RemitoGateway,
+    cliente_gateway: ClienteGateway,
+    transaccion_id: int,
+    data: Dict[str, Any],
 ) -> Optional[Dict[str, Any]]:
     entity = RemitoVenta.from_dict(data)
-    updated = remito_venta.update_remito(gateway, transaccion_id, entity)
+    updated = remito_venta.update_remito(gateway, transaccion_id, entity, cliente_gateway)
     if updated is None:
         return None
     return updated.to_dict(exclude_none=True)
