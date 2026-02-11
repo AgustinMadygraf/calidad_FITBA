@@ -52,20 +52,21 @@ def _preview_token(token: str, head: int = 6, tail: int = 4) -> str:
     return f"{token[:head]}...{token[-tail:]}"
 
 
-def fetch_access_token(
-    timeout: Optional[float] = 10.0, *, force_refresh: bool = False
-) -> Dict[str, Any]:
-    if not force_refresh and _cache_valid():
-        remaining = max(0, int(_CACHE["expires_at"] - _now()))
-        return {
-            "access_token": _CACHE["access_token"],
-            "token_type": _CACHE["token_type"],
-            "scope": _CACHE["scope"],
-            "expires_in": remaining,
-            "expires_at": _CACHE["expires_at"],
-            "from_cache": True,
-        }
+def _cached_token_info() -> Optional[Dict[str, Any]]:
+    if not _cache_valid():
+        return None
+    remaining = max(0, int(_CACHE["expires_at"] - _now()))
+    return {
+        "access_token": _CACHE["access_token"],
+        "token_type": _CACHE["token_type"],
+        "scope": _CACHE["scope"],
+        "expires_in": remaining,
+        "expires_at": _CACHE["expires_at"],
+        "from_cache": True,
+    }
 
+
+def _request_token(timeout: Optional[float]) -> httpx.Response:
     token_endpoint = get_token_endpoint()
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -79,30 +80,56 @@ def fetch_access_token(
     if resp.status_code >= 400:
         raise RuntimeError(f"TokenEndpoint error {resp.status_code}: {resp.text}")
 
-    payload = resp.json()
-    access_token = payload.get("access_token")
-    expires_in_raw = payload.get("expires_in")
-    token_type = payload.get("token_type")
-    scope = payload.get("scope")
+    return resp
 
+
+def _parse_token_payload(payload: Any) -> tuple[str, int, Optional[str], Optional[str]]:
+    if not isinstance(payload, dict):
+        raise RuntimeError("TokenEndpoint response sin JSON valido")
+    access_token = payload.get("access_token")
     if not access_token:
         raise RuntimeError("TokenEndpoint response sin access_token")
+    expires_in_raw = payload.get("expires_in")
     try:
         expires_in = int(expires_in_raw)
     except (TypeError, ValueError) as exc:
         raise RuntimeError("TokenEndpoint response sin expires_in valido") from exc
+    return access_token, expires_in, payload.get("token_type"), payload.get("scope")
 
+
+def _store_token(
+    access_token: str,
+    token_type: Optional[str],
+    scope: Optional[str],
+    expires_in: int,
+) -> int:
+    expires_at = _now() + expires_in
     _CACHE["access_token"] = access_token
     _CACHE["token_type"] = token_type
     _CACHE["scope"] = scope
-    _CACHE["expires_at"] = _now() + expires_in
+    _CACHE["expires_at"] = expires_at
+    return expires_at
+
+
+def fetch_access_token(
+    timeout: Optional[float] = 10.0, *, force_refresh: bool = False
+) -> Dict[str, Any]:
+    if not force_refresh:
+        cached = _cached_token_info()
+        if cached is not None:
+            return cached
+
+    resp = _request_token(timeout)
+    payload = resp.json()
+    access_token, expires_in, token_type, scope = _parse_token_payload(payload)
+    expires_at = _store_token(access_token, token_type, scope, expires_in)
 
     return {
         "access_token": access_token,
         "token_type": token_type,
         "scope": scope,
         "expires_in": expires_in,
-        "expires_at": _CACHE["expires_at"],
+        "expires_at": expires_at,
         "from_cache": False,
     }
 
@@ -138,41 +165,60 @@ def request_with_token(
     """
     Request con refresh simple si el token es invalido.
     """
-    token_info = fetch_access_token(timeout=timeout)
-    token = token_info["access_token"]
-    base_headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
-    }
-    headers = _get_option(kwargs, "headers")
-    params = _get_option(kwargs, "params")
-    data = _get_option(kwargs, "data")
-    json = _get_option(kwargs, "json")
+    options = _extract_request_options(kwargs)
     _ensure_no_extra_options(kwargs)
-    if headers:
-        base_headers.update(headers)
-
-    with httpx.Client(timeout=timeout) as client:
-        resp = client.request(
-            method, url, headers=base_headers, params=params, data=data, json=json
-        )
-
-        if is_invalid_token_response(resp):
-            token_info = fetch_access_token(timeout=timeout, force_refresh=True)
-            token = token_info["access_token"]
-            base_headers["Authorization"] = f"Bearer {token}"
-            resp = client.request(
-                method, url, headers=base_headers, params=params, data=data, json=json
-            )
-
-    return resp
-
-
-def _get_option(options: Dict[str, Any], key: str) -> Any:
-    return options.pop(key, None)
+    return _request_with_refresh(method, url, timeout, options)
 
 
 def _ensure_no_extra_options(options: Dict[str, Any]) -> None:
     if options:
         extra = ", ".join(sorted(options.keys()))
         raise ValueError(f"Opciones no soportadas: {extra}")
+
+
+def _extract_request_options(options: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "headers": options.pop("headers", None),
+        "params": options.pop("params", None),
+        "data": options.pop("data", None),
+        "json": options.pop("json", None),
+    }
+
+
+def _build_auth_headers(
+    token: str, extra_headers: Optional[Dict[str, Any]]
+) -> Dict[str, Any]:
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    if extra_headers:
+        headers.update(extra_headers)
+    return headers
+
+
+def _request_once(
+    method: str,
+    url: str,
+    timeout: Optional[float],
+    options: Dict[str, Any],
+    *,
+    force_refresh: bool,
+) -> httpx.Response:
+    token_info = fetch_access_token(timeout=timeout, force_refresh=force_refresh)
+    headers = _build_auth_headers(token_info["access_token"], options.get("headers"))
+    with httpx.Client(timeout=timeout) as client:
+        return client.request(
+            method,
+            url,
+            headers=headers,
+            params=options.get("params"),
+            data=options.get("data"),
+            json=options.get("json"),
+        )
+
+
+def _request_with_refresh(
+    method: str, url: str, timeout: Optional[float], options: Dict[str, Any]
+) -> httpx.Response:
+    resp = _request_once(method, url, timeout, options, force_refresh=False)
+    if is_invalid_token_response(resp):
+        resp = _request_once(method, url, timeout, options, force_refresh=True)
+    return resp

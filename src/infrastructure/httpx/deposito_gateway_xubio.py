@@ -53,6 +53,7 @@ class XubioDepositoGateway(DepositoGateway):
 
     def get(self, deposito_id: int) -> Optional[Dict[str, Any]]:
         url = self._url(f"{DEPOSITO_PATH}/{deposito_id}")
+        result: Optional[Dict[str, Any]] = None
         try:
             resp = request_with_token("GET", url, timeout=self._timeout)
             logger.info("Xubio GET %s -> %s", url, resp.status_code)
@@ -62,23 +63,26 @@ class XubioDepositoGateway(DepositoGateway):
                     url,
                     resp.status_code,
                 )
-                return self._fallback_get_from_list(deposito_id)
-            raise_for_status(resp)
-            return resp.json()
+                result = self._fallback_get_from_list(deposito_id)
+            else:
+                raise_for_status(resp)
+                result = resp.json()
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
+        return result
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        entry = _GLOBAL_LIST_CACHE.get(DEPOSITO_PATH)
-        if entry is None:
-            return None
-        if self._list_cache_ttl <= 0:
-            return None
-        timestamp, items = entry
-        if time.time() - timestamp > self._list_cache_ttl:
-            return None
-        logger.info("Xubio lista depositos: cache hit (%d items)", len(items))
-        return list(items)
+        cached: Optional[List[Dict[str, Any]]] = None
+        if self._list_cache_ttl > 0:
+            entry = _GLOBAL_LIST_CACHE.get(DEPOSITO_PATH)
+            if entry is not None:
+                timestamp, items = entry
+                if time.time() - timestamp <= self._list_cache_ttl:
+                    logger.info(
+                        "Xubio lista depositos: cache hit (%d items)", len(items)
+                    )
+                    cached = list(items)
+        return cached
 
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
         if self._list_cache_ttl <= 0:

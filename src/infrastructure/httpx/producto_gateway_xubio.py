@@ -57,18 +57,21 @@ class XubioProductoGateway(ProductoGateway):
         return self._list_with_fallback(self._primary_bean, self._fallback_bean)
 
     def get(self, producto_id: int) -> Optional[Dict[str, Any]]:
+        result: Optional[Dict[str, Any]] = None
         status, item = self._get_from_bean(self._primary_bean, producto_id)
         if status == "ok":
-            return item
-        item = self._find_in_list(self._primary_bean, self._fallback_bean, producto_id)
-        if item is not None:
-            return item
-        if self._fallback_bean is None:
-            return None
-        status, item = self._get_from_bean(self._fallback_bean, producto_id)
-        if status == "ok":
-            return item
-        return self._find_in_list(self._fallback_bean, None, producto_id)
+            result = item
+        else:
+            result = self._find_in_list(
+                self._primary_bean, self._fallback_bean, producto_id
+            )
+            if result is None and self._fallback_bean is not None:
+                status, item = self._get_from_bean(self._fallback_bean, producto_id)
+                if status == "ok":
+                    result = item
+                else:
+                    result = self._find_in_list(self._fallback_bean, None, producto_id)
+        return result
 
     def _list_with_fallback(
         self, primary_bean: str, fallback_bean: Optional[str]
@@ -104,16 +107,17 @@ class XubioProductoGateway(ProductoGateway):
             raise ExternalServiceError(str(exc)) from exc
 
     def _get_cached_list(self, bean: str) -> Optional[List[Dict[str, Any]]]:
-        if self._list_cache_ttl <= 0:
-            return None
-        entry = _GLOBAL_LIST_CACHE.get(bean)
-        if entry is None:
-            return None
-        timestamp, items = entry
-        if time.time() - timestamp > self._list_cache_ttl:
-            return None
-        logger.info("Xubio lista productos: cache hit (%d items)", len(items))
-        return list(items)
+        cached: Optional[List[Dict[str, Any]]] = None
+        if self._list_cache_ttl > 0:
+            entry = _GLOBAL_LIST_CACHE.get(bean)
+            if entry is not None:
+                timestamp, items = entry
+                if time.time() - timestamp <= self._list_cache_ttl:
+                    logger.info(
+                        "Xubio lista productos: cache hit (%d items)", len(items)
+                    )
+                    cached = list(items)
+        return cached
 
     def _store_cache(self, bean: str, items: List[Dict[str, Any]]) -> None:
         if self._list_cache_ttl <= 0:
