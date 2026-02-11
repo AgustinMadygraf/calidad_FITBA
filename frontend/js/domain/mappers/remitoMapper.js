@@ -38,6 +38,15 @@ export function toRemitoVM(remito) {
   const items = Array.isArray(remito?.transaccionProductoItem)
     ? remito.transaccionProductoItem
     : [];
+  const depositoId = pickFirstDefined(remito?.depositoId, remito?.depositoID);
+  const circuitoContableId = pickFirstDefined(
+    remito?.circuitoContableId,
+    remito?.circuitoContableID
+  );
+  const comisionVendedor = pickFirstDefined(
+    remito?.comisionVendedor,
+    remito?.comision_vendedor
+  );
 
   return {
     transaccionId: remito?.transaccionId ?? null,
@@ -45,9 +54,9 @@ export function toRemitoVM(remito) {
     fecha: remito?.fecha ?? "",
     observacion: remito?.observacion ?? "",
     clienteId: remito?.clienteId ?? null,
-    comisionVendedor: remito?.comisionVendedor ?? null,
-    depositoId: remito?.depositoId ?? null,
-    circuitoContableId: remito?.circuitoContableId ?? null,
+    comisionVendedor,
+    depositoId,
+    circuitoContableId,
     transaccionProductoItem: items.map(toItemVM)
   };
 }

@@ -13,8 +13,17 @@ export const REMITO_COLUMNS = [
   { key: "observacion", className: "remito-observacion" },
   { key: "clienteId", linkType: "cliente" },
   { key: "comisionVendedor", className: "text-nowrap" },
-  { key: "depositoId" },
-  { key: "circuitoContableId", className: "text-nowrap" }
+  {
+    key: "depositoID",
+    className: "text-nowrap",
+    getValue: (remito) => remito?.depositoID ?? remito?.depositoId
+  },
+  {
+    key: "circuitoContableId",
+    className: "text-nowrap",
+    getValue: (remito) =>
+      remito?.circuitoContableId ?? remito?.circuitoContableID
+  }
 ];
 
 export const ITEM_COLUMNS = [
