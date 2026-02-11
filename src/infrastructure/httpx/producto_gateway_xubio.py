@@ -2,6 +2,7 @@
 Path: src/infrastructure/httpx/producto_gateway_xubio.py
 """
 
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 import os
@@ -21,19 +22,27 @@ DEFAULT_FALLBACK_BEAN = "ProductoCompraBean"
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
+@dataclass(frozen=True)
+class ProductoGatewayConfig:
+    primary_bean: str = DEFAULT_PRIMARY_BEAN
+    fallback_bean: Optional[str] = DEFAULT_FALLBACK_BEAN
+
+
 class XubioProductoGateway(ProductoGateway):
     def __init__(
         self,
         base_url: Optional[str] = None,
         timeout: Optional[float] = 10.0,
-        primary_bean: str = DEFAULT_PRIMARY_BEAN,
-        fallback_bean: Optional[str] = DEFAULT_FALLBACK_BEAN,
+        config: Optional[ProductoGatewayConfig] = None,
         list_cache_ttl: Optional[float] = None,
     ) -> None:
         self._base_url = (base_url or "https://xubio.com").rstrip("/")
         self._timeout = timeout
-        self._primary_bean = primary_bean
-        if fallback_bean == primary_bean:
+        if config is None:
+            config = ProductoGatewayConfig()
+        self._primary_bean = config.primary_bean
+        fallback_bean = config.fallback_bean
+        if fallback_bean == self._primary_bean:
             fallback_bean = None
         self._fallback_bean = fallback_bean
         if list_cache_ttl is None:

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import List, Optional
 
 from ..entities.remito_venta import RemitoVenta, TransaccionProductoItem
@@ -5,6 +6,13 @@ from ..use_cases.ports.cliente_gateway import ClienteGateway
 from ..use_cases.ports.producto_gateway import ProductoGateway
 from ..use_cases.ports.deposito_gateway import DepositoGateway
 from ..use_cases.ports.remito_gateway import RemitoGateway
+
+
+@dataclass(frozen=True)
+class RemitoDependencies:
+    cliente_gateway: ClienteGateway
+    producto_gateway: ProductoGateway
+    deposito_gateway: DepositoGateway
 
 
 def list_remitos(gateway: RemitoGateway) -> List[RemitoVenta]:
@@ -22,15 +30,13 @@ def get_remito(gateway: RemitoGateway, transaccion_id: int) -> Optional[RemitoVe
 def create_remito(
     gateway: RemitoGateway,
     entity: RemitoVenta,
-    cliente_gateway: ClienteGateway,
-    producto_gateway: ProductoGateway,
-    deposito_gateway: DepositoGateway,
+    deps: RemitoDependencies,
 ) -> RemitoVenta:
     entity.validate()
-    _ensure_cliente_exists(cliente_gateway, entity.clienteId)
-    _ensure_productos_exist(producto_gateway, entity.transaccionProductoItem)
-    _ensure_deposito_exists(deposito_gateway, entity.depositoId)
-    _ensure_item_depositos_exist(deposito_gateway, entity.transaccionProductoItem)
+    _ensure_cliente_exists(deps.cliente_gateway, entity.clienteId)
+    _ensure_productos_exist(deps.producto_gateway, entity.transaccionProductoItem)
+    _ensure_deposito_exists(deps.deposito_gateway, entity.depositoId)
+    _ensure_item_depositos_exist(deps.deposito_gateway, entity.transaccionProductoItem)
     created = gateway.create(entity.to_dict(exclude_none=True))
     return RemitoVenta.from_dict(created)
 
@@ -39,15 +45,13 @@ def update_remito(
     gateway: RemitoGateway,
     transaccion_id: int,
     entity: RemitoVenta,
-    cliente_gateway: ClienteGateway,
-    producto_gateway: ProductoGateway,
-    deposito_gateway: DepositoGateway,
+    deps: RemitoDependencies,
 ) -> Optional[RemitoVenta]:
     entity.validate()
-    _ensure_cliente_exists(cliente_gateway, entity.clienteId)
-    _ensure_productos_exist(producto_gateway, entity.transaccionProductoItem)
-    _ensure_deposito_exists(deposito_gateway, entity.depositoId)
-    _ensure_item_depositos_exist(deposito_gateway, entity.transaccionProductoItem)
+    _ensure_cliente_exists(deps.cliente_gateway, entity.clienteId)
+    _ensure_productos_exist(deps.producto_gateway, entity.transaccionProductoItem)
+    _ensure_deposito_exists(deps.deposito_gateway, entity.depositoId)
+    _ensure_item_depositos_exist(deps.deposito_gateway, entity.transaccionProductoItem)
     updated = gateway.update(transaccion_id, entity.to_dict(exclude_none=True))
     if updated is None:
         return None

@@ -2,7 +2,10 @@ from typing import Protocol
 
 from ...infrastructure.httpx.cliente_gateway_xubio import XubioClienteGateway
 from ...infrastructure.httpx.remito_gateway_xubio import XubioRemitoGateway
-from ...infrastructure.httpx.producto_gateway_xubio import XubioProductoGateway
+from ...infrastructure.httpx.producto_gateway_xubio import (
+    ProductoGatewayConfig,
+    XubioProductoGateway,
+)
 from ...infrastructure.httpx.deposito_gateway_xubio import XubioDepositoGateway
 from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
 from ...infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
@@ -47,7 +50,9 @@ def get_producto_gateway():
 
 def get_producto_compra_gateway():
     if is_prod():
-        gw = XubioProductoGateway(primary_bean="ProductoCompraBean", fallback_bean=None)
+        gw = XubioProductoGateway(
+            config=ProductoGatewayConfig(primary_bean="ProductoCompraBean", fallback_bean=None)
+        )
     else:
         gw = InMemoryProductoGateway()
     logger.info("Producto compra gateway: %s", gw.__class__.__name__)

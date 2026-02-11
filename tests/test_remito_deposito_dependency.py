@@ -23,10 +23,13 @@ def test_create_remito_rejects_missing_deposito():
     deposito_gateway = InMemoryDepositoGateway()
     cliente = cliente_gateway.create({"nombre": "Cliente OK"})
     entity = _make_entity(cliente["cliente_id"], 999)
+    deps = remito_venta.RemitoDependencies(
+        cliente_gateway=cliente_gateway,
+        producto_gateway=producto_gateway,
+        deposito_gateway=deposito_gateway,
+    )
     try:
-        remito_venta.create_remito(
-            remito_gateway, entity, cliente_gateway, producto_gateway, deposito_gateway
-        )
+        remito_venta.create_remito(remito_gateway, entity, deps)
     except ValueError as exc:
         assert "depositoId" in str(exc)
     else:
@@ -41,7 +44,10 @@ def test_create_remito_accepts_existing_deposito():
     cliente = cliente_gateway.create({"nombre": "Cliente OK"})
     deposito = deposito_gateway.create({"nombre": "Deposito OK"})
     entity = _make_entity(cliente["cliente_id"], deposito["id"])
-    created = remito_venta.create_remito(
-        remito_gateway, entity, cliente_gateway, producto_gateway, deposito_gateway
+    deps = remito_venta.RemitoDependencies(
+        cliente_gateway=cliente_gateway,
+        producto_gateway=producto_gateway,
+        deposito_gateway=deposito_gateway,
     )
+    created = remito_venta.create_remito(remito_gateway, entity, deps)
     assert created.transaccionId is not None

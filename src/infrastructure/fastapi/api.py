@@ -14,6 +14,7 @@ from ...interface_adapter.schemas.remito_venta import RemitoVentaPayload
 from ...shared.config import is_prod, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
+from ...use_cases import remito_venta
 from .deps import (
     get_cliente_gateway,
     get_deposito_gateway,
@@ -207,10 +208,12 @@ def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
         gateway = _get_remito_gateway()
         cliente_gateway = _get_cliente_gateway()
         producto_gateway = _get_producto_gateway()
-        deposito_gateway = _get_deposito_gateway()
-        return handlers.create_remito(
-            gateway, cliente_gateway, producto_gateway, deposito_gateway, data
+        deps = remito_venta.RemitoDependencies(
+            cliente_gateway=cliente_gateway,
+            producto_gateway=producto_gateway,
+            deposito_gateway=_get_deposito_gateway(),
         )
+        return handlers.create_remito(gateway, deps, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ExternalServiceError as exc:
@@ -241,15 +244,12 @@ def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, An
         gateway = _get_remito_gateway()
         cliente_gateway = _get_cliente_gateway()
         producto_gateway = _get_producto_gateway()
-        deposito_gateway = _get_deposito_gateway()
-        item = handlers.update_remito(
-            gateway,
-            cliente_gateway,
-            producto_gateway,
-            deposito_gateway,
-            transaccion_id,
-            data,
+        deps = remito_venta.RemitoDependencies(
+            cliente_gateway=cliente_gateway,
+            producto_gateway=producto_gateway,
+            deposito_gateway=_get_deposito_gateway(),
         )
+        item = handlers.update_remito(gateway, transaccion_id, deps, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ExternalServiceError as exc:

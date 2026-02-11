@@ -133,10 +133,7 @@ def request_with_token(
     url: str,
     *,
     timeout: Optional[float] = 10.0,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, str]] = None,
-    data: Optional[Dict[str, str]] = None,
-    json: Optional[Dict[str, str]] = None,
+    **kwargs: Any,
 ) -> httpx.Response:
     """
     Request con refresh simple si el token es invalido.
@@ -147,6 +144,11 @@ def request_with_token(
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
     }
+    headers = _get_option(kwargs, "headers")
+    params = _get_option(kwargs, "params")
+    data = _get_option(kwargs, "data")
+    json = _get_option(kwargs, "json")
+    _ensure_no_extra_options(kwargs)
     if headers:
         base_headers.update(headers)
 
@@ -164,3 +166,13 @@ def request_with_token(
             )
 
     return resp
+
+
+def _get_option(options: Dict[str, Any], key: str) -> Any:
+    return options.pop(key, None)
+
+
+def _ensure_no_extra_options(options: Dict[str, Any]) -> None:
+    if options:
+        extra = ", ".join(sorted(options.keys()))
+        raise ValueError(f"Opciones no soportadas: {extra}")
