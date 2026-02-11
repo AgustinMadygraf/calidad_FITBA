@@ -28,7 +28,12 @@ export const CLIENTE_COLUMNS = [
   { key: "cliente_id" },
   { key: "nombre" },
   { key: "razonSocial" },
-  { key: "identificacionTributaria" },
+  {
+    key: "identificacionTributaria",
+    getValue: (cliente) =>
+      cliente?.identificacionTributaria?.ID ??
+      cliente?.identificacionTributaria?.id
+  },
   { key: "categoriaFiscal" },
   { key: "cuit" },
   { key: "CUIT" },
@@ -44,6 +49,13 @@ export const CLIENTE_COLUMNS = [
   { key: "cuentaCompra_id" },
   { key: "usrCode" },
   { key: "descripcion" }
+];
+
+export const IDENTIFICACION_TRIBUTARIA_COLUMNS = [
+  { key: "ID" },
+  { key: "nombre" },
+  { key: "codigo" },
+  { key: "id" }
 ];
 
 export const FALLBACK_REMITOS = [
@@ -79,5 +91,7 @@ export const UI_MESSAGES = {
   noItems: "Esta transaccion no tiene items.",
   clienteLoading: "Cargando cliente...",
   clienteNotFound: "No se encontro el cliente para el id seleccionado.",
-  clienteLoadError: "No se pudo cargar el cliente seleccionado."
+  clienteLoadError: "No se pudo cargar el cliente seleccionado.",
+  identificacionTributariaNotFound:
+    "El cliente no tiene datos de identificacionTributaria."
 };

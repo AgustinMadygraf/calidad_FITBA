@@ -1,5 +1,6 @@
 import {
   CLIENTE_COLUMNS,
+  IDENTIFICACION_TRIBUTARIA_COLUMNS,
   ITEM_COLUMNS,
   REMITO_COLUMNS,
   UI_MESSAGES
@@ -18,13 +19,16 @@ import {
   setClienteLoading,
   setClienteNotFound,
   setClienteReady,
-  setRemitos
+  setRemitos,
+  showClienteAsMainTable,
+  showRemitoAsMainTable
 } from "../state/store.js";
 import { getDomRefs } from "../ui/dom.js";
 import {
   hideDetailSection,
   renderBanner,
   renderClienteSection,
+  renderIdentificacionTributariaSection,
   renderItemSection,
   renderRemitoTable,
   renderShowAllButton
@@ -35,11 +39,49 @@ let clienteRequestToken = 0;
 
 function renderView() {
   const state = getState();
+  const isClienteMainTable = state.mainTable === "cliente";
   const visibleRemitos = getVisibleRemitos();
   const selectedRemito = getSelectedRemito();
 
   renderBanner(domRefs.banner, state.banner);
-  renderShowAllButton(domRefs.showAllButton, state.selectedTransaccionId !== null);
+  renderShowAllButton(
+    domRefs.showAllButton,
+    state.selectedTransaccionId !== null || isClienteMainTable
+  );
+
+  if (isClienteMainTable) {
+    domRefs.remitoTableWrapper.classList.add("d-none");
+    renderClienteSection(
+      domRefs.clienteMainTableWrapper,
+      domRefs.mainTitle,
+      domRefs.clienteMainTableBody,
+      state.clienteDetail,
+      CLIENTE_COLUMNS,
+      UI_MESSAGES
+    );
+    hideDetailSection(domRefs.itemSection, domRefs.itemTableBody);
+    hideDetailSection(domRefs.clienteSection, domRefs.clienteTableBody);
+    if (state.clienteDetail.status !== "idle") {
+      renderIdentificacionTributariaSection(
+        domRefs.identificacionTributariaSection,
+        domRefs.identificacionTributariaTitle,
+        domRefs.identificacionTributariaTableBody,
+        state.clienteDetail,
+        IDENTIFICACION_TRIBUTARIA_COLUMNS,
+        UI_MESSAGES
+      );
+    } else {
+      hideDetailSection(
+        domRefs.identificacionTributariaSection,
+        domRefs.identificacionTributariaTableBody
+      );
+    }
+    return;
+  }
+
+  domRefs.mainTitle.textContent = "Remito de Venta";
+  domRefs.remitoTableWrapper.classList.remove("d-none");
+  hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   renderRemitoTable(
     domRefs.remitoTableBody,
     visibleRemitos,
@@ -69,17 +111,38 @@ function renderView() {
       CLIENTE_COLUMNS,
       UI_MESSAGES
     );
+    renderIdentificacionTributariaSection(
+      domRefs.identificacionTributariaSection,
+      domRefs.identificacionTributariaTitle,
+      domRefs.identificacionTributariaTableBody,
+      state.clienteDetail,
+      IDENTIFICACION_TRIBUTARIA_COLUMNS,
+      UI_MESSAGES
+    );
   } else {
     hideDetailSection(domRefs.clienteSection, domRefs.clienteTableBody);
+    hideDetailSection(
+      domRefs.identificacionTributariaSection,
+      domRefs.identificacionTributariaTableBody
+    );
   }
 }
 
-async function handleClienteClick(transaccionId, clienteId) {
+async function handleClienteClick(
+  transaccionId,
+  clienteId,
+  { clienteAsMainTable = false } = {}
+) {
   const hasTransaccion = transaccionId !== null && transaccionId !== undefined;
   if (hasTransaccion) {
     selectTransaccion(transaccionId);
   } else {
     clearSelection();
+  }
+  if (clienteAsMainTable) {
+    showClienteAsMainTable();
+  } else {
+    showRemitoAsMainTable();
   }
 
   if (clienteId === null || clienteId === undefined || String(clienteId).trim() === "") {
@@ -120,7 +183,8 @@ function bindEvents() {
       event.preventDefault();
       void handleClienteClick(
         transaccionLink.dataset.transaccionId,
-        transaccionLink.dataset.clienteId
+        transaccionLink.dataset.clienteId,
+        { clienteAsMainTable: false }
       );
       return;
     }
@@ -130,13 +194,15 @@ function bindEvents() {
       event.preventDefault();
       void handleClienteClick(
         clienteLink.dataset.transaccionId,
-        clienteLink.dataset.clienteId
+        clienteLink.dataset.clienteId,
+        { clienteAsMainTable: true }
       );
     }
   });
 
   domRefs.showAllButton.addEventListener("click", () => {
     clienteRequestToken += 1;
+    showRemitoAsMainTable();
     clearSelection();
     renderView();
   });

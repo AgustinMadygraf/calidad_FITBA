@@ -1,5 +1,6 @@
 const state = {
   remitos: [],
+  mainTable: "remito",
   selectedTransaccionId: null,
   clienteDetail: {
     clienteId: null,
@@ -34,6 +35,7 @@ export function clearBanner() {
 }
 
 export function clearSelection() {
+  state.mainTable = "remito";
   state.selectedTransaccionId = null;
   resetClienteDetail();
 }
@@ -86,6 +88,14 @@ export function resetClienteDetail() {
     data: null,
     errorMessage: null
   };
+}
+
+export function showClienteAsMainTable() {
+  state.mainTable = "cliente";
+}
+
+export function showRemitoAsMainTable() {
+  state.mainTable = "remito";
 }
 
 export function getVisibleRemitos() {

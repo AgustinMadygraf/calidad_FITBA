@@ -165,3 +165,54 @@ export function renderClienteSection(
 
   appendMessageRow(tableBodyNode, uiMessages.clienteLoadError, columns.length);
 }
+
+export function renderIdentificacionTributariaSection(
+  sectionNode,
+  titleNode,
+  tableBodyNode,
+  clienteDetail,
+  columns,
+  uiMessages
+) {
+  clearTable(tableBodyNode);
+  sectionNode.classList.remove("d-none");
+  titleNode.textContent = `Desglose de identificacionTributaria para cliente ${asText(
+    clienteDetail?.clienteId
+  )}`;
+
+  if (clienteDetail?.status === "loading") {
+    appendMessageRow(tableBodyNode, uiMessages.clienteLoading, columns.length);
+    return;
+  }
+
+  if (clienteDetail?.status === "not_found") {
+    appendMessageRow(tableBodyNode, uiMessages.clienteNotFound, columns.length);
+    return;
+  }
+
+  if (clienteDetail?.status === "error") {
+    const message = clienteDetail.errorMessage || uiMessages.clienteLoadError;
+    appendMessageRow(tableBodyNode, message, columns.length);
+    return;
+  }
+
+  if (clienteDetail?.status === "ready" && clienteDetail.data) {
+    const identificacionTributaria = clienteDetail.data.identificacionTributaria;
+    if (
+      identificacionTributaria &&
+      typeof identificacionTributaria === "object" &&
+      !Array.isArray(identificacionTributaria)
+    ) {
+      appendDataRow(tableBodyNode, identificacionTributaria, columns);
+      return;
+    }
+    appendMessageRow(
+      tableBodyNode,
+      uiMessages.identificacionTributariaNotFound,
+      columns.length
+    );
+    return;
+  }
+
+  appendMessageRow(tableBodyNode, uiMessages.clienteLoadError, columns.length);
+}

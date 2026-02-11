@@ -22,15 +22,15 @@
       </p>
     </section>
 
-    <section class="card shadow-sm">
+    <section class="card shadow-sm" id="main-section">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 card-title mb-0">Remito de Venta</h2>
+          <h2 class="h5 card-title mb-0" id="main-title">Remito de Venta</h2>
           <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="show-all-btn">
             Ver todos
           </button>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive" id="remito-table-wrapper">
           <table class="table table-striped table-hover align-middle mb-0" id="remito-table">
             <thead class="table-dark">
               <tr>
@@ -45,6 +45,34 @@
               </tr>
             </thead>
             <tbody id="remito-table-body"></tbody>
+          </table>
+        </div>
+        <div class="table-responsive d-none" id="cliente-main-table-wrapper">
+          <table class="table table-striped table-hover align-middle mb-0" id="cliente-main-table">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">cliente_id</th>
+                <th scope="col">nombre</th>
+                <th scope="col">razonSocial</th>
+                <th scope="col">identificacionTributaria</th>
+                <th scope="col">categoriaFiscal</th>
+                <th scope="col">cuit</th>
+                <th scope="col">CUIT</th>
+                <th scope="col">responsabilidadOrganizacionItem</th>
+                <th scope="col">esclienteextranjero</th>
+                <th scope="col">esProveedor</th>
+                <th scope="col">direccion</th>
+                <th scope="col">email</th>
+                <th scope="col">telefono</th>
+                <th scope="col">provincia</th>
+                <th scope="col">pais</th>
+                <th scope="col">cuentaVenta_id</th>
+                <th scope="col">cuentaCompra_id</th>
+                <th scope="col">usrCode</th>
+                <th scope="col">descripcion</th>
+              </tr>
+            </thead>
+            <tbody id="cliente-main-table-body"></tbody>
           </table>
         </div>
       </div>
@@ -101,6 +129,30 @@
               </tr>
             </thead>
             <tbody id="cliente-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card shadow-sm mt-4 d-none" id="identificacion-tributaria-section">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3" id="identificacion-tributaria-title">
+          Desglose de identificacionTributaria
+        </h2>
+        <div class="table-responsive">
+          <table
+            class="table table-striped table-hover align-middle mb-0"
+            id="identificacion-tributaria-table"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">nombre</th>
+                <th scope="col">codigo</th>
+                <th scope="col">id</th>
+              </tr>
+            </thead>
+            <tbody id="identificacion-tributaria-table-body"></tbody>
           </table>
         </div>
       </div>
