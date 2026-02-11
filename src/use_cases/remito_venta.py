@@ -33,9 +33,9 @@ def create_remito(
     deps: RemitoDependencies,
 ) -> RemitoVenta:
     entity.validate()
-    _ensure_cliente_exists(deps.cliente_gateway, entity.clienteId)
+    _ensure_cliente_exists(deps.cliente_gateway, entity.relaciones.clienteId)
     _ensure_productos_exist(deps.producto_gateway, entity.transaccionProductoItem)
-    _ensure_deposito_exists(deps.deposito_gateway, entity.depositoId)
+    _ensure_deposito_exists(deps.deposito_gateway, entity.relaciones.depositoId)
     _ensure_item_depositos_exist(deps.deposito_gateway, entity.transaccionProductoItem)
     created = gateway.create(entity.to_dict(exclude_none=True))
     return RemitoVenta.from_dict(created)
@@ -48,9 +48,9 @@ def update_remito(
     deps: RemitoDependencies,
 ) -> Optional[RemitoVenta]:
     entity.validate()
-    _ensure_cliente_exists(deps.cliente_gateway, entity.clienteId)
+    _ensure_cliente_exists(deps.cliente_gateway, entity.relaciones.clienteId)
     _ensure_productos_exist(deps.producto_gateway, entity.transaccionProductoItem)
-    _ensure_deposito_exists(deps.deposito_gateway, entity.depositoId)
+    _ensure_deposito_exists(deps.deposito_gateway, entity.relaciones.depositoId)
     _ensure_item_depositos_exist(deps.deposito_gateway, entity.transaccionProductoItem)
     updated = gateway.update(transaccion_id, entity.to_dict(exclude_none=True))
     if updated is None:
@@ -86,12 +86,13 @@ def _ensure_productos_exist(
 
 
 def _extract_producto_id(item: TransaccionProductoItem) -> Optional[int]:
+    producto = item.producto_ref.producto
     candidates = [
-        item.productoid,
-        item.productoId,
-        item.producto.productoid if item.producto else None,
-        item.producto.ID if item.producto else None,
-        item.producto.id if item.producto else None,
+        item.producto_ref.productoid,
+        item.producto_ref.productoId,
+        producto.productoid if producto else None,
+        producto.ID if producto else None,
+        producto.id if producto else None,
     ]
     for value in candidates:
         if value is not None:
@@ -122,9 +123,9 @@ def _ensure_item_depositos_exist(
 
 
 def _extract_deposito_id(item: TransaccionProductoItem) -> Optional[int]:
-    if item.deposito is None:
+    if item.refs.deposito is None:
         return None
-    for value in (item.deposito.ID, item.deposito.id):
+    for value in (item.refs.deposito.ID, item.refs.deposito.id):
         if value is not None:
             return value
     return None

@@ -8,15 +8,23 @@ from .common import SimpleItem, drop_none
 
 
 @dataclass
-class TransaccionProductoItem:  # pylint: disable=too-many-instance-attributes
+class ItemRefs:
     transaccionCVItemId: Optional[int] = None
-    precioconivaincluido: Optional[float] = None
     transaccionId: Optional[int] = None
+    centroDeCosto: Optional[SimpleItem] = None
+    deposito: Optional[SimpleItem] = None
+
+
+@dataclass
+class ItemProducto:
     productoId: Optional[int] = None
     productoid: Optional[int] = None
     producto: Optional[SimpleItem] = None
-    centroDeCosto: Optional[SimpleItem] = None
-    deposito: Optional[SimpleItem] = None
+
+
+@dataclass
+class ItemValores:
+    precioconivaincluido: Optional[float] = None
     descripcion: Optional[str] = None
     cantidad: Optional[float] = None
     precio: Optional[float] = None
@@ -26,6 +34,17 @@ class TransaccionProductoItem:  # pylint: disable=too-many-instance-attributes
     montoExento: Optional[float] = None
     porcentajeDescuento: Optional[float] = None
 
+
+@dataclass
+class TransaccionProductoItem:
+    refs: ItemRefs = field(default_factory=ItemRefs, metadata={"flatten": True})
+    producto_ref: ItemProducto = field(
+        default_factory=ItemProducto, metadata={"flatten": True}
+    )
+    valores: ItemValores = field(
+        default_factory=ItemValores, metadata={"flatten": True}
+    )
+
     @classmethod
     def from_dict(
         cls, data: Optional[Dict[str, Any]]
@@ -33,39 +52,59 @@ class TransaccionProductoItem:  # pylint: disable=too-many-instance-attributes
         if not data:
             return None
         return cls(
-            transaccionCVItemId=data.get("transaccionCVItemId"),
-            precioconivaincluido=data.get("precioconivaincluido"),
-            transaccionId=data.get("transaccionId"),
-            productoId=data.get("productoId"),
-            productoid=data.get("productoid"),
-            producto=SimpleItem.from_dict(data.get("producto")),
-            centroDeCosto=SimpleItem.from_dict(data.get("centroDeCosto")),
-            deposito=SimpleItem.from_dict(data.get("deposito")),
-            descripcion=data.get("descripcion"),
-            cantidad=data.get("cantidad"),
-            precio=data.get("precio"),
-            iva=data.get("iva"),
-            importe=data.get("importe"),
-            total=data.get("total"),
-            montoExento=data.get("montoExento"),
-            porcentajeDescuento=data.get("porcentajeDescuento"),
+            refs=ItemRefs(
+                transaccionCVItemId=data.get("transaccionCVItemId"),
+                transaccionId=data.get("transaccionId"),
+                centroDeCosto=SimpleItem.from_dict(data.get("centroDeCosto")),
+                deposito=SimpleItem.from_dict(data.get("deposito")),
+            ),
+            producto_ref=ItemProducto(
+                productoId=data.get("productoId"),
+                productoid=data.get("productoid"),
+                producto=SimpleItem.from_dict(data.get("producto")),
+            ),
+            valores=ItemValores(
+                precioconivaincluido=data.get("precioconivaincluido"),
+                descripcion=data.get("descripcion"),
+                cantidad=data.get("cantidad"),
+                precio=data.get("precio"),
+                iva=data.get("iva"),
+                importe=data.get("importe"),
+                total=data.get("total"),
+                montoExento=data.get("montoExento"),
+                porcentajeDescuento=data.get("porcentajeDescuento"),
+            ),
         )
 
 
 @dataclass
-class RemitoVenta:  # pylint: disable=too-many-instance-attributes
-    transaccionId: Optional[int] = None
-    clienteId: Optional[int] = None
+class RemitoEncabezado:
     numeroRemito: Optional[str] = None
     fecha: Optional[str] = None
+    observacion: Optional[str] = None
+
+
+@dataclass
+class RemitoRelaciones:
+    clienteId: Optional[int] = None
     vendedorId: Optional[int] = None
     comisionVendedor: Optional[float] = None
     sucursalClienteId: Optional[int] = None
     depositoId: Optional[int] = None
     transporteId: Optional[int] = None
     listaPrecioId: Optional[int] = None
-    observacion: Optional[str] = None
     circuitoContableId: Optional[int] = None
+
+
+@dataclass
+class RemitoVenta:
+    transaccionId: Optional[int] = None
+    encabezado: RemitoEncabezado = field(
+        default_factory=RemitoEncabezado, metadata={"flatten": True}
+    )
+    relaciones: RemitoRelaciones = field(
+        default_factory=RemitoRelaciones, metadata={"flatten": True}
+    )
     transaccionProductoItem: List[TransaccionProductoItem] = field(default_factory=list)
 
     @classmethod
@@ -75,17 +114,21 @@ class RemitoVenta:  # pylint: disable=too-many-instance-attributes
         items = data.get("transaccionProductoItem") or []
         return cls(
             transaccionId=data.get("transaccionId"),
-            clienteId=data.get("clienteId"),
-            numeroRemito=data.get("numeroRemito"),
-            fecha=data.get("fecha"),
-            vendedorId=data.get("vendedorId"),
-            comisionVendedor=data.get("comisionVendedor"),
-            sucursalClienteId=data.get("sucursalClienteId"),
-            depositoId=data.get("depositoId"),
-            transporteId=data.get("transporteId"),
-            listaPrecioId=data.get("listaPrecioId"),
-            observacion=data.get("observacion"),
-            circuitoContableId=data.get("circuitoContableId"),
+            encabezado=RemitoEncabezado(
+                numeroRemito=data.get("numeroRemito"),
+                fecha=data.get("fecha"),
+                observacion=data.get("observacion"),
+            ),
+            relaciones=RemitoRelaciones(
+                clienteId=data.get("clienteId"),
+                vendedorId=data.get("vendedorId"),
+                comisionVendedor=data.get("comisionVendedor"),
+                sucursalClienteId=data.get("sucursalClienteId"),
+                depositoId=data.get("depositoId"),
+                transporteId=data.get("transporteId"),
+                listaPrecioId=data.get("listaPrecioId"),
+                circuitoContableId=data.get("circuitoContableId"),
+            ),
             transaccionProductoItem=[
                 item
                 for item in (TransaccionProductoItem.from_dict(x) for x in items)
@@ -94,22 +137,31 @@ class RemitoVenta:  # pylint: disable=too-many-instance-attributes
         )
 
     def to_dict(self, *, exclude_none: bool = False) -> Dict[str, Any]:
-        data = asdict(self)
+        data = {
+            "transaccionId": self.transaccionId,
+            **asdict(self.encabezado),
+            **asdict(self.relaciones),
+            "transaccionProductoItem": [
+                _item_to_dict(item) for item in self.transaccionProductoItem
+            ],
+        }
         if exclude_none:
             return drop_none(data)
         return data
 
     def validate(self) -> None:
-        _validate_fecha(self.fecha)
-        _validate_positive(self.clienteId, "clienteId")
+        _validate_fecha(self.encabezado.fecha)
+        _validate_positive(self.relaciones.clienteId, "clienteId")
         for item in self.transaccionProductoItem:
-            _validate_positive(item.cantidad, "cantidad")
-            _validate_positive(item.precio, "precio")
-            _validate_non_negative(item.iva, "iva")
-            _validate_non_negative(item.importe, "importe")
-            _validate_non_negative(item.total, "total")
-            _validate_non_negative(item.montoExento, "montoExento")
-            _validate_non_negative(item.porcentajeDescuento, "porcentajeDescuento")
+            _validate_positive(item.valores.cantidad, "cantidad")
+            _validate_positive(item.valores.precio, "precio")
+            _validate_non_negative(item.valores.iva, "iva")
+            _validate_non_negative(item.valores.importe, "importe")
+            _validate_non_negative(item.valores.total, "total")
+            _validate_non_negative(item.valores.montoExento, "montoExento")
+            _validate_non_negative(
+                item.valores.porcentajeDescuento, "porcentajeDescuento"
+            )
 
 
 def _validate_fecha(value: Optional[str]) -> None:
@@ -133,3 +185,11 @@ def _validate_non_negative(value: Optional[float], field_name: str) -> None:
         return
     if value < 0:
         raise ValueError(f"{field_name} debe ser >= 0")
+
+
+def _item_to_dict(item: TransaccionProductoItem) -> Dict[str, Any]:
+    return {
+        **asdict(item.refs),
+        **asdict(item.producto_ref),
+        **asdict(item.valores),
+    }
