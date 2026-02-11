@@ -44,6 +44,7 @@ function appendDataRow(tableBody, data, columns) {
       link.href = "#";
       link.className = "js-transaccion-link";
       link.dataset.transaccionId = asText(value);
+      link.dataset.clienteId = asText(data?.clienteId ?? data?.cliente_id);
       link.textContent = asText(value);
       cell.appendChild(link);
     } else if (

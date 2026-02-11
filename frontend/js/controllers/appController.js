@@ -74,12 +74,6 @@ function renderView() {
   }
 }
 
-function handleTransaccionClick(transaccionId) {
-  clienteRequestToken += 1;
-  selectTransaccion(transaccionId);
-  renderView();
-}
-
 async function handleClienteClick(transaccionId, clienteId) {
   const hasTransaccion = transaccionId !== null && transaccionId !== undefined;
   if (hasTransaccion) {
@@ -124,7 +118,10 @@ function bindEvents() {
     const transaccionLink = event.target.closest(".js-transaccion-link");
     if (transaccionLink) {
       event.preventDefault();
-      handleTransaccionClick(transaccionLink.dataset.transaccionId);
+      void handleClienteClick(
+        transaccionLink.dataset.transaccionId,
+        transaccionLink.dataset.clienteId
+      );
       return;
     }
 
