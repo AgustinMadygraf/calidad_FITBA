@@ -93,10 +93,10 @@ def token_inspect() -> Dict[str, Any]:
         return handlers.inspect_token(token_gateway)
     except ValueError as exc:
         logger.error("Token inspect error: %s", exc)
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         logger.error("Token inspect error: %s", exc)
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get(CLIENTE_BASE)
@@ -107,7 +107,7 @@ def cliente_list() -> Dict[str, Any]:
         return handlers.list_clientes(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar clientes: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get("/debug/clienteBean")
@@ -118,7 +118,7 @@ def cliente_list_debug() -> Dict[str, Any]:
         return handlers.debug_clientes(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error en debug cliente: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.post(CLIENTE_BASE)
@@ -130,10 +130,10 @@ def cliente_create(body: ClientePayload) -> Dict[str, Any]:
         gateway = _get_cliente_gateway()
         return handlers.create_cliente(gateway, data)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ExternalServiceError as exc:
         logger.error("Gateway error al crear cliente: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get(f"{CLIENTE_BASE}/{{cliente_id}}")
@@ -144,7 +144,7 @@ def cliente_get(cliente_id: int) -> Dict[str, Any]:
         item = handlers.get_cliente(gateway, cliente_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al obtener cliente: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="cliente no encontrado")
     return item
@@ -160,7 +160,7 @@ def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
         item = handlers.update_cliente(gateway, cliente_id, data)
     except ExternalServiceError as exc:
         logger.error("Gateway error al actualizar cliente: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="cliente no encontrado")
     return item
@@ -175,7 +175,7 @@ def cliente_delete(cliente_id: int) -> Dict[str, Any]:
         ok = handlers.delete_cliente(gateway, cliente_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al borrar cliente: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if not ok:
         raise HTTPException(status_code=404, detail="cliente no encontrado")
     return {"status": "deleted", "cliente_id": cliente_id}
@@ -193,7 +193,7 @@ def remito_list() -> Dict[str, Any]:
         return handlers.list_remitos(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar remitos: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.post(REMITO_BASE)
@@ -210,10 +210,10 @@ def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
             gateway, cliente_gateway, producto_gateway, deposito_gateway, data
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ExternalServiceError as exc:
         logger.error("Gateway error al crear remito: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get(f"{REMITO_BASE}/{{transaccion_id}}")
@@ -224,7 +224,7 @@ def remito_get(transaccion_id: int) -> Dict[str, Any]:
         item = handlers.get_remito(gateway, transaccion_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al obtener remito: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="remito no encontrado")
     return item
@@ -249,10 +249,10 @@ def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, An
             data,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ExternalServiceError as exc:
         logger.error("Gateway error al actualizar remito: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="remito no encontrado")
     return item
@@ -267,7 +267,7 @@ def remito_delete(transaccion_id: int) -> Dict[str, Any]:
         ok = handlers.delete_remito(gateway, transaccion_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al borrar remito: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if not ok:
         raise HTTPException(status_code=404, detail="remito no encontrado")
     return {"status": "deleted", "transaccionId": transaccion_id}
@@ -281,7 +281,7 @@ def producto_list() -> Dict[str, Any]:
         return handlers.list_productos(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar productos: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get(f"{PRODUCTO_BASE}/{{producto_id}}")
@@ -292,7 +292,7 @@ def producto_get(producto_id: int) -> Dict[str, Any]:
         item = handlers.get_producto(gateway, producto_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al obtener producto: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="producto no encontrado")
     return item
@@ -306,7 +306,7 @@ def producto_compra_list() -> Dict[str, Any]:
         return handlers.list_productos(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar productos compra: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get(f"{PRODUCTO_COMPRA_BASE}/{{producto_id}}")
@@ -317,7 +317,7 @@ def producto_compra_get(producto_id: int) -> Dict[str, Any]:
         item = handlers.get_producto(gateway, producto_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al obtener producto compra: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="producto no encontrado")
     return item
@@ -331,7 +331,7 @@ def deposito_list() -> Dict[str, Any]:
         return handlers.list_depositos(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar depositos: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.get(f"{DEPOSITO_BASE}/{{deposito_id}}")
@@ -342,7 +342,7 @@ def deposito_get(deposito_id: int) -> Dict[str, Any]:
         item = handlers.get_deposito(gateway, deposito_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al obtener deposito: %s", exc)
-        raise HTTPException(status_code=502, detail=str(exc))
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="deposito no encontrado")
     return item

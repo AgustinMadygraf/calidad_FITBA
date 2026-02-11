@@ -16,7 +16,7 @@ from .token_client import request_with_token
 logger = get_logger(__name__)
 
 DEPOSITO_PATH = "/API/1.1/depositos"
-_GLOBAL_LIST_CACHE: Optional[Tuple[float, List[Dict[str, Any]]]] = None
+_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
 class XubioDepositoGateway(DepositoGateway):
@@ -67,12 +67,12 @@ class XubioDepositoGateway(DepositoGateway):
             raise ExternalServiceError(str(exc)) from exc
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        global _GLOBAL_LIST_CACHE
-        if _GLOBAL_LIST_CACHE is None:
+        entry = _GLOBAL_LIST_CACHE.get(DEPOSITO_PATH)
+        if entry is None:
             return None
         if self._list_cache_ttl <= 0:
             return None
-        timestamp, items = _GLOBAL_LIST_CACHE
+        timestamp, items = entry
         if time.time() - timestamp > self._list_cache_ttl:
             return None
         logger.info("Xubio lista depositos: cache hit (%d items)", len(items))
@@ -81,8 +81,7 @@ class XubioDepositoGateway(DepositoGateway):
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
         if self._list_cache_ttl <= 0:
             return
-        global _GLOBAL_LIST_CACHE
-        _GLOBAL_LIST_CACHE = (time.time(), list(items))
+        _GLOBAL_LIST_CACHE[DEPOSITO_PATH] = (time.time(), list(items))
 
     def _fallback_get_from_list(self, deposito_id: int) -> Optional[Dict[str, Any]]:
         items = self.list()

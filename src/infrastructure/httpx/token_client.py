@@ -86,8 +86,8 @@ def fetch_access_token(timeout: Optional[float] = 10.0, *, force_refresh: bool =
         raise RuntimeError("TokenEndpoint response sin access_token")
     try:
         expires_in = int(expires_in_raw)
-    except (TypeError, ValueError):
-        raise RuntimeError("TokenEndpoint response sin expires_in valido")
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("TokenEndpoint response sin expires_in valido") from exc
 
     _CACHE["access_token"] = access_token
     _CACHE["token_type"] = token_type

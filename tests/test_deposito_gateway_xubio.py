@@ -8,9 +8,9 @@ from src.use_cases.errors import ExternalServiceError
 
 @pytest.fixture(autouse=True)
 def reset_cache():
-    deposito_gateway._GLOBAL_LIST_CACHE = None
+    deposito_gateway._GLOBAL_LIST_CACHE.clear()
     yield
-    deposito_gateway._GLOBAL_LIST_CACHE = None
+    deposito_gateway._GLOBAL_LIST_CACHE.clear()
 
 
 def test_list_accepts_list_payload(monkeypatch):
