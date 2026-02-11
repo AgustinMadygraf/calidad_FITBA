@@ -69,6 +69,10 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 - `GET /API/1.1/depositos`
 - `GET /API/1.1/depositos/{id}`
 
+## Identificaciones tributarias
+- `GET /API/1.1/identificacionTributaria`
+- `GET /API/1.1/identificacionTributaria/{id}`
+
 ## Listas de precio
 - `GET /API/1.1/listaPrecioBean`
 - `GET /API/1.1/listaPrecioBean/{id}`

@@ -21,6 +21,7 @@ from ...use_cases import cliente, remito_venta
 from .deps import (
     get_cliente_gateway,
     get_deposito_gateway,
+    get_identificacion_tributaria_gateway,
     get_lista_precio_gateway,
     get_producto_compra_gateway,
     get_producto_gateway,
@@ -68,6 +69,12 @@ def _get_deposito_gateway():
     return app.deposito_gateway
 
 
+def _get_identificacion_tributaria_gateway():
+    if not hasattr(app, "identificacion_tributaria_gateway"):
+        app.identificacion_tributaria_gateway = get_identificacion_tributaria_gateway()
+    return app.identificacion_tributaria_gateway
+
+
 def _get_lista_precio_gateway():
     if not hasattr(app, "lista_precio_gateway"):
         app.lista_precio_gateway = get_lista_precio_gateway()
@@ -82,6 +89,8 @@ PRODUCTO_COMPRA_BASE = "/API/1.1/productoCompraBean"
 PRODUCTO_COMPRA_BASE_SLASH = "/API/1.1/productoCompraBean/"
 DEPOSITO_BASE = "/API/1.1/depositos"
 DEPOSITO_BASE_SLASH = "/API/1.1/depositos/"
+IDENTIFICACION_TRIBUTARIA_BASE = "/API/1.1/identificacionTributaria"
+IDENTIFICACION_TRIBUTARIA_BASE_SLASH = "/API/1.1/identificacionTributaria/"
 LISTA_PRECIO_BASE = "/API/1.1/listaPrecioBean"
 LISTA_PRECIO_BASE_SLASH = "/API/1.1/listaPrecioBean/"
 
@@ -380,6 +389,38 @@ def deposito_get(deposito_id: int) -> Dict[str, Any]:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="deposito no encontrado")
+    return item
+
+
+@app.get(IDENTIFICACION_TRIBUTARIA_BASE)
+@app.get(IDENTIFICACION_TRIBUTARIA_BASE_SLASH, include_in_schema=False)
+def identificacion_tributaria_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_identificacion_tributaria_gateway()
+        return handlers.list_identificaciones_tributarias(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar identificaciones tributarias: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get(f"{IDENTIFICACION_TRIBUTARIA_BASE}/{{identificacion_tributaria_id}}")
+@app.get(
+    f"{IDENTIFICACION_TRIBUTARIA_BASE}/{{identificacion_tributaria_id}}/",
+    include_in_schema=False,
+)
+def identificacion_tributaria_get(identificacion_tributaria_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_identificacion_tributaria_gateway()
+        item = handlers.get_identificacion_tributaria(
+            gateway, identificacion_tributaria_id
+        )
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener identificacion tributaria: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(
+            status_code=404, detail="identificacion tributaria no encontrada"
+        )
     return item
 
 

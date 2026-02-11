@@ -7,6 +7,9 @@ from ...infrastructure.httpx.producto_gateway_xubio import (
     XubioProductoGateway,
 )
 from ...infrastructure.httpx.deposito_gateway_xubio import XubioDepositoGateway
+from ...infrastructure.httpx.identificacion_tributaria_gateway_xubio import (
+    XubioIdentificacionTributariaGateway,
+)
 from ...infrastructure.httpx.lista_precio_gateway_xubio import (
     XubioListaPrecioGateway,
 )
@@ -14,6 +17,9 @@ from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
 from ...infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
 from ...infrastructure.memory.producto_gateway_memory import InMemoryProductoGateway
 from ...infrastructure.memory.deposito_gateway_memory import InMemoryDepositoGateway
+from ...infrastructure.memory.identificacion_tributaria_gateway_memory import (
+    InMemoryIdentificacionTributariaGateway,
+)
 from ...infrastructure.memory.lista_precio_gateway_memory import (
     InMemoryListaPrecioGateway,
 )
@@ -29,6 +35,7 @@ class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
     producto_gateway: object
     producto_compra_gateway: object
     deposito_gateway: object
+    identificacion_tributaria_gateway: object
     lista_precio_gateway: object
     token_gateway: object
 
@@ -71,6 +78,15 @@ def get_producto_compra_gateway():
 def get_deposito_gateway():
     gw = XubioDepositoGateway() if is_prod() else InMemoryDepositoGateway()
     logger.info("Deposito gateway: %s", gw.__class__.__name__)
+    return gw
+
+
+def get_identificacion_tributaria_gateway():
+    if is_prod():
+        gw = XubioIdentificacionTributariaGateway()
+    else:
+        gw = InMemoryIdentificacionTributariaGateway()
+    logger.info("Identificacion tributaria gateway: %s", gw.__class__.__name__)
     return gw
 
 

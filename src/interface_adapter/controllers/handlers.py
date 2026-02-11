@@ -6,6 +6,9 @@ from ...use_cases.ports.token_gateway import TokenGateway
 from ...use_cases.ports.remito_gateway import RemitoGateway
 from ...use_cases.ports.producto_gateway import ProductoGateway
 from ...use_cases.ports.deposito_gateway import DepositoGateway
+from ...use_cases.ports.identificacion_tributaria_gateway import (
+    IdentificacionTributariaGateway,
+)
 from ...use_cases.ports.lista_precio_gateway import ListaPrecioGateway
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, remito_venta, token_inspect
@@ -96,6 +99,19 @@ def get_producto(
 def list_depositos(gateway: DepositoGateway) -> Dict[str, Any]:
     items = gateway.list()
     return {"items": items}
+
+
+def list_identificaciones_tributarias(
+    gateway: IdentificacionTributariaGateway,
+) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_identificacion_tributaria(
+    gateway: IdentificacionTributariaGateway, identificacion_tributaria_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(identificacion_tributaria_id)
 
 
 def get_deposito(

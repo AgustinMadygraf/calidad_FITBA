@@ -176,7 +176,7 @@ export function renderIdentificacionTributariaSection(
 ) {
   clearTable(tableBodyNode);
   sectionNode.classList.remove("d-none");
-  titleNode.textContent = `Desglose de identificacionTributaria para cliente ${asText(
+  titleNode.textContent = `Detalle de identificacionTributaria para cliente ${asText(
     clienteDetail?.clienteId
   )}`;
 
