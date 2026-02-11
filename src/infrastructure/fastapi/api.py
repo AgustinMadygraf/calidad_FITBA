@@ -18,6 +18,7 @@ from ...use_cases import remito_venta
 from .deps import (
     get_cliente_gateway,
     get_deposito_gateway,
+    get_lista_precio_gateway,
     get_producto_compra_gateway,
     get_producto_gateway,
     get_remito_gateway,
@@ -62,6 +63,12 @@ def _get_deposito_gateway():
     return app.deposito_gateway
 
 
+def _get_lista_precio_gateway():
+    if not hasattr(app, "lista_precio_gateway"):
+        app.lista_precio_gateway = get_lista_precio_gateway()
+    return app.lista_precio_gateway
+
+
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 PRODUCTO_BASE = "/API/1.1/productoVentaBean"
@@ -70,6 +77,8 @@ PRODUCTO_COMPRA_BASE = "/API/1.1/productoCompraBean"
 PRODUCTO_COMPRA_BASE_SLASH = "/API/1.1/productoCompraBean/"
 DEPOSITO_BASE = "/API/1.1/depositos"
 DEPOSITO_BASE_SLASH = "/API/1.1/depositos/"
+LISTA_PRECIO_BASE = "/API/1.1/listaPrecioBean"
+LISTA_PRECIO_BASE_SLASH = "/API/1.1/listaPrecioBean/"
 
 
 @app.get("/")
@@ -216,6 +225,7 @@ def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
             cliente_gateway=cliente_gateway,
             producto_gateway=producto_gateway,
             deposito_gateway=_get_deposito_gateway(),
+            lista_precio_gateway=_get_lista_precio_gateway(),
         )
         return handlers.create_remito(gateway, deps, data)
     except ValueError as exc:
@@ -252,6 +262,7 @@ def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, An
             cliente_gateway=cliente_gateway,
             producto_gateway=producto_gateway,
             deposito_gateway=_get_deposito_gateway(),
+            lista_precio_gateway=_get_lista_precio_gateway(),
         )
         item = handlers.update_remito(gateway, transaccion_id, deps, data)
     except ValueError as exc:
@@ -351,6 +362,31 @@ def deposito_get(deposito_id: int) -> Dict[str, Any]:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="deposito no encontrado")
+    return item
+
+
+@app.get(LISTA_PRECIO_BASE)
+@app.get(LISTA_PRECIO_BASE_SLASH, include_in_schema=False)
+def lista_precio_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_lista_precio_gateway()
+        return handlers.list_lista_precios(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar listas de precio: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}")
+@app.get(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}/", include_in_schema=False)
+def lista_precio_get(lista_precio_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_lista_precio_gateway()
+        item = handlers.get_lista_precio(gateway, lista_precio_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener lista de precio: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="lista de precio no encontrada")
     return item
 
 

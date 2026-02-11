@@ -5,14 +5,11 @@ Path: src/infrastructure/httpx/deposito_gateway_xubio.py
 from typing import Any, Dict, List, Optional, Tuple
 
 import time
-import httpx
 
 from ...use_cases.ports.deposito_gateway import DepositoGateway
 from ...shared.logger import get_logger
-from ...use_cases.errors import ExternalServiceError
-from .token_client import request_with_token
 from .xubio_cache_helpers import read_cache_ttl
-from .xubio_httpx_helpers import extract_list, raise_for_status
+from .xubio_crud_helpers import get_item_with_fallback, list_items
 
 logger = get_logger(__name__)
 
@@ -41,35 +38,20 @@ class XubioDepositoGateway(DepositoGateway):
         if cached is not None:
             return cached
         url = self._url(DEPOSITO_PATH)
-        try:
-            resp = request_with_token("GET", url, timeout=self._timeout)
-            logger.info("Xubio GET %s -> %s", url, resp.status_code)
-            items = extract_list(resp, label="depositos")
-            logger.info("Xubio lista depositos: %d items", len(items))
-            self._store_cache(items)
-            return items
-        except httpx.HTTPError as exc:
-            raise ExternalServiceError(str(exc)) from exc
+        items = list_items(
+            url=url, timeout=self._timeout, label="depositos", logger=logger
+        )
+        self._store_cache(items)
+        return items
 
     def get(self, deposito_id: int) -> Optional[Dict[str, Any]]:
         url = self._url(f"{DEPOSITO_PATH}/{deposito_id}")
-        result: Optional[Dict[str, Any]] = None
-        try:
-            resp = request_with_token("GET", url, timeout=self._timeout)
-            logger.info("Xubio GET %s -> %s", url, resp.status_code)
-            if resp.status_code == 404 or resp.status_code >= 500:
-                logger.warning(
-                    "Xubio GET %s failed with %s, falling back to list lookup",
-                    url,
-                    resp.status_code,
-                )
-                result = self._fallback_get_from_list(deposito_id)
-            else:
-                raise_for_status(resp)
-                result = resp.json()
-        except httpx.HTTPError as exc:
-            raise ExternalServiceError(str(exc)) from exc
-        return result
+        return get_item_with_fallback(
+            url=url,
+            timeout=self._timeout,
+            logger=logger,
+            fallback=lambda: self._fallback_get_from_list(deposito_id),
+        )
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
         cached: Optional[List[Dict[str, Any]]] = None

@@ -2,7 +2,7 @@
 Path: src/infrastructure/httpx/xubio_crud_helpers.py
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import httpx
 
@@ -34,6 +34,34 @@ def get_item(*, url: str, timeout: float, logger: Any) -> Optional[Dict[str, Any
         return resp.json()
     except httpx.HTTPError as exc:
         raise ExternalServiceError(str(exc)) from exc
+
+
+def get_item_with_fallback(
+    *,
+    url: str,
+    timeout: float,
+    logger: Any,
+    fallback: Callable[[], Optional[Dict[str, Any]]],
+) -> Optional[Dict[str, Any]]:
+    result: Optional[Dict[str, Any]] = None
+    try:
+        resp = request_with_token("GET", url, timeout=timeout)
+        logger.info("Xubio GET %s -> %s", url, resp.status_code)
+        if resp.status_code == 404:
+            result = None
+        elif resp.status_code >= 500:
+            logger.warning(
+                "Xubio GET %s failed with %s, falling back to list lookup",
+                url,
+                resp.status_code,
+            )
+            result = fallback()
+        else:
+            raise_for_status(resp)
+            result = resp.json()
+    except httpx.HTTPError as exc:
+        raise ExternalServiceError(str(exc)) from exc
+    return result
 
 
 def create_item(
