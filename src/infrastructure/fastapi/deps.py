@@ -18,7 +18,7 @@ from ...shared.logger import get_logger
 logger = get_logger(__name__)
 
 
-class Dependencies(Protocol):
+class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
     cliente_gateway: object
     producto_gateway: object
     producto_compra_gateway: object

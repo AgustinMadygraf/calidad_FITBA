@@ -4,7 +4,6 @@ Path: src/infrastructure/httpx/deposito_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
-import os
 import time
 import httpx
 
@@ -12,6 +11,8 @@ from ...use_cases.ports.deposito_gateway import DepositoGateway
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .token_client import request_with_token
+from .xubio_cache_helpers import read_cache_ttl
+from .xubio_httpx_helpers import extract_list, raise_for_status
 
 logger = get_logger(__name__)
 
@@ -29,7 +30,7 @@ class XubioDepositoGateway(DepositoGateway):
         self._base_url = (base_url or "https://xubio.com").rstrip("/")
         self._timeout = timeout
         if list_cache_ttl is None:
-            list_cache_ttl = _read_cache_ttl()
+            list_cache_ttl = read_cache_ttl("XUBIO_DEPOSITO_LIST_TTL")
         self._list_cache_ttl = list_cache_ttl
 
     def _url(self, path: str) -> str:
@@ -43,7 +44,8 @@ class XubioDepositoGateway(DepositoGateway):
         try:
             resp = request_with_token("GET", url, timeout=self._timeout)
             logger.info("Xubio GET %s -> %s", url, resp.status_code)
-            items = _extract_list(resp)
+            items = extract_list(resp, label="depositos")
+            logger.info("Xubio lista depositos: %d items", len(items))
             self._store_cache(items)
             return items
         except httpx.HTTPError as exc:
@@ -61,7 +63,7 @@ class XubioDepositoGateway(DepositoGateway):
                     resp.status_code,
                 )
                 return self._fallback_get_from_list(deposito_id)
-            _raise_for_status(resp)
+            raise_for_status(resp)
             return resp.json()
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
@@ -91,37 +93,9 @@ class XubioDepositoGateway(DepositoGateway):
         return None
 
 
-def _raise_for_status(resp: httpx.Response) -> None:
-    if resp.status_code >= 400:
-        raise ExternalServiceError(f"Xubio error {resp.status_code}: {resp.text}")
-
-
-def _extract_list(resp: httpx.Response) -> List[Dict[str, Any]]:
-    _raise_for_status(resp)
-    payload = resp.json()
-    if isinstance(payload, list):
-        logger.info("Xubio lista depositos: %d items (list)", len(payload))
-        return payload
-    if isinstance(payload, dict) and isinstance(payload.get("items"), list):
-        logger.info("Xubio lista depositos: %d items (items)", len(payload["items"]))
-        return payload["items"]
-    raise ExternalServiceError("Respuesta inesperada al listar depositos")
-
-
 def _match_deposito_id(item: Dict[str, Any], deposito_id: int) -> bool:
     for key in ("ID", "id", "depositoId"):
         value = item.get(key)
         if value == deposito_id:
             return True
     return False
-
-
-def _read_cache_ttl() -> float:
-    raw = os.getenv("XUBIO_DEPOSITO_LIST_TTL", "").strip()
-    if not raw:
-        return 60.0
-    try:
-        value = float(raw)
-    except ValueError:
-        return 60.0
-    return value

@@ -14,9 +14,6 @@ class LevelPrefixFormatter(logging.Formatter):
         return super().format(record)
 
 
-_configured = False
-
-
 def _build_logging_config(level: Union[int, str]) -> Dict[str, object]:
     return {
         "version": 1,
@@ -41,12 +38,12 @@ def _build_logging_config(level: Union[int, str]) -> Dict[str, object]:
 
 
 def configure_logging(level: Union[int, str] = logging.INFO) -> None:
-    global _configured
-    if _configured:
-        logging.getLogger().setLevel(level)
+    root = logging.getLogger()
+    if root.handlers:
+        root.setLevel(level)
         return
     logging.config.dictConfig(_build_logging_config(level))
-    _configured = True
+    root.setLevel(level)
 
 
 def get_logger(

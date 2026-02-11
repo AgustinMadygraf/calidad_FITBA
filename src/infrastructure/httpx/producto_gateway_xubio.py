@@ -5,7 +5,6 @@ Path: src/infrastructure/httpx/producto_gateway_xubio.py
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-import os
 import time
 import httpx
 
@@ -13,6 +12,8 @@ from ...use_cases.ports.producto_gateway import ProductoGateway
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .token_client import request_with_token
+from .xubio_cache_helpers import read_cache_ttl
+from .xubio_httpx_helpers import extract_list, raise_for_status
 
 logger = get_logger(__name__)
 
@@ -46,7 +47,7 @@ class XubioProductoGateway(ProductoGateway):
             fallback_bean = None
         self._fallback_bean = fallback_bean
         if list_cache_ttl is None:
-            list_cache_ttl = _read_cache_ttl()
+            list_cache_ttl = read_cache_ttl("XUBIO_PRODUCTO_LIST_TTL")
         self._list_cache_ttl = list_cache_ttl
 
     def _url(self, path: str) -> str:
@@ -96,7 +97,9 @@ class XubioProductoGateway(ProductoGateway):
                     fallback_bean,
                 )
                 return self._fetch_list_with_fallback(fallback_bean, None)
-            return _extract_list(resp), bean
+            items = extract_list(resp, label="productos")
+            logger.info("Xubio lista productos: %d items", len(items))
+            return items, bean
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
 
@@ -133,7 +136,7 @@ class XubioProductoGateway(ProductoGateway):
                     resp.status_code,
                 )
                 return "error", None
-            _raise_for_status(resp)
+            raise_for_status(resp)
             return "ok", resp.json()
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
@@ -148,37 +151,9 @@ class XubioProductoGateway(ProductoGateway):
         return None
 
 
-def _raise_for_status(resp: httpx.Response) -> None:
-    if resp.status_code >= 400:
-        raise ExternalServiceError(f"Xubio error {resp.status_code}: {resp.text}")
-
-
-def _extract_list(resp: httpx.Response) -> List[Dict[str, Any]]:
-    _raise_for_status(resp)
-    payload = resp.json()
-    if isinstance(payload, list):
-        logger.info("Xubio lista productos: %d items (list)", len(payload))
-        return payload
-    if isinstance(payload, dict) and isinstance(payload.get("items"), list):
-        logger.info("Xubio lista productos: %d items (items)", len(payload["items"]))
-        return payload["items"]
-    raise ExternalServiceError("Respuesta inesperada al listar productos")
-
-
 def _match_producto_id(item: Dict[str, Any], producto_id: int) -> bool:
     for key in ("productoid", "productoId", "ID", "id"):
         value = item.get(key)
         if value == producto_id:
             return True
     return False
-
-
-def _read_cache_ttl() -> float:
-    raw = os.getenv("XUBIO_PRODUCTO_LIST_TTL", "").strip()
-    if not raw:
-        return 60.0
-    try:
-        value = float(raw)
-    except ValueError:
-        return 60.0
-    return value

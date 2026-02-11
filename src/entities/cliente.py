@@ -3,24 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
-
-@dataclass
-class SimpleItem:
-    ID: Optional[int] = None
-    nombre: Optional[str] = None
-    codigo: Optional[str] = None
-    id: Optional[int] = None
-
-    @classmethod
-    def from_dict(cls, data: Optional[Dict[str, Any]]) -> Optional["SimpleItem"]:
-        if not data:
-            return None
-        return cls(
-            ID=data.get("ID"),
-            nombre=data.get("nombre"),
-            codigo=data.get("codigo"),
-            id=data.get("id"),
-        )
+from .common import SimpleItem, drop_none
 
 
 @dataclass
@@ -43,7 +26,7 @@ class Provincia:
 
 
 @dataclass
-class Cliente:
+class Cliente:  # pylint: disable=too-many-instance-attributes
     cliente_id: Optional[int] = None
     nombre: Optional[str] = None
     primerApellido: Optional[str] = None
@@ -118,13 +101,5 @@ class Cliente:
     def to_dict(self, *, exclude_none: bool = False) -> Dict[str, Any]:
         data = asdict(self)
         if exclude_none:
-            return _drop_none(data)
+            return drop_none(data)
         return data
-
-
-def _drop_none(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {k: _drop_none(v) for k, v in value.items() if v is not None}
-    if isinstance(value, list):
-        return [_drop_none(v) for v in value]
-    return value

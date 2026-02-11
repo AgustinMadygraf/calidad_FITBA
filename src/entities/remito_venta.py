@@ -4,30 +4,11 @@ from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Any, Dict, List, Optional
 
-
-@dataclass
-class SimpleItem:
-    ID: Optional[int] = None
-    nombre: Optional[str] = None
-    codigo: Optional[str] = None
-    productoid: Optional[int] = None
-    id: Optional[int] = None
-
-    @classmethod
-    def from_dict(cls, data: Optional[Dict[str, Any]]) -> Optional["SimpleItem"]:
-        if not data:
-            return None
-        return cls(
-            ID=data.get("ID"),
-            nombre=data.get("nombre"),
-            codigo=data.get("codigo"),
-            productoid=data.get("productoid") or data.get("productoId"),
-            id=data.get("id"),
-        )
+from .common import SimpleItem, drop_none
 
 
 @dataclass
-class TransaccionProductoItem:
+class TransaccionProductoItem:  # pylint: disable=too-many-instance-attributes
     transaccionCVItemId: Optional[int] = None
     precioconivaincluido: Optional[float] = None
     transaccionId: Optional[int] = None
@@ -72,7 +53,7 @@ class TransaccionProductoItem:
 
 
 @dataclass
-class RemitoVenta:
+class RemitoVenta:  # pylint: disable=too-many-instance-attributes
     transaccionId: Optional[int] = None
     clienteId: Optional[int] = None
     numeroRemito: Optional[str] = None
@@ -115,7 +96,7 @@ class RemitoVenta:
     def to_dict(self, *, exclude_none: bool = False) -> Dict[str, Any]:
         data = asdict(self)
         if exclude_none:
-            return _drop_none(data)
+            return drop_none(data)
         return data
 
     def validate(self) -> None:
@@ -129,14 +110,6 @@ class RemitoVenta:
             _validate_non_negative(item.total, "total")
             _validate_non_negative(item.montoExento, "montoExento")
             _validate_non_negative(item.porcentajeDescuento, "porcentajeDescuento")
-
-
-def _drop_none(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {k: _drop_none(v) for k, v in value.items() if v is not None}
-    if isinstance(value, list):
-        return [_drop_none(v) for v in value]
-    return value
 
 
 def _validate_fecha(value: Optional[str]) -> None:
