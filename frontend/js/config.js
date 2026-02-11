@@ -5,9 +5,9 @@ export const API_ENDPOINTS = {
 
 export const REMITO_COLUMNS = [
   { key: "transaccionId", linkType: "transaccion" },
-  { key: "numeroRemito" },
+  { key: "numeroRemito", className: "text-nowrap" },
   { key: "fecha", className: "text-nowrap" },
-  { key: "observacion" },
+  { key: "observacion", className: "remito-observacion" },
   { key: "clienteId", linkType: "cliente" },
   { key: "comisionVendedor" },
   { key: "depositoId" },
@@ -34,7 +34,10 @@ export const CLIENTE_COLUMNS = [
       cliente?.identificacionTributaria?.ID ??
       cliente?.identificacionTributaria?.id
   },
-  { key: "categoriaFiscal" },
+  {
+    key: "categoriaFiscal",
+    getValue: (cliente) => cliente?.categoriaFiscal?.ID ?? cliente?.categoriaFiscal?.id
+  },
   { key: "cuit" },
   { key: "CUIT" },
   { key: "responsabilidadOrganizacionItem" },
@@ -52,6 +55,13 @@ export const CLIENTE_COLUMNS = [
 ];
 
 export const IDENTIFICACION_TRIBUTARIA_COLUMNS = [
+  { key: "ID" },
+  { key: "nombre" },
+  { key: "codigo" },
+  { key: "id" }
+];
+
+export const CATEGORIA_FISCAL_COLUMNS = [
   { key: "ID" },
   { key: "nombre" },
   { key: "codigo" },
@@ -93,5 +103,6 @@ export const UI_MESSAGES = {
   clienteNotFound: "No se encontro el cliente para el id seleccionado.",
   clienteLoadError: "No se pudo cargar el cliente seleccionado.",
   identificacionTributariaNotFound:
-    "El cliente no tiene datos de identificacionTributaria."
+    "El cliente no tiene datos de identificacionTributaria.",
+  categoriaFiscalNotFound: "El cliente no tiene datos de categoriaFiscal."
 };

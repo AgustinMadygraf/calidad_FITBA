@@ -10,6 +10,19 @@
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
   >
+  <style>
+    #remito-table {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    #remito-table .remito-observacion {
+      max-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
 </head>
 <body>
   <main class="container py-5">
@@ -153,6 +166,30 @@
               </tr>
             </thead>
             <tbody id="identificacion-tributaria-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card shadow-sm mt-4 d-none" id="categoria-fiscal-section">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3" id="categoria-fiscal-title">
+          Detalle de categoriaFiscal
+        </h2>
+        <div class="table-responsive">
+          <table
+            class="table table-striped table-hover align-middle mb-0"
+            id="categoria-fiscal-table"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">nombre</th>
+                <th scope="col">codigo</th>
+                <th scope="col">id</th>
+              </tr>
+            </thead>
+            <tbody id="categoria-fiscal-table-body"></tbody>
           </table>
         </div>
       </div>

@@ -216,3 +216,50 @@ export function renderIdentificacionTributariaSection(
 
   appendMessageRow(tableBodyNode, uiMessages.clienteLoadError, columns.length);
 }
+
+export function renderCategoriaFiscalSection(
+  sectionNode,
+  titleNode,
+  tableBodyNode,
+  clienteDetail,
+  columns,
+  uiMessages
+) {
+  clearTable(tableBodyNode);
+  sectionNode.classList.remove("d-none");
+  titleNode.textContent = `Detalle de categoriaFiscal para cliente ${asText(
+    clienteDetail?.clienteId
+  )}`;
+
+  if (clienteDetail?.status === "loading") {
+    appendMessageRow(tableBodyNode, uiMessages.clienteLoading, columns.length);
+    return;
+  }
+
+  if (clienteDetail?.status === "not_found") {
+    appendMessageRow(tableBodyNode, uiMessages.clienteNotFound, columns.length);
+    return;
+  }
+
+  if (clienteDetail?.status === "error") {
+    const message = clienteDetail.errorMessage || uiMessages.clienteLoadError;
+    appendMessageRow(tableBodyNode, message, columns.length);
+    return;
+  }
+
+  if (clienteDetail?.status === "ready" && clienteDetail.data) {
+    const categoriaFiscal = clienteDetail.data.categoriaFiscal;
+    if (
+      categoriaFiscal &&
+      typeof categoriaFiscal === "object" &&
+      !Array.isArray(categoriaFiscal)
+    ) {
+      appendDataRow(tableBodyNode, categoriaFiscal, columns);
+      return;
+    }
+    appendMessageRow(tableBodyNode, uiMessages.categoriaFiscalNotFound, columns.length);
+    return;
+  }
+
+  appendMessageRow(tableBodyNode, uiMessages.clienteLoadError, columns.length);
+}

@@ -1,4 +1,5 @@
 import {
+  CATEGORIA_FISCAL_COLUMNS,
   CLIENTE_COLUMNS,
   IDENTIFICACION_TRIBUTARIA_COLUMNS,
   ITEM_COLUMNS,
@@ -27,6 +28,7 @@ import { getDomRefs } from "../ui/dom.js";
 import {
   hideDetailSection,
   renderBanner,
+  renderCategoriaFiscalSection,
   renderClienteSection,
   renderIdentificacionTributariaSection,
   renderItemSection,
@@ -70,11 +72,20 @@ function renderView() {
         IDENTIFICACION_TRIBUTARIA_COLUMNS,
         UI_MESSAGES
       );
+      renderCategoriaFiscalSection(
+        domRefs.categoriaFiscalSection,
+        domRefs.categoriaFiscalTitle,
+        domRefs.categoriaFiscalTableBody,
+        state.clienteDetail,
+        CATEGORIA_FISCAL_COLUMNS,
+        UI_MESSAGES
+      );
     } else {
       hideDetailSection(
         domRefs.identificacionTributariaSection,
         domRefs.identificacionTributariaTableBody
       );
+      hideDetailSection(domRefs.categoriaFiscalSection, domRefs.categoriaFiscalTableBody);
     }
     return;
   }
@@ -119,12 +130,21 @@ function renderView() {
       IDENTIFICACION_TRIBUTARIA_COLUMNS,
       UI_MESSAGES
     );
+    renderCategoriaFiscalSection(
+      domRefs.categoriaFiscalSection,
+      domRefs.categoriaFiscalTitle,
+      domRefs.categoriaFiscalTableBody,
+      state.clienteDetail,
+      CATEGORIA_FISCAL_COLUMNS,
+      UI_MESSAGES
+    );
   } else {
     hideDetailSection(domRefs.clienteSection, domRefs.clienteTableBody);
     hideDetailSection(
       domRefs.identificacionTributariaSection,
       domRefs.identificacionTributariaTableBody
     );
+    hideDetailSection(domRefs.categoriaFiscalSection, domRefs.categoriaFiscalTableBody);
   }
 }
 

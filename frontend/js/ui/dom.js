@@ -25,6 +25,9 @@ export function getDomRefs() {
     identificacionTributariaTitle: getById("identificacion-tributaria-title"),
     identificacionTributariaTableBody: getById(
       "identificacion-tributaria-table-body"
-    )
+    ),
+    categoriaFiscalSection: getById("categoria-fiscal-section"),
+    categoriaFiscalTitle: getById("categoria-fiscal-title"),
+    categoriaFiscalTableBody: getById("categoria-fiscal-table-body")
   };
 }
