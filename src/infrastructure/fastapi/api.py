@@ -14,7 +14,7 @@ from ...interface_adapter.schemas.remito_venta import RemitoVentaPayload
 from ...shared.config import is_prod, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
-from ...use_cases import remito_venta
+from ...use_cases import cliente, remito_venta
 from .deps import (
     get_cliente_gateway,
     get_deposito_gateway,
@@ -144,7 +144,10 @@ def cliente_create(body: ClientePayload) -> Dict[str, Any]:
     try:
         data = body.model_dump(exclude_none=True)
         gateway = _get_cliente_gateway()
-        return handlers.create_cliente(gateway, data)
+        deps = cliente.ClienteDependencies(
+            lista_precio_gateway=_get_lista_precio_gateway()
+        )
+        return handlers.create_cliente(gateway, deps, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ExternalServiceError as exc:
@@ -173,7 +176,10 @@ def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
     try:
         data = body.model_dump(exclude_none=True)
         gateway = _get_cliente_gateway()
-        item = handlers.update_cliente(gateway, cliente_id, data)
+        deps = cliente.ClienteDependencies(
+            lista_precio_gateway=_get_lista_precio_gateway()
+        )
+        item = handlers.update_cliente(gateway, cliente_id, deps, data)
     except ExternalServiceError as exc:
         logger.error("Gateway error al actualizar cliente: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
