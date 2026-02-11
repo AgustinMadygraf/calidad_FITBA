@@ -2,8 +2,10 @@
 Path: src/infrastructure/fastapi/api.py
 """
 
+import os
 from typing import Any, Dict
 
+import uvicorn
 from fastapi import HTTPException
 
 from ...interface_adapter.controllers import handlers
@@ -349,9 +351,6 @@ def deposito_get(deposito_id: int) -> Dict[str, Any]:
 
 
 def run() -> None:
-    import os
-    import uvicorn
-
     port = int(os.getenv("PORT", "8000"))
     logger.info("Iniciando FastAPI en 0.0.0.0:%d", port)
     uvicorn.run("src.infrastructure.fastapi.api:app", host="0.0.0.0", port=port, reload=True)

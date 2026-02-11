@@ -2,6 +2,11 @@ import base64
 import os
 from pathlib import Path
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
 
 def build_xubio_token() -> str:
     """
@@ -24,9 +29,7 @@ def load_env(env_path: Path | None = None) -> bool:
         env_path = Path(__file__).resolve().parents[2] / ".env"
     if not env_path.exists():
         return False
-    try:
-        from dotenv import load_dotenv
-    except ImportError:
+    if load_dotenv is None:
         return False
     load_dotenv(env_path)
     return True

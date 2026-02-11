@@ -10,6 +10,7 @@ import httpx
 
 from ...shared.config import build_xubio_token
 
+DEFAULT_TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
 _CACHE: Dict[str, Any] = {
     "access_token": None,
     "token_type": None,
@@ -32,7 +33,7 @@ def build_auth_header() -> str:
 
 
 def get_token_endpoint() -> str:
-    return os.getenv("XUBIO_TOKEN_ENDPOINT", "https://xubio.com/API/1.1/TokenEndpoint")
+    return os.getenv("XUBIO_TOKEN_ENDPOINT", DEFAULT_TOKEN_ENDPOINT)
 
 
 def _now() -> int:
@@ -51,7 +52,9 @@ def _preview_token(token: str, head: int = 6, tail: int = 4) -> str:
     return f"{token[:head]}...{token[-tail:]}"
 
 
-def fetch_access_token(timeout: Optional[float] = 10.0, *, force_refresh: bool = False) -> Dict[str, Any]:
+def fetch_access_token(
+    timeout: Optional[float] = 10.0, *, force_refresh: bool = False
+) -> Dict[str, Any]:
     if not force_refresh and _cache_valid():
         remaining = max(0, int(_CACHE["expires_at"] - _now()))
         return {
