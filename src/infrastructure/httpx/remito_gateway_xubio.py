@@ -34,6 +34,13 @@ class XubioRemitoGateway(RemitoGateway):
             logger.info("Xubio GET %s -> %s", url, resp.status_code)
             if resp.status_code == 404:
                 return None
+            if resp.status_code >= 500:
+                logger.warning(
+                    "Xubio GET %s failed with %s, falling back to list lookup",
+                    url,
+                    resp.status_code,
+                )
+                return self._fallback_get_from_list(transaccion_id)
             _raise_for_status(resp)
             return resp.json()
         except httpx.HTTPError as exc:
@@ -72,6 +79,19 @@ class XubioRemitoGateway(RemitoGateway):
             return True
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
+
+    def _fallback_get_from_list(self, transaccion_id: int) -> Optional[Dict[str, Any]]:
+        url = self._url("/API/1.1/remitoVentaBean")
+        try:
+            resp = request_with_token("GET", url, timeout=self._timeout)
+            logger.info("Xubio GET %s -> %s", url, resp.status_code)
+            items = _extract_list(resp)
+        except httpx.HTTPError as exc:
+            raise ExternalServiceError(str(exc)) from exc
+        for item in items:
+            if item.get("transaccionId") == transaccion_id:
+                return item
+        return None
 
 
 def _raise_for_status(resp: httpx.Response) -> None:
