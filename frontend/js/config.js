@@ -6,7 +6,7 @@ export const API_ENDPOINTS = {
 export const REMITO_COLUMNS = [
   { key: "transaccionId", linkType: "transaccion" },
   { key: "numeroRemito" },
-  { key: "fecha" },
+  { key: "fecha", className: "text-nowrap" },
   { key: "observacion" },
   { key: "clienteId", linkType: "cliente" },
   { key: "comisionVendedor" },

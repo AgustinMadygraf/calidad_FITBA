@@ -34,6 +34,9 @@ function appendDataRow(tableBody, data, columns) {
 
   columns.forEach((column) => {
     const cell = document.createElement("td");
+    if (column.className) {
+      cell.classList.add(...String(column.className).split(/\s+/).filter(Boolean));
+    }
     const value = resolveValue(data, column);
 
     if (column.linkType === "transaccion" && value !== undefined && value !== null) {
