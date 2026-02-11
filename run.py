@@ -21,11 +21,12 @@ def main() -> int:
         elif arg == "--IS_PROD" and idx + 1 < len(argv):
             os.environ["IS_PROD"] = argv[idx + 1]
 
+    host = os.getenv("HOST", "localhost")
     port = int(os.getenv("PORT", "8000"))
-    logger.info("Iniciando FastAPI en 0.0.0.0:%d", port)
+    logger.info("Iniciando FastAPI en %s:%d", host, port)
     uvicorn.run(
         "src.infrastructure.fastapi.api:app",
-        host="0.0.0.0",
+        host=host,
         port=port,
         reload=True,
     )

@@ -85,7 +85,7 @@ Modo en servidor:
 ## Ejecutar servidor
 
 ```bash
-uvicorn src.infrastructure.fastapi.api:app --reload --port 8000
+uvicorn src.infrastructure.fastapi.api:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ```bash

@@ -3,10 +3,13 @@ Path: src/infrastructure/fastapi/api.py
 """
 
 import os
+from pathlib import Path
 from typing import Any, Dict
 
 import uvicorn
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from ...interface_adapter.controllers import handlers
 from ...interface_adapter.schemas.cliente import ClientePayload
@@ -31,6 +34,8 @@ logger = get_logger(__name__)
 
 load_env()
 token_gateway = get_token_gateway()
+FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
+FRONTEND_INDEX = FRONTEND_DIR / "index.html"
 
 
 def _get_cliente_gateway():
@@ -81,9 +86,16 @@ LISTA_PRECIO_BASE = "/API/1.1/listaPrecioBean"
 LISTA_PRECIO_BASE_SLASH = "/API/1.1/listaPrecioBean/"
 
 
-@app.get("/")
-def root() -> Dict[str, str]:
+@app.get("/", include_in_schema=False)
+def root():
+    if FRONTEND_INDEX.exists():
+        return FileResponse(FRONTEND_INDEX)
     return handlers.root()
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    return Response(status_code=204)
 
 
 @app.get("/health")
@@ -396,11 +408,18 @@ def lista_precio_get(lista_precio_id: int) -> Dict[str, Any]:
     return item
 
 
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+else:
+    logger.warning("Directorio frontend no encontrado: %s", FRONTEND_DIR)
+
+
 def run() -> None:
+    host = os.getenv("HOST", "localhost")
     port = int(os.getenv("PORT", "8000"))
-    logger.info("Iniciando FastAPI en 0.0.0.0:%d", port)
+    logger.info("Iniciando FastAPI en %s:%d", host, port)
     uvicorn.run(
-        "src.infrastructure.fastapi.api:app", host="0.0.0.0", port=port, reload=True
+        "src.infrastructure.fastapi.api:app", host=host, port=port, reload=True
     )
 
 
