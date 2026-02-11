@@ -12,7 +12,13 @@ from ...interface_adapter.schemas.remito_venta import RemitoVentaPayload
 from ...shared.config import is_prod, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
-from .deps import get_cliente_gateway, get_producto_gateway, get_remito_gateway, get_token_gateway
+from .deps import (
+    get_cliente_gateway,
+    get_producto_compra_gateway,
+    get_producto_gateway,
+    get_remito_gateway,
+    get_token_gateway,
+)
 from .app import app
 
 logger = get_logger(__name__)
@@ -38,10 +44,18 @@ def _get_producto_gateway():
     if not hasattr(app, "producto_gateway"):
         app.producto_gateway = get_producto_gateway()
     return app.producto_gateway
+
+
+def _get_producto_compra_gateway():
+    if not hasattr(app, "producto_compra_gateway"):
+        app.producto_compra_gateway = get_producto_compra_gateway()
+    return app.producto_compra_gateway
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 PRODUCTO_BASE = "/API/1.1/productoVentaBean"
 PRODUCTO_BASE_SLASH = "/API/1.1/productoVentaBean/"
+PRODUCTO_COMPRA_BASE = "/API/1.1/productoCompraBean"
+PRODUCTO_COMPRA_BASE_SLASH = "/API/1.1/productoCompraBean/"
 
 
 @app.get("/")
@@ -258,6 +272,31 @@ def producto_get(producto_id: int) -> Dict[str, Any]:
         item = handlers.get_producto(gateway, producto_id)
     except ExternalServiceError as exc:
         logger.error("Gateway error al obtener producto: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    if item is None:
+        raise HTTPException(status_code=404, detail="producto no encontrado")
+    return item
+
+
+@app.get(PRODUCTO_COMPRA_BASE)
+@app.get(PRODUCTO_COMPRA_BASE_SLASH, include_in_schema=False)
+def producto_compra_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_producto_compra_gateway()
+        return handlers.list_productos(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar productos compra: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.get(f"{PRODUCTO_COMPRA_BASE}/{{producto_id}}")
+@app.get(f"{PRODUCTO_COMPRA_BASE}/{{producto_id}}/", include_in_schema=False)
+def producto_compra_get(producto_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_producto_compra_gateway()
+        item = handlers.get_producto(gateway, producto_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener producto compra: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))
     if item is None:
         raise HTTPException(status_code=404, detail="producto no encontrado")

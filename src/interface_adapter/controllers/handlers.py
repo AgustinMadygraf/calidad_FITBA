@@ -5,7 +5,6 @@ from ...entities.remito_venta import RemitoVenta
 from ...use_cases.ports.token_gateway import TokenGateway
 from ...use_cases.ports.remito_gateway import RemitoGateway
 from ...use_cases.ports.producto_gateway import ProductoGateway
-from ...use_cases.ports.producto_gateway import ProductoGateway
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, remito_venta, token_inspect
 from ...use_cases.ports.cliente_gateway import ClienteGateway

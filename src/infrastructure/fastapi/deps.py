@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 class Dependencies(Protocol):
     cliente_gateway: object
     producto_gateway: object
+    producto_compra_gateway: object
     token_gateway: object
 
 
@@ -38,4 +39,13 @@ def get_remito_gateway():
 def get_producto_gateway():
     gw = XubioProductoGateway() if is_prod() else InMemoryProductoGateway()
     logger.info("Producto gateway: %s", gw.__class__.__name__)
+    return gw
+
+
+def get_producto_compra_gateway():
+    if is_prod():
+        gw = XubioProductoGateway(primary_bean="ProductoCompraBean", fallback_bean=None)
+    else:
+        gw = InMemoryProductoGateway()
+    logger.info("Producto compra gateway: %s", gw.__class__.__name__)
     return gw
