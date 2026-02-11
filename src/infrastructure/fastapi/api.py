@@ -12,7 +12,7 @@ from ...interface_adapter.schemas.remito_venta import RemitoVentaPayload
 from ...shared.config import is_prod, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
-from .deps import get_cliente_gateway, get_remito_gateway, get_token_gateway
+from .deps import get_cliente_gateway, get_producto_gateway, get_remito_gateway, get_token_gateway
 from .app import app
 
 logger = get_logger(__name__)
@@ -32,8 +32,16 @@ def _get_remito_gateway():
     if not hasattr(app, "remito_gateway"):
         app.remito_gateway = get_remito_gateway()
     return app.remito_gateway
+
+
+def _get_producto_gateway():
+    if not hasattr(app, "producto_gateway"):
+        app.producto_gateway = get_producto_gateway()
+    return app.producto_gateway
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
+PRODUCTO_BASE = "/API/1.1/productoVentaBean"
+PRODUCTO_BASE_SLASH = "/API/1.1/productoVentaBean/"
 
 
 @app.get("/")
@@ -173,7 +181,8 @@ def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
         data = body.model_dump(exclude_none=True)
         gateway = _get_remito_gateway()
         cliente_gateway = _get_cliente_gateway()
-        return handlers.create_remito(gateway, cliente_gateway, data)
+        producto_gateway = _get_producto_gateway()
+        return handlers.create_remito(gateway, cliente_gateway, producto_gateway, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except ExternalServiceError as exc:
@@ -203,7 +212,8 @@ def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, An
         data = body.model_dump(exclude_none=True)
         gateway = _get_remito_gateway()
         cliente_gateway = _get_cliente_gateway()
-        item = handlers.update_remito(gateway, cliente_gateway, transaccion_id, data)
+        producto_gateway = _get_producto_gateway()
+        item = handlers.update_remito(gateway, cliente_gateway, producto_gateway, transaccion_id, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except ExternalServiceError as exc:
@@ -227,6 +237,31 @@ def remito_delete(transaccion_id: int) -> Dict[str, Any]:
     if not ok:
         raise HTTPException(status_code=404, detail="remito no encontrado")
     return {"status": "deleted", "transaccionId": transaccion_id}
+
+
+@app.get(PRODUCTO_BASE)
+@app.get(PRODUCTO_BASE_SLASH, include_in_schema=False)
+def producto_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_producto_gateway()
+        return handlers.list_productos(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar productos: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.get(f"{PRODUCTO_BASE}/{{producto_id}}")
+@app.get(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+def producto_get(producto_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_producto_gateway()
+        item = handlers.get_producto(gateway, producto_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener producto: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    if item is None:
+        raise HTTPException(status_code=404, detail="producto no encontrado")
+    return item
 
 
 def run() -> None:

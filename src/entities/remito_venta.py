@@ -10,6 +10,7 @@ class SimpleItem:
     ID: Optional[int] = None
     nombre: Optional[str] = None
     codigo: Optional[str] = None
+    productoid: Optional[int] = None
     id: Optional[int] = None
 
     @classmethod
@@ -20,6 +21,7 @@ class SimpleItem:
             ID=data.get("ID"),
             nombre=data.get("nombre"),
             codigo=data.get("codigo"),
+            productoid=data.get("productoid") or data.get("productoId"),
             id=data.get("id"),
         )
 
@@ -29,6 +31,8 @@ class TransaccionProductoItem:
     transaccionCVItemId: Optional[int] = None
     precioconivaincluido: Optional[float] = None
     transaccionId: Optional[int] = None
+    productoId: Optional[int] = None
+    productoid: Optional[int] = None
     producto: Optional[SimpleItem] = None
     centroDeCosto: Optional[SimpleItem] = None
     deposito: Optional[SimpleItem] = None
@@ -49,6 +53,8 @@ class TransaccionProductoItem:
             transaccionCVItemId=data.get("transaccionCVItemId"),
             precioconivaincluido=data.get("precioconivaincluido"),
             transaccionId=data.get("transaccionId"),
+            productoId=data.get("productoId"),
+            productoid=data.get("productoid"),
             producto=SimpleItem.from_dict(data.get("producto")),
             centroDeCosto=SimpleItem.from_dict(data.get("centroDeCosto")),
             deposito=SimpleItem.from_dict(data.get("deposito")),

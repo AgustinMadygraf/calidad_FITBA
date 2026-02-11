@@ -7,6 +7,7 @@ class SimpleItem(BaseModel):
     ID: Optional[int] = None
     nombre: Optional[str] = None
     codigo: Optional[str] = None
+    productoid: Optional[int] = None
     id: Optional[int] = None
 
     model_config = ConfigDict(extra="allow")
@@ -16,6 +17,8 @@ class TransaccionProductoItem(BaseModel):
     transaccionCVItemId: Optional[int] = None
     precioconivaincluido: Optional[float] = None
     transaccionId: Optional[int] = None
+    productoId: Optional[int] = None
+    productoid: Optional[int] = None
     producto: Optional[SimpleItem] = None
     centroDeCosto: Optional[SimpleItem] = None
     deposito: Optional[SimpleItem] = None

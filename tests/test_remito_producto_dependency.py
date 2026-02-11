@@ -5,28 +5,42 @@ from src.infrastructure.memory.remito_gateway_memory import InMemoryRemitoGatewa
 from src.use_cases import remito_venta
 
 
-def _make_entity(cliente_id: int) -> RemitoVenta:
-    return RemitoVenta.from_dict({"clienteId": cliente_id, "fecha": "2026-02-09"})
+def _make_entity(cliente_id: int, producto_id: int) -> RemitoVenta:
+    return RemitoVenta.from_dict(
+        {
+            "clienteId": cliente_id,
+            "fecha": "2026-02-09",
+            "transaccionProductoItem": [
+                {
+                    "productoId": producto_id,
+                    "cantidad": 1,
+                    "precio": 100,
+                }
+            ],
+        }
+    )
 
 
-def test_create_remito_rejects_missing_cliente():
-    remito_gateway = InMemoryRemitoGateway()
-    cliente_gateway = InMemoryClienteGateway()
-    producto_gateway = InMemoryProductoGateway()
-    entity = _make_entity(999)
-    try:
-        remito_venta.create_remito(remito_gateway, entity, cliente_gateway, producto_gateway)
-    except ValueError as exc:
-        assert "clienteId" in str(exc)
-    else:
-        raise AssertionError("Expected ValueError for missing cliente")
-
-
-def test_create_remito_accepts_existing_cliente():
+def test_create_remito_rejects_missing_producto():
     remito_gateway = InMemoryRemitoGateway()
     cliente_gateway = InMemoryClienteGateway()
     producto_gateway = InMemoryProductoGateway()
     cliente = cliente_gateway.create({"nombre": "Cliente OK"})
-    entity = _make_entity(cliente["cliente_id"])
+    entity = _make_entity(cliente["cliente_id"], 999)
+    try:
+        remito_venta.create_remito(remito_gateway, entity, cliente_gateway, producto_gateway)
+    except ValueError as exc:
+        assert "productoId" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for missing producto")
+
+
+def test_create_remito_accepts_existing_producto():
+    remito_gateway = InMemoryRemitoGateway()
+    cliente_gateway = InMemoryClienteGateway()
+    producto_gateway = InMemoryProductoGateway()
+    cliente = cliente_gateway.create({"nombre": "Cliente OK"})
+    producto = producto_gateway.create({"nombre": "Producto OK"})
+    entity = _make_entity(cliente["cliente_id"], producto["productoid"])
     created = remito_venta.create_remito(remito_gateway, entity, cliente_gateway, producto_gateway)
     assert created.transaccionId is not None
