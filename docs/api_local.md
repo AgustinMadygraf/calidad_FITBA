@@ -33,6 +33,10 @@ Respuesta (ejemplo):
 - `PUT /API/1.1/clienteBean/{id}`
 - `DELETE /API/1.1/clienteBean/{id}`
 
+## Categoria fiscal
+- `GET /API/1.1/categoriaFiscal`
+- `GET /API/1.1/categoriaFiscal/{id}`
+
 Ejemplo (crear):
 ```json
 {

@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 from ...entities.cliente import Cliente
 from ...entities.remito_venta import RemitoVenta
+from ...use_cases.ports.categoria_fiscal_gateway import CategoriaFiscalGateway
 from ...use_cases.ports.token_gateway import TokenGateway
 from ...use_cases.ports.remito_gateway import RemitoGateway
 from ...use_cases.ports.producto_gateway import ProductoGateway
@@ -88,6 +89,17 @@ def get_cliente(gateway: ClienteGateway, cliente_id: int) -> Optional[Dict[str, 
 def list_productos(gateway: ProductoGateway) -> Dict[str, Any]:
     items = gateway.list()
     return {"items": items}
+
+
+def list_categorias_fiscales(gateway: CategoriaFiscalGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_categoria_fiscal(
+    gateway: CategoriaFiscalGateway, categoria_fiscal_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(categoria_fiscal_id)
 
 
 def get_producto(

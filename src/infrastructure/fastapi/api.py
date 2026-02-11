@@ -19,6 +19,7 @@ from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from ...use_cases import cliente, remito_venta
 from .deps import (
+    get_categoria_fiscal_gateway,
     get_cliente_gateway,
     get_deposito_gateway,
     get_identificacion_tributaria_gateway,
@@ -43,6 +44,12 @@ def _get_cliente_gateway():
     if not hasattr(app, "cliente_gateway"):
         app.cliente_gateway = get_cliente_gateway()
     return app.cliente_gateway
+
+
+def _get_categoria_fiscal_gateway():
+    if not hasattr(app, "categoria_fiscal_gateway"):
+        app.categoria_fiscal_gateway = get_categoria_fiscal_gateway()
+    return app.categoria_fiscal_gateway
 
 
 def _get_remito_gateway():
@@ -83,6 +90,8 @@ def _get_lista_precio_gateway():
 
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
+CATEGORIA_FISCAL_BASE = "/API/1.1/categoriaFiscal"
+CATEGORIA_FISCAL_BASE_SLASH = "/API/1.1/categoriaFiscal/"
 PRODUCTO_BASE = "/API/1.1/productoVentaBean"
 PRODUCTO_BASE_SLASH = "/API/1.1/productoVentaBean/"
 PRODUCTO_COMPRA_BASE = "/API/1.1/productoCompraBean"
@@ -145,6 +154,31 @@ def cliente_list() -> Dict[str, Any]:
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar clientes: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get(CATEGORIA_FISCAL_BASE)
+@app.get(CATEGORIA_FISCAL_BASE_SLASH, include_in_schema=False)
+def categoria_fiscal_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_categoria_fiscal_gateway()
+        return handlers.list_categorias_fiscales(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar categorias fiscales: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get(f"{CATEGORIA_FISCAL_BASE}/{{categoria_fiscal_id}}")
+@app.get(f"{CATEGORIA_FISCAL_BASE}/{{categoria_fiscal_id}}/", include_in_schema=False)
+def categoria_fiscal_get(categoria_fiscal_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_categoria_fiscal_gateway()
+        item = handlers.get_categoria_fiscal(gateway, categoria_fiscal_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener categoria fiscal: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="categoria fiscal no encontrada")
+    return item
 
 
 @app.get("/debug/clienteBean")

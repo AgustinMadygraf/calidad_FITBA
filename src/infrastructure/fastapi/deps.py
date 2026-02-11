@@ -1,5 +1,8 @@
 from typing import Protocol
 
+from ...infrastructure.httpx.categoria_fiscal_gateway_xubio import (
+    XubioCategoriaFiscalGateway,
+)
 from ...infrastructure.httpx.cliente_gateway_xubio import XubioClienteGateway
 from ...infrastructure.httpx.remito_gateway_xubio import XubioRemitoGateway
 from ...infrastructure.httpx.producto_gateway_xubio import (
@@ -14,6 +17,9 @@ from ...infrastructure.httpx.lista_precio_gateway_xubio import (
     XubioListaPrecioGateway,
 )
 from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
+from ...infrastructure.memory.categoria_fiscal_gateway_memory import (
+    InMemoryCategoriaFiscalGateway,
+)
 from ...infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
 from ...infrastructure.memory.producto_gateway_memory import InMemoryProductoGateway
 from ...infrastructure.memory.deposito_gateway_memory import InMemoryDepositoGateway
@@ -31,6 +37,7 @@ logger = get_logger(__name__)
 
 
 class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
+    categoria_fiscal_gateway: object
     cliente_gateway: object
     producto_gateway: object
     producto_compra_gateway: object
@@ -43,6 +50,12 @@ class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
 def get_cliente_gateway():
     gw = XubioClienteGateway() if is_prod() else InMemoryClienteGateway()
     logger.info("Cliente gateway: %s", gw.__class__.__name__)
+    return gw
+
+
+def get_categoria_fiscal_gateway():
+    gw = XubioCategoriaFiscalGateway() if is_prod() else InMemoryCategoriaFiscalGateway()
+    logger.info("Categoria fiscal gateway: %s", gw.__class__.__name__)
     return gw
 
 
