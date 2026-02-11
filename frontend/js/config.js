@@ -28,11 +28,22 @@ export const CLIENTE_COLUMNS = [
   { key: "cliente_id" },
   { key: "nombre" },
   { key: "razonSocial" },
-  { key: "nombreComercial" },
-  { key: "cuit", getValue: (cliente) => cliente?.CUIT ?? cliente?.cuit },
+  { key: "identificacionTributaria" },
+  { key: "categoriaFiscal" },
+  { key: "cuit" },
+  { key: "CUIT" },
+  { key: "responsabilidadOrganizacionItem" },
+  { key: "esclienteextranjero" },
+  { key: "esProveedor" },
+  { key: "direccion" },
   { key: "email" },
   { key: "telefono" },
-  { key: "direccion" }
+  { key: "provincia" },
+  { key: "pais" },
+  { key: "cuentaVenta_id" },
+  { key: "cuentaCompra_id" },
+  { key: "usrCode" },
+  { key: "descripcion" }
 ];
 
 export const FALLBACK_REMITOS = [
