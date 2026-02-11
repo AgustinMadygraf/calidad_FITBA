@@ -11,21 +11,54 @@
     crossorigin="anonymous"
   >
   <style>
+    .app-shell {
+      width: 95vw;
+      max-width: 95vw;
+      margin: 0 auto;
+    }
+
     #remito-table {
       width: 100%;
       table-layout: fixed;
     }
 
+    #remito-table th:nth-child(1),
+    #remito-table td:nth-child(1) { width: 7%; }
+    #remito-table th:nth-child(2),
+    #remito-table td:nth-child(2) { width: 12%; }
+    #remito-table th:nth-child(3),
+    #remito-table td:nth-child(3) { width: 8%; }
+    #remito-table th:nth-child(4),
+    #remito-table td:nth-child(4) { width: 40%; }
+    #remito-table th:nth-child(5),
+    #remito-table td:nth-child(5) { width: 8%; }
+    #remito-table th:nth-child(6),
+    #remito-table td:nth-child(6) { width: 10%; }
+    #remito-table th:nth-child(7),
+    #remito-table td:nth-child(7) { width: 5%; }
+    #remito-table th:nth-child(8),
+    #remito-table td:nth-child(8) { width: 10%; }
+
+    #remito-table th:nth-child(6),
+    #remito-table th:nth-child(8) {
+      white-space: nowrap;
+    }
+
     #remito-table .remito-observacion {
-      max-width: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    .cliente-no-wrap-no-truncate {
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+    }
   </style>
 </head>
 <body>
-  <main class="container py-5">
+  <main class="app-shell py-5">
     <div class="alert alert-warning d-none" role="alert" id="status-banner"></div>
 
     <section class="mb-4">
@@ -86,6 +119,101 @@
               </tr>
             </thead>
             <tbody id="cliente-main-table-body"></tbody>
+          </table>
+        </div>
+        <div class="table-responsive d-none" id="producto-main-table-wrapper">
+          <table class="table table-striped table-hover align-middle mb-0" id="producto-main-table">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">productoid</th>
+                <th scope="col">nombre</th>
+                <th scope="col">codigo</th>
+                <th scope="col">usrcode</th>
+                <th scope="col">codigoBarra</th>
+                <th scope="col">unidadMedida</th>
+                <th scope="col">categoria</th>
+                <th scope="col">stockNegativo</th>
+                <th scope="col">tasaIva</th>
+                <th scope="col">cuentaContable</th>
+                <th scope="col">catFormIVA2002</th>
+                <th scope="col">precioUltCompra</th>
+                <th scope="col">activo</th>
+                <th scope="col">sincronizaStock</th>
+              </tr>
+            </thead>
+            <tbody id="producto-main-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card shadow-sm mt-4 d-none" id="producto-unidad-medida-section">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3" id="producto-unidad-medida-title">
+          Detalle de unidadMedida
+        </h2>
+        <div class="table-responsive">
+          <table
+            class="table table-striped table-hover align-middle mb-0"
+            id="producto-unidad-medida-table"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">nombre</th>
+                <th scope="col">codigo</th>
+                <th scope="col">id</th>
+              </tr>
+            </thead>
+            <tbody id="producto-unidad-medida-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card shadow-sm mt-4 d-none" id="producto-tasa-iva-section">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3" id="producto-tasa-iva-title">
+          Detalle de tasaIva
+        </h2>
+        <div class="table-responsive">
+          <table
+            class="table table-striped table-hover align-middle mb-0"
+            id="producto-tasa-iva-table"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">nombre</th>
+                <th scope="col">codigo</th>
+                <th scope="col">id</th>
+              </tr>
+            </thead>
+            <tbody id="producto-tasa-iva-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card shadow-sm mt-4 d-none" id="producto-cuenta-contable-section">
+      <div class="card-body">
+        <h2 class="h5 card-title mb-3" id="producto-cuenta-contable-title">
+          Detalle de cuentaContable
+        </h2>
+        <div class="table-responsive">
+          <table
+            class="table table-striped table-hover align-middle mb-0"
+            id="producto-cuenta-contable-table"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">nombre</th>
+                <th scope="col">codigo</th>
+                <th scope="col">id</th>
+              </tr>
+            </thead>
+            <tbody id="producto-cuenta-contable-table-body"></tbody>
           </table>
         </div>
       </div>

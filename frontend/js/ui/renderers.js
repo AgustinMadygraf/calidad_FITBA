@@ -59,6 +59,17 @@ function appendDataRow(tableBody, data, columns) {
       link.dataset.transaccionId = asText(data?.transaccionId);
       link.textContent = asText(value);
       cell.appendChild(link);
+    } else if (
+      column.linkType === "producto" &&
+      value !== undefined &&
+      value !== null
+    ) {
+      const link = document.createElement("a");
+      link.href = "#";
+      link.className = "js-producto-link";
+      link.dataset.productoId = asText(value);
+      link.textContent = asText(value);
+      cell.appendChild(link);
     } else {
       cell.textContent = asText(value);
     }
@@ -262,4 +273,92 @@ export function renderCategoriaFiscalSection(
   }
 
   appendMessageRow(tableBodyNode, uiMessages.clienteLoadError, columns.length);
+}
+
+export function renderProductoSection(
+  sectionNode,
+  titleNode,
+  tableBodyNode,
+  productoDetail,
+  columns,
+  uiMessages
+) {
+  clearTable(tableBodyNode);
+  sectionNode.classList.remove("d-none");
+  titleNode.textContent = `Detalle de producto ${asText(productoDetail?.productoId)}`;
+
+  if (productoDetail?.status === "loading") {
+    appendMessageRow(tableBodyNode, uiMessages.productoLoading, columns.length);
+    return;
+  }
+
+  if (productoDetail?.status === "not_found") {
+    appendMessageRow(tableBodyNode, uiMessages.productoNotFound, columns.length);
+    return;
+  }
+
+  if (productoDetail?.status === "error") {
+    const message = productoDetail.errorMessage || uiMessages.productoLoadError;
+    appendMessageRow(tableBodyNode, message, columns.length);
+    return;
+  }
+
+  if (productoDetail?.status === "ready" && productoDetail.data) {
+    appendDataRow(tableBodyNode, productoDetail.data, columns);
+    return;
+  }
+
+  appendMessageRow(tableBodyNode, uiMessages.productoLoadError, columns.length);
+}
+
+export function renderProductoNestedSection(
+  sectionNode,
+  titleNode,
+  tableBodyNode,
+  productoDetail,
+  columns,
+  uiMessages,
+  { fieldKey, label, notFoundMessageKey }
+) {
+  clearTable(tableBodyNode);
+  sectionNode.classList.remove("d-none");
+  titleNode.textContent = `Detalle de ${label} para producto ${asText(
+    productoDetail?.productoId
+  )}`;
+
+  if (productoDetail?.status === "loading") {
+    appendMessageRow(tableBodyNode, uiMessages.productoLoading, columns.length);
+    return;
+  }
+
+  if (productoDetail?.status === "not_found") {
+    appendMessageRow(tableBodyNode, uiMessages.productoNotFound, columns.length);
+    return;
+  }
+
+  if (productoDetail?.status === "error") {
+    const message = productoDetail.errorMessage || uiMessages.productoLoadError;
+    appendMessageRow(tableBodyNode, message, columns.length);
+    return;
+  }
+
+  if (productoDetail?.status === "ready" && productoDetail.data) {
+    const nestedValue = productoDetail.data[fieldKey];
+    if (
+      nestedValue &&
+      typeof nestedValue === "object" &&
+      !Array.isArray(nestedValue)
+    ) {
+      appendDataRow(tableBodyNode, nestedValue, columns);
+      return;
+    }
+    appendMessageRow(
+      tableBodyNode,
+      uiMessages[notFoundMessageKey] || uiMessages.productoLoadError,
+      columns.length
+    );
+    return;
+  }
+
+  appendMessageRow(tableBodyNode, uiMessages.productoLoadError, columns.length);
 }
