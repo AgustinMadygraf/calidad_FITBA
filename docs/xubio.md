@@ -2,9 +2,11 @@
 
 ## Resumen
 Xubio expone una API REST para integrar emision de comprobantes electronicos y
-otras operaciones sin reinventar funcionalidad existente. La API usa OAuth2
-`client_credentials` con `Client-ID` y `Secret-ID` para obtener un
-`access_token`.
+otras operaciones sin reinventar funcionalidad existente. La API usa OAuth2 con
+`client_credentials` y `Client-ID` y `Secret-ID` para obtener un `access_token`.
+
+Documentacion oficial:
+- `https://xubio.com/API/documentation/index.html`
 
 ## Que es una API REST
 REST es un estilo de arquitectura que utiliza los verbos HTTP para realizar
@@ -62,3 +64,14 @@ En ese caso, repetir el paso 2 para obtener un token nuevo y reintentar el reque
 ## Estrategias de refresh
 - Pedir token en cada request.
 - Renovar el token cuando la API responda `401/403`.
+
+## Endpoints usados en este proyecto (Xubio)
+- `https://xubio.com/API/1.1/TokenEndpoint`
+- `https://xubio.com/API/1.1/clienteBean`
+- `https://xubio.com/API/1.1/remitoVentaBean`
+- `https://xubio.com/API/1.1/ProductoVentaBean`
+- `https://xubio.com/API/1.1/ProductoCompraBean`
+- `https://xubio.com/API/1.1/depositos`
+- `https://xubio.com/API/1.1/listaPrecioBean`
+
+Nota: Xubio es sensible a mayusculas en algunos endpoints. Ejemplo: `ProductoVentaBean`.
