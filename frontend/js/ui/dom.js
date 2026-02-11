@@ -10,6 +10,7 @@ export function getDomRefs() {
   return {
     banner: getById("status-banner"),
     mainTitle: getById("main-title"),
+    backButton: getById("back-btn"),
     showAllButton: getById("show-all-btn"),
     remitoTableWrapper: getById("remito-table-wrapper"),
     remitoTableBody: getById("remito-table-body"),

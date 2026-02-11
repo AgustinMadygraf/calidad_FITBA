@@ -29,6 +29,17 @@ Este proyecto aplica Clean Architecture con separacion de responsabilidades.
 - Cliente:
   - `listaPrecioVenta` (si existe) debe tener `ID` o `id` valido y existir.
 
+## Dependencias de Lista de Precio
+En la implementacion actual:
+- `ListaPrecio` es un catalogo consultable (`list/get`) por su gateway.
+- `Cliente` depende de `ListaPrecio` de manera opcional:
+  - campo: `cliente.cuentas.listaPrecioVenta`
+  - validacion: `src/use_cases/cliente.py`
+- `RemitoVenta` depende de `ListaPrecio` de manera opcional:
+  - campo: `remito.relaciones.listaPrecioId`
+  - validacion: `src/use_cases/remito_venta.py`
+- `ListaPrecio` no depende de otras entidades de negocio para validarse.
+
 ## Token y autenticacion
 - OAuth2 `client_credentials` con `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
 - Endpoint por defecto: `https://xubio.com/API/1.1/TokenEndpoint`.

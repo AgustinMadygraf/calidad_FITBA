@@ -19,6 +19,12 @@ Monorepo Python con dos componentes:
 - Lista de precio: GET list/get.
 - Token inspect local: `GET /token/inspect`.
 
+## Dependencias de "Lista de Precio" (en este proyecto)
+- `listaPrecioBean` se usa como catalogo de referencia (lectura `GET list/get`).
+- `Cliente` depende de `Lista de Precio` de forma opcional por `listaPrecioVenta`.
+- `RemitoVenta` depende de `Lista de Precio` de forma opcional por `listaPrecioId`.
+- `Lista de Precio` no depende de `Cliente`, `RemitoVenta`, `Producto` ni `Deposito`.
+
 ## API local (FastAPI)
 - `GET /health`
 - `GET /token/inspect`

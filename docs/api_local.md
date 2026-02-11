@@ -81,5 +81,11 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 - `GET /API/1.1/listaPrecioBean`
 - `GET /API/1.1/listaPrecioBean/{id}`
 
+Dependencias funcionales en esta API local:
+- `Cliente` puede referenciar `listaPrecioVenta` (opcional).
+- `RemitoVenta` puede referenciar `listaPrecioId` (opcional).
+- Cuando se informan esos campos, se valida existencia contra `listaPrecioBean/{id}`.
+- `listaPrecioBean` no requiere `clienteId`, `transaccionId` ni `productoId` para su lectura.
+
 ## Debug (solo en IS_PROD=false)
 - `GET /debug/clienteBean`

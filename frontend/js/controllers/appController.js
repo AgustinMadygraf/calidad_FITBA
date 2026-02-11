@@ -10,6 +10,10 @@ import {
 } from "../config.js";
 import { fetchClienteById } from "../services/clienteService.js";
 import { fetchProductoById } from "../services/productoService.js";
+import {
+  readRouteFromUrl,
+  writeRouteToUrl
+} from "../router/queryState.js";
 import { fetchRemitos, getFallbackRemitos } from "../services/remitoService.js";
 import {
   clearBanner,
@@ -68,6 +72,54 @@ const requestTrackers = {
   cliente: createRequestTracker(),
   producto: createRequestTracker()
 };
+
+async function applyRouteSelectionFromUrl() {
+  const route = readRouteFromUrl();
+
+  if (route.productoId !== null) {
+    clearSelection();
+    showProductoAsMainTable();
+    await loadDetailEntity({
+      entityId: route.productoId,
+      requestTracker: requestTrackers.producto,
+      setLoading: setProductoLoading,
+      fetchById: fetchProductoById,
+      setNotFound: setProductoNotFound,
+      setReady: setProductoReady,
+      setError: setProductoError,
+      notFoundMessage: UI_MESSAGES.productoNotFound,
+      loadErrorMessage: UI_MESSAGES.productoLoadError
+    });
+    return;
+  }
+
+  if (route.clienteId !== null) {
+    clearSelection();
+    showClienteAsMainTable();
+    await loadDetailEntity({
+      entityId: route.clienteId,
+      requestTracker: requestTrackers.cliente,
+      setLoading: setClienteLoading,
+      fetchById: fetchClienteById,
+      setNotFound: setClienteNotFound,
+      setReady: setClienteReady,
+      setError: setClienteError,
+      notFoundMessage: UI_MESSAGES.clienteNotFound,
+      loadErrorMessage: UI_MESSAGES.clienteLoadError
+    });
+    return;
+  }
+
+  showRemitoAsMainTable();
+  if (route.remitoVentaId === null) {
+    clearSelection();
+    renderView();
+    return;
+  }
+
+  selectTransaccion(route.remitoVentaId);
+  renderView();
+}
 
 function hideProductoNestedSections() {
   hideDetailSection(
@@ -258,14 +310,14 @@ function renderView() {
   const state = getState();
   const visibleRemitos = getVisibleRemitos();
   const selectedRemito = getSelectedRemito();
+  const hasActiveSelection =
+    state.selectedTransaccionId !== null ||
+    state.mainTable === "cliente" ||
+    state.mainTable === "producto";
 
   renderBanner(domRefs.banner, state.banner);
-  renderShowAllButton(
-    domRefs.showAllButton,
-    state.selectedTransaccionId !== null ||
-      state.mainTable === "cliente" ||
-      state.mainTable === "producto"
-  );
+  renderShowAllButton(domRefs.showAllButton, hasActiveSelection);
+  domRefs.backButton.classList.toggle("d-none", !hasActiveSelection);
 
   const renderer = MAIN_TABLE_RENDERERS[state.mainTable] || MAIN_TABLE_RENDERERS.remito;
   renderer(state, { visibleRemitos, selectedRemito });
@@ -316,6 +368,7 @@ async function loadDetailEntity({
 function handleTransaccionClick(transaccionId) {
   requestTrackers.cliente.invalidate();
   requestTrackers.producto.invalidate();
+  writeRouteToUrl({ remitoVentaId: transaccionId });
   showRemitoAsMainTable();
   selectTransaccion(transaccionId);
   renderView();
@@ -334,8 +387,10 @@ async function handleClienteClick(
   }
 
   if (clienteAsMainTable) {
+    writeRouteToUrl({ clienteId });
     showClienteAsMainTable();
   } else {
+    writeRouteToUrl({ remitoVentaId: hasTransaccion ? transaccionId : null });
     showRemitoAsMainTable();
   }
 
@@ -353,6 +408,7 @@ async function handleClienteClick(
 }
 
 async function handleProductoClick(productoId) {
+  writeRouteToUrl({ productoId });
   showProductoAsMainTable();
   await loadDetailEntity({
     entityId: productoId,
@@ -401,9 +457,33 @@ function bindEvents() {
   domRefs.showAllButton.addEventListener("click", () => {
     requestTrackers.cliente.invalidate();
     requestTrackers.producto.invalidate();
+    writeRouteToUrl({});
     showRemitoAsMainTable();
     clearSelection();
     renderView();
+  });
+
+  domRefs.backButton.addEventListener("click", () => {
+    requestTrackers.cliente.invalidate();
+    requestTrackers.producto.invalidate();
+
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    writeRouteToUrl({}, { mode: "replace" });
+    showRemitoAsMainTable();
+    clearSelection();
+    renderView();
+  });
+}
+
+function bindLocationEvents() {
+  window.addEventListener("popstate", () => {
+    requestTrackers.cliente.invalidate();
+    requestTrackers.producto.invalidate();
+    void applyRouteSelectionFromUrl();
   });
 }
 
@@ -418,11 +498,12 @@ async function loadRemitos() {
     setBanner(UI_MESSAGES.remitosLoadError, "warning");
   }
 
-  renderView();
+  await applyRouteSelectionFromUrl();
 }
 
 export async function initApp() {
   domRefs = getDomRefs();
   bindEvents();
+  bindLocationEvents();
   await loadRemitos();
 }

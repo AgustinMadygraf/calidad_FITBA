@@ -75,3 +75,10 @@ En ese caso, repetir el paso 2 para obtener un token nuevo y reintentar el reque
 - `https://xubio.com/API/1.1/listaPrecioBean`
 
 Nota: Xubio es sensible a mayusculas en algunos endpoints. Ejemplo: `ProductoVentaBean`.
+
+## Lista de Precio y dependencias (uso en este proyecto)
+- `listaPrecioBean` se trata como catalogo de referencia.
+- `Cliente` puede depender de ese catalogo via `listaPrecioVenta`.
+- `RemitoVenta` puede depender de ese catalogo via `listaPrecioId`.
+- No se implementaron dependencias inversas (por ejemplo, "que clientes usan una lista")
+  dentro de esta API local.
