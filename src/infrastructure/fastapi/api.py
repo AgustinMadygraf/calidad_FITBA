@@ -2,7 +2,7 @@
 Path: src/infrastructure/fastapi/api.py
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from fastapi import HTTPException
 
@@ -14,6 +14,7 @@ from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .deps import (
     get_cliente_gateway,
+    get_deposito_gateway,
     get_producto_compra_gateway,
     get_producto_gateway,
     get_remito_gateway,
@@ -50,12 +51,20 @@ def _get_producto_compra_gateway():
     if not hasattr(app, "producto_compra_gateway"):
         app.producto_compra_gateway = get_producto_compra_gateway()
     return app.producto_compra_gateway
+
+
+def _get_deposito_gateway():
+    if not hasattr(app, "deposito_gateway"):
+        app.deposito_gateway = get_deposito_gateway()
+    return app.deposito_gateway
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 PRODUCTO_BASE = "/API/1.1/productoVentaBean"
 PRODUCTO_BASE_SLASH = "/API/1.1/productoVentaBean/"
 PRODUCTO_COMPRA_BASE = "/API/1.1/productoCompraBean"
 PRODUCTO_COMPRA_BASE_SLASH = "/API/1.1/productoCompraBean/"
+DEPOSITO_BASE = "/API/1.1/depositos"
+DEPOSITO_BASE_SLASH = "/API/1.1/depositos/"
 
 
 @app.get("/")
@@ -196,7 +205,10 @@ def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
         gateway = _get_remito_gateway()
         cliente_gateway = _get_cliente_gateway()
         producto_gateway = _get_producto_gateway()
-        return handlers.create_remito(gateway, cliente_gateway, producto_gateway, data)
+        deposito_gateway = _get_deposito_gateway()
+        return handlers.create_remito(
+            gateway, cliente_gateway, producto_gateway, deposito_gateway, data
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except ExternalServiceError as exc:
@@ -227,7 +239,15 @@ def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, An
         gateway = _get_remito_gateway()
         cliente_gateway = _get_cliente_gateway()
         producto_gateway = _get_producto_gateway()
-        item = handlers.update_remito(gateway, cliente_gateway, producto_gateway, transaccion_id, data)
+        deposito_gateway = _get_deposito_gateway()
+        item = handlers.update_remito(
+            gateway,
+            cliente_gateway,
+            producto_gateway,
+            deposito_gateway,
+            transaccion_id,
+            data,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except ExternalServiceError as exc:
@@ -300,6 +320,31 @@ def producto_compra_get(producto_id: int) -> Dict[str, Any]:
         raise HTTPException(status_code=502, detail=str(exc))
     if item is None:
         raise HTTPException(status_code=404, detail="producto no encontrado")
+    return item
+
+
+@app.get(DEPOSITO_BASE)
+@app.get(DEPOSITO_BASE_SLASH, include_in_schema=False)
+def deposito_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_deposito_gateway()
+        return handlers.list_depositos(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar depositos: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+
+
+@app.get(f"{DEPOSITO_BASE}/{{deposito_id}}")
+@app.get(f"{DEPOSITO_BASE}/{{deposito_id}}/", include_in_schema=False)
+def deposito_get(deposito_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_deposito_gateway()
+        item = handlers.get_deposito(gateway, deposito_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener deposito: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    if item is None:
+        raise HTTPException(status_code=404, detail="deposito no encontrado")
     return item
 
 

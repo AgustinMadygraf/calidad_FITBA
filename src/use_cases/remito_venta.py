@@ -3,6 +3,7 @@ from typing import List, Optional
 from ..entities.remito_venta import RemitoVenta, TransaccionProductoItem
 from ..use_cases.ports.cliente_gateway import ClienteGateway
 from ..use_cases.ports.producto_gateway import ProductoGateway
+from ..use_cases.ports.deposito_gateway import DepositoGateway
 from ..use_cases.ports.remito_gateway import RemitoGateway
 
 
@@ -23,10 +24,13 @@ def create_remito(
     entity: RemitoVenta,
     cliente_gateway: ClienteGateway,
     producto_gateway: ProductoGateway,
+    deposito_gateway: DepositoGateway,
 ) -> RemitoVenta:
     entity.validate()
     _ensure_cliente_exists(cliente_gateway, entity.clienteId)
     _ensure_productos_exist(producto_gateway, entity.transaccionProductoItem)
+    _ensure_deposito_exists(deposito_gateway, entity.depositoId)
+    _ensure_item_depositos_exist(deposito_gateway, entity.transaccionProductoItem)
     created = gateway.create(entity.to_dict(exclude_none=True))
     return RemitoVenta.from_dict(created)
 
@@ -37,10 +41,13 @@ def update_remito(
     entity: RemitoVenta,
     cliente_gateway: ClienteGateway,
     producto_gateway: ProductoGateway,
+    deposito_gateway: DepositoGateway,
 ) -> Optional[RemitoVenta]:
     entity.validate()
     _ensure_cliente_exists(cliente_gateway, entity.clienteId)
     _ensure_productos_exist(producto_gateway, entity.transaccionProductoItem)
+    _ensure_deposito_exists(deposito_gateway, entity.depositoId)
+    _ensure_item_depositos_exist(deposito_gateway, entity.transaccionProductoItem)
     updated = gateway.update(transaccion_id, entity.to_dict(exclude_none=True))
     if updated is None:
         return None
@@ -85,6 +92,35 @@ def _extract_producto_id(item: TransaccionProductoItem) -> Optional[int]:
         item.producto.id if item.producto else None,
     ]
     for value in candidates:
+        if value is not None:
+            return value
+    return None
+
+
+def _ensure_deposito_exists(gateway: DepositoGateway, deposito_id: Optional[int]) -> None:
+    if deposito_id is None:
+        return
+    if gateway.get(deposito_id) is None:
+        raise ValueError(f"depositoId {deposito_id} no encontrado")
+
+
+def _ensure_item_depositos_exist(
+    gateway: DepositoGateway, items: List[TransaccionProductoItem]
+) -> None:
+    if not items:
+        return
+    for idx, item in enumerate(items):
+        deposito_id = _extract_deposito_id(item)
+        if deposito_id is None:
+            continue
+        if gateway.get(deposito_id) is None:
+            raise ValueError(f"depositoId {deposito_id} no encontrado en item {idx}")
+
+
+def _extract_deposito_id(item: TransaccionProductoItem) -> Optional[int]:
+    if item.deposito is None:
+        return None
+    for value in (item.deposito.ID, item.deposito.id):
         if value is not None:
             return value
     return None

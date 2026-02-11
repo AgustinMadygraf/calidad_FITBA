@@ -5,6 +5,7 @@ from ...entities.remito_venta import RemitoVenta
 from ...use_cases.ports.token_gateway import TokenGateway
 from ...use_cases.ports.remito_gateway import RemitoGateway
 from ...use_cases.ports.producto_gateway import ProductoGateway
+from ...use_cases.ports.deposito_gateway import DepositoGateway
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, remito_venta, token_inspect
 from ...use_cases.ports.cliente_gateway import ClienteGateway
@@ -50,10 +51,13 @@ def create_remito(
     gateway: RemitoGateway,
     cliente_gateway: ClienteGateway,
     producto_gateway: ProductoGateway,
+    deposito_gateway: DepositoGateway,
     data: Dict[str, Any],
 ) -> Dict[str, Any]:
     entity = RemitoVenta.from_dict(data)
-    created = remito_venta.create_remito(gateway, entity, cliente_gateway, producto_gateway)
+    created = remito_venta.create_remito(
+        gateway, entity, cliente_gateway, producto_gateway, deposito_gateway
+    )
     return created.to_dict(exclude_none=True)
 
 
@@ -61,12 +65,13 @@ def update_remito(
     gateway: RemitoGateway,
     cliente_gateway: ClienteGateway,
     producto_gateway: ProductoGateway,
+    deposito_gateway: DepositoGateway,
     transaccion_id: int,
     data: Dict[str, Any],
 ) -> Optional[Dict[str, Any]]:
     entity = RemitoVenta.from_dict(data)
     updated = remito_venta.update_remito(
-        gateway, transaccion_id, entity, cliente_gateway, producto_gateway
+        gateway, transaccion_id, entity, cliente_gateway, producto_gateway, deposito_gateway
     )
     if updated is None:
         return None
@@ -90,6 +95,15 @@ def list_productos(gateway: ProductoGateway) -> Dict[str, Any]:
 
 def get_producto(gateway: ProductoGateway, producto_id: int) -> Optional[Dict[str, Any]]:
     return gateway.get(producto_id)
+
+
+def list_depositos(gateway: DepositoGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_deposito(gateway: DepositoGateway, deposito_id: int) -> Optional[Dict[str, Any]]:
+    return gateway.get(deposito_id)
 
 
 def create_cliente(gateway: ClienteGateway, data: Dict[str, Any]) -> Dict[str, Any]:
