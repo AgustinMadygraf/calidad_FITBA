@@ -73,6 +73,7 @@ def update_remito(
 def delete_remito(gateway: RemitoGateway, transaccion_id: int) -> bool:
     return remito_venta.delete_remito(gateway, transaccion_id)
 
+
 def get_cliente(gateway: ClienteGateway, cliente_id: int) -> Optional[Dict[str, Any]]:
     entity = cliente.get_cliente(gateway, cliente_id)
     if entity is None:
@@ -85,7 +86,9 @@ def list_productos(gateway: ProductoGateway) -> Dict[str, Any]:
     return {"items": items}
 
 
-def get_producto(gateway: ProductoGateway, producto_id: int) -> Optional[Dict[str, Any]]:
+def get_producto(
+    gateway: ProductoGateway, producto_id: int
+) -> Optional[Dict[str, Any]]:
     return gateway.get(producto_id)
 
 
@@ -94,7 +97,9 @@ def list_depositos(gateway: DepositoGateway) -> Dict[str, Any]:
     return {"items": items}
 
 
-def get_deposito(gateway: DepositoGateway, deposito_id: int) -> Optional[Dict[str, Any]]:
+def get_deposito(
+    gateway: DepositoGateway, deposito_id: int
+) -> Optional[Dict[str, Any]]:
     return gateway.get(deposito_id)
 
 

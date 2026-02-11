@@ -23,7 +23,9 @@ class InMemoryRemitoGateway(RemitoGateway):
         self._items[transaccion_id] = record
         return record
 
-    def update(self, transaccion_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def update(
+        self, transaccion_id: int, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         if transaccion_id not in self._items:
             return None
         record = dict(self._items[transaccion_id])

@@ -86,7 +86,9 @@ class Cliente:
             otrosNombres=data.get("otrosNombres"),
             razonSocial=data.get("razonSocial"),
             nombreComercial=data.get("nombreComercial"),
-            identificacionTributaria=SimpleItem.from_dict(data.get("identificacionTributaria")),
+            identificacionTributaria=SimpleItem.from_dict(
+                data.get("identificacionTributaria")
+            ),
             digitoVerificacion=data.get("digitoVerificacion"),
             categoriaFiscal=SimpleItem.from_dict(data.get("categoriaFiscal")),
             provincia=Provincia.from_dict(data.get("provincia")),
@@ -106,7 +108,9 @@ class Cliente:
             cuit=data.get("cuit"),
             tipoDeOrganizacion=SimpleItem.from_dict(data.get("tipoDeOrganizacion")),
             responsabilidadOrganizacionItem=[
-                item for item in (SimpleItem.from_dict(x) for x in items) if item is not None
+                item
+                for item in (SimpleItem.from_dict(x) for x in items)
+                if item is not None
             ],
             CUIT=data.get("CUIT"),
         )

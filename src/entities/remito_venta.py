@@ -46,7 +46,9 @@ class TransaccionProductoItem:
     porcentajeDescuento: Optional[float] = None
 
     @classmethod
-    def from_dict(cls, data: Optional[Dict[str, Any]]) -> Optional["TransaccionProductoItem"]:
+    def from_dict(
+        cls, data: Optional[Dict[str, Any]]
+    ) -> Optional["TransaccionProductoItem"]:
         if not data:
             return None
         return cls(

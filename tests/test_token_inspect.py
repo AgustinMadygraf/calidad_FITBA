@@ -14,7 +14,12 @@ def test_token_inspect_ok(monkeypatch):
         api,
         "token_gateway",
         FakeTokenGateway(
-            {"token_preview": "abc", "expires_in_seconds": 10, "expires_at": 1, "from_cache": True}
+            {
+                "token_preview": "abc",
+                "expires_in_seconds": 10,
+                "expires_at": 1,
+                "from_cache": True,
+            }
         ),
     )
     data = api.token_inspect()

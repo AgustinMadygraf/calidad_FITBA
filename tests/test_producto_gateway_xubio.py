@@ -18,7 +18,8 @@ def test_list_accepts_list_payload(monkeypatch):
         return httpx.Response(200, json=[{"productoid": 1}])
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     assert gw.list() == [{"productoid": 1}]
@@ -29,7 +30,8 @@ def test_list_accepts_items_wrapper(monkeypatch):
         return httpx.Response(200, json={"items": [{"productoid": 2}]})
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     assert gw.list() == [{"productoid": 2}]
@@ -40,7 +42,8 @@ def test_list_raises_on_error_status(monkeypatch):
         return httpx.Response(500, text="boom")
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     with pytest.raises(ExternalServiceError):
@@ -56,7 +59,8 @@ def test_list_falls_back_to_compra_on_5xx(monkeypatch):
         return httpx.Response(404)
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     assert gw.list() == [{"productoid": 3}]
@@ -71,7 +75,8 @@ def test_get_falls_back_to_list_on_5xx(monkeypatch):
         return httpx.Response(404)
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     assert gw.get(9) == {"productoid": 9}
@@ -86,7 +91,8 @@ def test_get_falls_back_to_list_on_404(monkeypatch):
         return httpx.Response(404)
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     assert gw.get(10) == {"productoid": 10}
@@ -100,7 +106,8 @@ def test_list_uses_cache_within_ttl(monkeypatch):
         return httpx.Response(200, json=[{"productoid": 1}])
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway(list_cache_ttl=60)
     other = XubioProductoGateway(list_cache_ttl=60)
@@ -120,7 +127,8 @@ def test_get_falls_back_to_compra_when_not_in_list(monkeypatch):
         return httpx.Response(404)
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     assert gw.get(11) == {"productoid": 11}
@@ -139,7 +147,8 @@ def test_get_falls_back_to_compra_list_on_5xx(monkeypatch):
         return httpx.Response(404)
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token", fake_request
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
     )
     gw = XubioProductoGateway()
     assert gw.get(12) == {"productoid": 12}

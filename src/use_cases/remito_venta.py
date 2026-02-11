@@ -62,9 +62,7 @@ def delete_remito(gateway: RemitoGateway, transaccion_id: int) -> bool:
     return gateway.delete(transaccion_id)
 
 
-def _ensure_cliente_exists(
-    gateway: ClienteGateway, cliente_id: Optional[int]
-) -> None:
+def _ensure_cliente_exists(gateway: ClienteGateway, cliente_id: Optional[int]) -> None:
     if cliente_id is None:
         raise ValueError("clienteId es requerido")
     if gateway.get(cliente_id) is None:
@@ -101,7 +99,9 @@ def _extract_producto_id(item: TransaccionProductoItem) -> Optional[int]:
     return None
 
 
-def _ensure_deposito_exists(gateway: DepositoGateway, deposito_id: Optional[int]) -> None:
+def _ensure_deposito_exists(
+    gateway: DepositoGateway, deposito_id: Optional[int]
+) -> None:
     if deposito_id is None:
         return
     if gateway.get(deposito_id) is None:

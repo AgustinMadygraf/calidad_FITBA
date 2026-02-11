@@ -11,7 +11,9 @@ logger = get_logger(__name__)
 
 
 class XubioRemitoGateway(RemitoGateway):
-    def __init__(self, base_url: Optional[str] = None, timeout: Optional[float] = 10.0) -> None:
+    def __init__(
+        self, base_url: Optional[str] = None, timeout: Optional[float] = 10.0
+    ) -> None:
         self._base_url = (base_url or "https://xubio.com").rstrip("/")
         self._timeout = timeout
 
@@ -56,7 +58,9 @@ class XubioRemitoGateway(RemitoGateway):
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
 
-    def update(self, transaccion_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def update(
+        self, transaccion_id: int, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         url = self._url(f"/API/1.1/remitoVentaBean/{transaccion_id}")
         try:
             resp = request_with_token("PUT", url, timeout=self._timeout, json=data)

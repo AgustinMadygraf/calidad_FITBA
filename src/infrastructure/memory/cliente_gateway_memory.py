@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from ...use_cases.ports.cliente_gateway import ClienteGateway
 
+
 class InMemoryClienteGateway(ClienteGateway):
     def __init__(self) -> None:
         self._items: Dict[int, Dict[str, Any]] = {}

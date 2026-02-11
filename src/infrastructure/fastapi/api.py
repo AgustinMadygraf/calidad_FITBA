@@ -60,6 +60,8 @@ def _get_deposito_gateway():
     if not hasattr(app, "deposito_gateway"):
         app.deposito_gateway = get_deposito_gateway()
     return app.deposito_gateway
+
+
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 PRODUCTO_BASE = "/API/1.1/productoVentaBean"
@@ -82,7 +84,9 @@ def health() -> Dict[str, str]:
 
 def _ensure_write_allowed() -> None:
     if not is_prod():
-        raise HTTPException(status_code=403, detail="Modo solo lectura: IS_PROD debe ser true")
+        raise HTTPException(
+            status_code=403, detail="Modo solo lectura: IS_PROD debe ser true"
+        )
 
 
 def _ensure_debug_allowed() -> None:
@@ -353,7 +357,9 @@ def deposito_get(deposito_id: int) -> Dict[str, Any]:
 def run() -> None:
     port = int(os.getenv("PORT", "8000"))
     logger.info("Iniciando FastAPI en 0.0.0.0:%d", port)
-    uvicorn.run("src.infrastructure.fastapi.api:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run(
+        "src.infrastructure.fastapi.api:app", host="0.0.0.0", port=port, reload=True
+    )
 
 
 if __name__ == "__main__":

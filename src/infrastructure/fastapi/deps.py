@@ -51,7 +51,9 @@ def get_producto_gateway():
 def get_producto_compra_gateway():
     if is_prod():
         gw = XubioProductoGateway(
-            config=ProductoGatewayConfig(primary_bean="ProductoCompraBean", fallback_bean=None)
+            config=ProductoGatewayConfig(
+                primary_bean="ProductoCompraBean", fallback_bean=None
+            )
         )
     else:
         gw = InMemoryProductoGateway()

@@ -49,6 +49,8 @@ def configure_logging(level: Union[int, str] = logging.INFO) -> None:
     _configured = True
 
 
-def get_logger(name: str = "app", level: Union[int, str] = logging.INFO) -> logging.Logger:
+def get_logger(
+    name: str = "app", level: Union[int, str] = logging.INFO
+) -> logging.Logger:
     configure_logging(level)
     return logging.getLogger(name)

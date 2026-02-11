@@ -15,7 +15,9 @@ logger = get_logger(__name__)
 
 
 class XubioClienteGateway(ClienteGateway):
-    def __init__(self, base_url: Optional[str] = None, timeout: Optional[float] = 10.0) -> None:
+    def __init__(
+        self, base_url: Optional[str] = None, timeout: Optional[float] = 10.0
+    ) -> None:
         self._base_url = (base_url or "https://xubio.com").rstrip("/")
         self._timeout = timeout
 
