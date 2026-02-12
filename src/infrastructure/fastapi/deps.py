@@ -17,6 +17,7 @@ from ...infrastructure.httpx.lista_precio_gateway_xubio import (
     XubioListaPrecioGateway,
 )
 from ...infrastructure.httpx.moneda_gateway_xubio import XubioMonedaGateway
+from ...infrastructure.httpx.vendedor_gateway_xubio import XubioVendedorGateway
 from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
 from ...shared.config import is_prod
 from ...shared.logger import get_logger
@@ -33,6 +34,7 @@ class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
     identificacion_tributaria_gateway: object
     lista_precio_gateway: object
     moneda_gateway: object
+    vendedor_gateway: object
     token_gateway: object
 
 
@@ -140,6 +142,17 @@ def get_moneda_gateway():
     gw = XubioMonedaGateway(enable_get_cache=cache_enabled)
     logger.info(
         "Moneda gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
+    return gw
+
+
+def get_vendedor_gateway():
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioVendedorGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Vendedor gateway: %s (read cache enabled=%s)",
         gw.__class__.__name__,
         cache_enabled,
     )

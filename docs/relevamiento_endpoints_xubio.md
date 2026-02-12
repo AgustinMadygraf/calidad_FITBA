@@ -7,8 +7,8 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 ## Resumen ejecutivo
 - Endpoints oficiales relevados en Swagger: **62 paths**
 - Operaciones oficiales relevadas (GET/POST/PUT/PATCH/DELETE): **105**
-- Operaciones cubiertas por la API local (matching contra Swagger): **25**
-- Operaciones pendientes respecto de Swagger: **80**
+- Operaciones cubiertas por la API local (matching contra Swagger): **26**
+- Operaciones pendientes respecto de Swagger: **79**
 - Operaciones locales fuera de Swagger (extensiones formales): **10**
 
 ## Endpoints relevados y cubiertos (oficial vs local)
@@ -25,6 +25,7 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - `/API/1.1/monedaBean`: cubierto=`[GET]`
 - `/API/1.1/remitoVentaBean`: cubierto=`[GET, POST, PUT]`
 - `/API/1.1/remitoVentaBean/{id}`: cubierto=`[DELETE]` | local-extra=`[GET, PATCH, PUT]`
+- `/API/1.1/vendedorBean`: cubierto=`[GET]`
 
 ## Endpoints locales fuera de Swagger oficial (extensiones formales acordadas)
 - `/API/1.1/ProductoCompraBean/{id}` `[GET]`
@@ -102,4 +103,4 @@ Observaciones:
 - `tasaImpositiva`: 1 ops pendientes (`GET:1`)
 - `transporteBean`: 4 ops pendientes (`DELETE:1, GET:1, POST:1, PUT:1`)
 - `unidadMedida`: 1 ops pendientes (`GET:1`)
-- `vendedorBean`: 4 ops pendientes (`DELETE:1, GET:1, POST:1, PUT:1`)
+- `vendedorBean`: 3 ops pendientes (`DELETE:1, POST:1, PUT:1`)

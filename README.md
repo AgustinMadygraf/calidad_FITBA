@@ -58,6 +58,7 @@ Monorepo Python con dos componentes:
 - `DELETE /API/1.1/listaPrecioBean/{id}`
 - `GET /API/1.1/monedaBean`
 - `GET /API/1.1/monedaBean/{id}`
+- `GET /API/1.1/vendedorBean`
 - `GET /debug/clienteBean` (solo en `IS_PROD=false`)
 
 ## Resumen Xubio API
@@ -109,7 +110,7 @@ Modo en servidor:
   - `POST/PUT/PATCH/DELETE` habilitados.
 
 Cache de lectura Xubio (TTL en segundos, aplica cuando `IS_PROD=false`):
-- Cliente, Remito, Producto, Deposito, Moneda, Lista de Precio.
+- Cliente, Remito, Producto, Deposito, Moneda, Lista de Precio, Vendedor.
 - Categoria Fiscal e Identificacion Tributaria.
 - Los endpoint `GET .../{id}` de catalogos livianos (`monedaBean`,
   `categoriaFiscal`, `identificacionTributaria`, `depositos`) resuelven desde

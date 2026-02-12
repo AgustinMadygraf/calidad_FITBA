@@ -28,6 +28,7 @@ from .deps import (
     get_producto_gateway,
     get_remito_gateway,
     get_token_gateway,
+    get_vendedor_gateway,
 )
 from .app import app
 
@@ -92,6 +93,12 @@ def _get_moneda_gateway():
     if not hasattr(app, "moneda_gateway"):
         app.moneda_gateway = get_moneda_gateway()
     return app.moneda_gateway
+
+
+def _get_vendedor_gateway():
+    if not hasattr(app, "vendedor_gateway"):
+        app.vendedor_gateway = get_vendedor_gateway()
+    return app.vendedor_gateway
 
 
 def _build_remito_dependencies() -> remito_venta.RemitoDependencies:
@@ -166,6 +173,8 @@ LISTA_PRECIO_BASE = "/API/1.1/listaPrecioBean"
 LISTA_PRECIO_BASE_SLASH = "/API/1.1/listaPrecioBean/"
 MONEDA_BASE = "/API/1.1/monedaBean"
 MONEDA_BASE_SLASH = "/API/1.1/monedaBean/"
+VENDEDOR_BASE = "/API/1.1/vendedorBean"
+VENDEDOR_BASE_SLASH = "/API/1.1/vendedorBean/"
 _MUTATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
@@ -700,6 +709,17 @@ def moneda_list() -> Dict[str, Any]:
         return handlers.list_monedas(gateway)
     except ExternalServiceError as exc:
         logger.error("Gateway error al listar monedas: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get(VENDEDOR_BASE)
+@app.get(VENDEDOR_BASE_SLASH, include_in_schema=False)
+def vendedor_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_vendedor_gateway()
+        return handlers.list_vendedores(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar vendedores: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 

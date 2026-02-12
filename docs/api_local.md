@@ -94,6 +94,20 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 - `GET /API/1.1/monedaBean`
 - `GET /API/1.1/monedaBean/{id}`
 
+## Vendedores
+- `GET /API/1.1/vendedorBean`
+
+Ejemplo de item:
+```json
+{
+  "vendedorId": 0,
+  "nombre": "string",
+  "apellido": "string",
+  "esVendedor": 0,
+  "activo": 0
+}
+```
+
 ## Extensiones formales fuera de Swagger oficial
 - `GET /API/1.1/ProductoCompraBean/{id}`
 - `GET /API/1.1/categoriaFiscal/{id}`
@@ -118,6 +132,7 @@ Politica:
   - `XUBIO_LISTA_PRECIO_LIST_TTL`
   - `XUBIO_CATEGORIA_FISCAL_LIST_TTL`
   - `XUBIO_IDENTIFICACION_TRIBUTARIA_LIST_TTL`
+  - `XUBIO_VENDEDOR_LIST_TTL`
   - `XUBIO_GET_CACHE_ENABLED` (override general de cache on/off).
 - En catalogos livianos (`monedaBean`, `categoriaFiscal`,
   `identificacionTributaria`, `depositos`), `GET /{id}` resuelve desde la lista

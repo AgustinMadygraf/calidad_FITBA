@@ -32,6 +32,7 @@ def test_lazy_gateway_getters_set_app_attributes(monkeypatch):
         ),
         ("lista_precio_gateway", "_get_lista_precio_gateway", "get_lista_precio_gateway"),
         ("moneda_gateway", "_get_moneda_gateway", "get_moneda_gateway"),
+        ("vendedor_gateway", "_get_vendedor_gateway", "get_vendedor_gateway"),
     ]
     for attr_name, getter_name, dep_factory_name in cases:
         sentinel = object()
@@ -118,6 +119,7 @@ def test_debug_route_returns_502_on_gateway_error(monkeypatch):
         ("/API/1.1/identificacionTributaria", "list_identificaciones_tributarias"),
         ("/API/1.1/listaPrecioBean", "list_lista_precios"),
         ("/API/1.1/monedaBean", "list_monedas"),
+        ("/API/1.1/vendedorBean", "list_vendedores"),
     ],
 )
 def test_list_routes_return_502_on_external_errors(monkeypatch, path, handler_name):
