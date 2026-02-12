@@ -18,20 +18,6 @@ from ...infrastructure.httpx.lista_precio_gateway_xubio import (
 )
 from ...infrastructure.httpx.moneda_gateway_xubio import XubioMonedaGateway
 from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
-from ...infrastructure.memory.categoria_fiscal_gateway_memory import (
-    InMemoryCategoriaFiscalGateway,
-)
-from ...infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
-from ...infrastructure.memory.producto_gateway_memory import InMemoryProductoGateway
-from ...infrastructure.memory.deposito_gateway_memory import InMemoryDepositoGateway
-from ...infrastructure.memory.identificacion_tributaria_gateway_memory import (
-    InMemoryIdentificacionTributariaGateway,
-)
-from ...infrastructure.memory.lista_precio_gateway_memory import (
-    InMemoryListaPrecioGateway,
-)
-from ...infrastructure.memory.moneda_gateway_memory import InMemoryMonedaGateway
-from ...infrastructure.memory.remito_gateway_memory import InMemoryRemitoGateway
 from ...shared.config import is_prod
 from ...shared.logger import get_logger
 
@@ -50,15 +36,29 @@ class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
     token_gateway: object
 
 
+def _get_read_cache_enabled() -> bool:
+    return not is_prod()
+
+
 def get_cliente_gateway():
-    gw = XubioClienteGateway() if is_prod() else InMemoryClienteGateway()
-    logger.info("Cliente gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioClienteGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Cliente gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
 def get_categoria_fiscal_gateway():
-    gw = XubioCategoriaFiscalGateway() if is_prod() else InMemoryCategoriaFiscalGateway()
-    logger.info("Categoria fiscal gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioCategoriaFiscalGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Categoria fiscal gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
@@ -67,52 +67,80 @@ def get_token_gateway():
 
 
 def get_remito_gateway():
-    gw = XubioRemitoGateway() if is_prod() else InMemoryRemitoGateway()
-    logger.info("Remito gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioRemitoGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Remito gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
 def get_producto_gateway():
-    gw = XubioProductoGateway() if is_prod() else InMemoryProductoGateway()
-    logger.info("Producto gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioProductoGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Producto gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
 def get_producto_compra_gateway():
-    if is_prod():
-        gw = XubioProductoGateway(
-            config=ProductoGatewayConfig(
-                primary_bean="ProductoCompraBean", fallback_bean=None
-            )
-        )
-    else:
-        gw = InMemoryProductoGateway()
-    logger.info("Producto compra gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioProductoGateway(
+        config=ProductoGatewayConfig(primary_bean="ProductoCompraBean", fallback_bean=None),
+        enable_get_cache=cache_enabled,
+    )
+    logger.info(
+        "Producto compra gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
 def get_deposito_gateway():
-    gw = XubioDepositoGateway() if is_prod() else InMemoryDepositoGateway()
-    logger.info("Deposito gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioDepositoGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Deposito gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
 def get_identificacion_tributaria_gateway():
-    if is_prod():
-        gw = XubioIdentificacionTributariaGateway()
-    else:
-        gw = InMemoryIdentificacionTributariaGateway()
-    logger.info("Identificacion tributaria gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioIdentificacionTributariaGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Identificacion tributaria gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
 def get_lista_precio_gateway():
-    gw = XubioListaPrecioGateway() if is_prod() else InMemoryListaPrecioGateway()
-    logger.info("Lista precio gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioListaPrecioGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Lista precio gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw
 
 
 def get_moneda_gateway():
-    gw = XubioMonedaGateway() if is_prod() else InMemoryMonedaGateway()
-    logger.info("Moneda gateway: %s", gw.__class__.__name__)
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioMonedaGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Moneda gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
     return gw

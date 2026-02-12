@@ -4,11 +4,14 @@ Path: src/infrastructure/httpx/moneda_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
-import time
-
 from ...shared.logger import get_logger
 from ...use_cases.ports.moneda_gateway import MonedaGateway
-from .xubio_cache_helpers import read_cache_ttl
+from .xubio_cache_helpers import (
+    cache_get,
+    cache_set,
+    default_get_cache_enabled,
+    read_cache_ttl,
+)
 from .xubio_crud_helpers import list_items
 
 logger = get_logger(__name__)
@@ -23,12 +26,17 @@ class XubioMonedaGateway(MonedaGateway):
         base_url: Optional[str] = None,
         timeout: Optional[float] = 10.0,
         list_cache_ttl: Optional[float] = None,
+        enable_get_cache: Optional[bool] = None,
     ) -> None:
         self._base_url = (base_url or "https://xubio.com").rstrip("/")
         self._timeout = timeout
         if list_cache_ttl is None:
             list_cache_ttl = read_cache_ttl("XUBIO_MONEDA_LIST_TTL")
-        self._list_cache_ttl = list_cache_ttl
+        if enable_get_cache is None:
+            enable_get_cache = default_get_cache_enabled()
+        if not enable_get_cache:
+            list_cache_ttl = 0.0
+        self._list_cache_ttl = max(0.0, float(list_cache_ttl))
 
     def _url(self, path: str) -> str:
         return f"{self._base_url}{path}"
@@ -52,20 +60,13 @@ class XubioMonedaGateway(MonedaGateway):
         return None
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached: Optional[List[Dict[str, Any]]] = None
-        if self._list_cache_ttl > 0:
-            entry = _GLOBAL_LIST_CACHE.get(MONEDA_PATH)
-            if entry is not None:
-                timestamp, items = entry
-                if time.time() - timestamp <= self._list_cache_ttl:
-                    logger.info("Xubio lista monedas: cache hit (%d items)", len(items))
-                    cached = list(items)
+        cached = cache_get(_GLOBAL_LIST_CACHE, MONEDA_PATH, ttl=self._list_cache_ttl)
+        if cached is not None:
+            logger.info("Xubio lista monedas: cache hit (%d items)", len(cached))
         return cached
 
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        if self._list_cache_ttl <= 0:
-            return
-        _GLOBAL_LIST_CACHE[MONEDA_PATH] = (time.time(), list(items))
+        cache_set(_GLOBAL_LIST_CACHE, MONEDA_PATH, items, ttl=self._list_cache_ttl)
 
 
 def _match_moneda_id(item: Dict[str, Any], moneda_id: int) -> bool:

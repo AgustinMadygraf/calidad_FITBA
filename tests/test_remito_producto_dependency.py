@@ -1,6 +1,9 @@
 from src.entities.remito_venta import RemitoVenta
 from src.infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
 from src.infrastructure.memory.deposito_gateway_memory import InMemoryDepositoGateway
+from src.infrastructure.memory.lista_precio_gateway_memory import (
+    InMemoryListaPrecioGateway,
+)
 from src.infrastructure.memory.producto_gateway_memory import InMemoryProductoGateway
 from src.infrastructure.memory.remito_gateway_memory import InMemoryRemitoGateway
 from src.use_cases import remito_venta
@@ -27,12 +30,14 @@ def test_create_remito_rejects_missing_producto():
     cliente_gateway = InMemoryClienteGateway()
     producto_gateway = InMemoryProductoGateway()
     deposito_gateway = InMemoryDepositoGateway()
+    lista_precio_gateway = InMemoryListaPrecioGateway()
     cliente = cliente_gateway.create({"nombre": "Cliente OK"})
     entity = _make_entity(cliente["cliente_id"], 999)
     deps = remito_venta.RemitoDependencies(
         cliente_gateway=cliente_gateway,
         producto_gateway=producto_gateway,
         deposito_gateway=deposito_gateway,
+        lista_precio_gateway=lista_precio_gateway,
     )
     try:
         remito_venta.create_remito(remito_gateway, entity, deps)
@@ -47,6 +52,7 @@ def test_create_remito_accepts_existing_producto():
     cliente_gateway = InMemoryClienteGateway()
     producto_gateway = InMemoryProductoGateway()
     deposito_gateway = InMemoryDepositoGateway()
+    lista_precio_gateway = InMemoryListaPrecioGateway()
     cliente = cliente_gateway.create({"nombre": "Cliente OK"})
     producto = producto_gateway.create({"nombre": "Producto OK"})
     entity = _make_entity(cliente["cliente_id"], producto["productoid"])
@@ -54,6 +60,7 @@ def test_create_remito_accepts_existing_producto():
         cliente_gateway=cliente_gateway,
         producto_gateway=producto_gateway,
         deposito_gateway=deposito_gateway,
+        lista_precio_gateway=lista_precio_gateway,
     )
     created = remito_venta.create_remito(remito_gateway, entity, deps)
     assert created.transaccionId is not None

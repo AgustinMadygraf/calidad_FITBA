@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 import uvicorn
-from fastapi import HTTPException, Response
-from fastapi.responses import FileResponse
+from fastapi import HTTPException, Request, Response
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from ...interface_adapter.controllers import handlers
@@ -111,6 +111,7 @@ LISTA_PRECIO_BASE = "/API/1.1/listaPrecioBean"
 LISTA_PRECIO_BASE_SLASH = "/API/1.1/listaPrecioBean/"
 MONEDA_BASE = "/API/1.1/monedaBean"
 MONEDA_BASE_SLASH = "/API/1.1/monedaBean/"
+_MUTATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
 @app.get("/", include_in_schema=False)
@@ -128,6 +129,20 @@ def favicon() -> Response:
 @app.get("/health")
 def health() -> Dict[str, str]:
     return handlers.health()
+
+
+@app.middleware("http")
+async def block_mutations_when_read_only(request: Request, call_next):
+    if (
+        request.method in _MUTATION_METHODS
+        and request.url.path.startswith("/API/1.1/")
+        and not is_prod()
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Modo solo lectura: IS_PROD debe ser true"},
+        )
+    return await call_next(request)
 
 
 def _ensure_write_allowed() -> None:
@@ -235,6 +250,8 @@ def cliente_get(cliente_id: int) -> Dict[str, Any]:
 
 @app.put(f"{CLIENTE_BASE}/{{cliente_id}}")
 @app.put(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
+@app.patch(f"{CLIENTE_BASE}/{{cliente_id}}")
+@app.patch(f"{CLIENTE_BASE}/{{cliente_id}}/", include_in_schema=False)
 def cliente_update(cliente_id: int, body: ClientePayload) -> Dict[str, Any]:
     _ensure_write_allowed()
     try:
@@ -321,6 +338,8 @@ def remito_get(transaccion_id: int) -> Dict[str, Any]:
 
 @app.put(f"{REMITO_BASE}/{{transaccion_id}}")
 @app.put(f"{REMITO_BASE}/{{transaccion_id}}/", include_in_schema=False)
+@app.patch(f"{REMITO_BASE}/{{transaccion_id}}")
+@app.patch(f"{REMITO_BASE}/{{transaccion_id}}/", include_in_schema=False)
 def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, Any]:
     _ensure_write_allowed()
     try:

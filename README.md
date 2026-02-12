@@ -81,6 +81,7 @@ IS_PROD=false
 XUBIO_CLIENT_ID=...
 XUBIO_SECRET_ID=...
 XUBIO_TOKEN_ENDPOINT=https://xubio.com/API/1.1/TokenEndpoint
+XUBIO_GET_CACHE_ENABLED=true
 XUBIO_CLIENTE_LIST_TTL=30
 XUBIO_REMITO_LIST_TTL=15
 XUBIO_PRODUCTO_LIST_TTL=60
@@ -95,16 +96,20 @@ PORT=8000
 Nota: `IS_PROD` acepta `true/false`, `1/0`, `yes/no`.
 
 Modo en servidor:
-- `IS_PROD=false`: usa gateways in-memory para clientes, remitos, productos,
-  depositos, listas de precio y monedas.
-- `IS_PROD=true`: usa gateways HTTPX y requiere OAuth2 (token real de Xubio).
+- `IS_PROD=false`: usa gateways HTTPX Xubio en modo solo lectura:
+  - `GET` con cache-aside (cache hit -> responde; miss -> consulta Xubio y cachea).
+  - `POST/PUT/PATCH/DELETE` bloqueados con `403`.
+- `IS_PROD=true`: usa gateways HTTPX Xubio sin cache de lectura:
+  - cada `GET` consulta directo a Xubio.
+  - `POST/PUT/PATCH/DELETE` habilitados.
 
-Cache de listas Xubio (TTL en segundos):
+Cache de lectura Xubio (TTL en segundos, aplica cuando `IS_PROD=false`):
 - Cliente, Remito, Producto, Deposito, Moneda, Lista de Precio.
 - Categoria Fiscal e Identificacion Tributaria.
 - Los endpoint `GET .../{id}` de catalogos (`monedaBean`, `listaPrecioBean`,
   `categoriaFiscal`, `identificacionTributaria`, `depositos`) resuelven desde
   `GET list` + busqueda por ID para reducir llamadas.
+- `XUBIO_GET_CACHE_ENABLED` permite override explicito de cache de lectura.
 
 ## Ejecutar servidor
 

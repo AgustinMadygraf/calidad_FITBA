@@ -4,11 +4,14 @@ Path: src/infrastructure/httpx/cliente_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
-import time
-
 from ...use_cases.ports.cliente_gateway import ClienteGateway
 from ...shared.logger import get_logger
-from .xubio_cache_helpers import read_cache_ttl
+from .xubio_cache_helpers import (
+    cache_get,
+    cache_set,
+    default_get_cache_enabled,
+    read_cache_ttl,
+)
 from .xubio_crud_helpers import (
     create_item,
     delete_item,
@@ -21,6 +24,7 @@ logger = get_logger(__name__)
 
 CLIENTE_PATH = "/API/1.1/clienteBean"
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
+_GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 
 
 class XubioClienteGateway(ClienteGateway):
@@ -29,12 +33,17 @@ class XubioClienteGateway(ClienteGateway):
         base_url: Optional[str] = None,
         timeout: Optional[float] = 10.0,
         list_cache_ttl: Optional[float] = None,
+        enable_get_cache: Optional[bool] = None,
     ) -> None:
         self._base_url = (base_url or "https://xubio.com").rstrip("/")
         self._timeout = timeout
         if list_cache_ttl is None:
             list_cache_ttl = read_cache_ttl("XUBIO_CLIENTE_LIST_TTL", default=30.0)
-        self._list_cache_ttl = list_cache_ttl
+        if enable_get_cache is None:
+            enable_get_cache = default_get_cache_enabled()
+        if not enable_get_cache:
+            list_cache_ttl = 0.0
+        self._list_cache_ttl = max(0.0, float(list_cache_ttl))
 
     def _url(self, path: str) -> str:
         return f"{self._base_url}{path}"
@@ -51,24 +60,34 @@ class XubioClienteGateway(ClienteGateway):
         return items
 
     def get(self, cliente_id: int) -> Optional[Dict[str, Any]]:
+        cached_item = self._get_cached_item(cliente_id)
+        if cached_item is not None:
+            logger.info("Xubio cliente detalle: cache hit (%s)", cliente_id)
+            return cached_item
         cached = self._get_cached_list()
         if cached is not None:
             for item in cached:
                 if _match_cliente_id(item, cliente_id):
+                    self._store_item_cache(cliente_id, item)
                     return item
         url = self._url(f"{CLIENTE_PATH}/{cliente_id}")
-        return get_item(url=url, timeout=self._timeout, logger=logger)
+        item = get_item(url=url, timeout=self._timeout, logger=logger)
+        if item is not None:
+            self._store_item_cache(cliente_id, item)
+        return item
 
     def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
         url = self._url(CLIENTE_PATH)
         created = create_item(url=url, timeout=self._timeout, data=data, logger=logger)
         self._clear_list_cache()
+        self._clear_item_cache()
         return created
 
     def update(self, cliente_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         url = self._url(f"{CLIENTE_PATH}/{cliente_id}")
         updated = update_item(url=url, timeout=self._timeout, data=data, logger=logger)
         self._clear_list_cache()
+        self._clear_item_cache(cliente_id)
         return updated
 
     def delete(self, cliente_id: int) -> bool:
@@ -76,28 +95,45 @@ class XubioClienteGateway(ClienteGateway):
         deleted = delete_item(url=url, timeout=self._timeout, logger=logger)
         if deleted:
             self._clear_list_cache()
+            self._clear_item_cache(cliente_id)
         return deleted
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached: Optional[List[Dict[str, Any]]] = None
-        if self._list_cache_ttl > 0:
-            entry = _GLOBAL_LIST_CACHE.get(CLIENTE_PATH)
-            if entry is not None:
-                timestamp, items = entry
-                if time.time() - timestamp <= self._list_cache_ttl:
-                    logger.info(
-                        "Xubio lista clientes: cache hit (%d items)", len(items)
-                    )
-                    cached = list(items)
+        cached = cache_get(_GLOBAL_LIST_CACHE, CLIENTE_PATH, ttl=self._list_cache_ttl)
+        if cached is not None:
+            logger.info("Xubio lista clientes: cache hit (%d items)", len(cached))
         return cached
 
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        if self._list_cache_ttl <= 0:
-            return
-        _GLOBAL_LIST_CACHE[CLIENTE_PATH] = (time.time(), list(items))
+        cache_set(_GLOBAL_LIST_CACHE, CLIENTE_PATH, items, ttl=self._list_cache_ttl)
+        for item in items:
+            item_id = _extract_cliente_id(item)
+            if item_id is not None:
+                self._store_item_cache(item_id, item)
 
     def _clear_list_cache(self) -> None:
         _GLOBAL_LIST_CACHE.pop(CLIENTE_PATH, None)
+
+    def _get_cached_item(self, cliente_id: int) -> Optional[Dict[str, Any]]:
+        return cache_get(
+            _GLOBAL_ITEM_CACHE,
+            _cliente_item_cache_key(cliente_id),
+            ttl=self._list_cache_ttl,
+        )
+
+    def _store_item_cache(self, cliente_id: int, item: Dict[str, Any]) -> None:
+        cache_set(
+            _GLOBAL_ITEM_CACHE,
+            _cliente_item_cache_key(cliente_id),
+            item,
+            ttl=self._list_cache_ttl,
+        )
+
+    def _clear_item_cache(self, cliente_id: Optional[int] = None) -> None:
+        if cliente_id is not None:
+            _GLOBAL_ITEM_CACHE.pop(_cliente_item_cache_key(cliente_id), None)
+            return
+        _GLOBAL_ITEM_CACHE.clear()
 
 
 def _match_cliente_id(item: Dict[str, Any], cliente_id: int) -> bool:
@@ -106,3 +142,15 @@ def _match_cliente_id(item: Dict[str, Any], cliente_id: int) -> bool:
         if value == cliente_id:
             return True
     return False
+
+
+def _extract_cliente_id(item: Dict[str, Any]) -> Optional[int]:
+    for key in ("cliente_id", "clienteId", "ID", "id"):
+        value = item.get(key)
+        if isinstance(value, int):
+            return value
+    return None
+
+
+def _cliente_item_cache_key(cliente_id: int) -> str:
+    return f"{CLIENTE_PATH}/{cliente_id}"

@@ -9,8 +9,10 @@ from src.use_cases.errors import ExternalServiceError
 @pytest.fixture(autouse=True)
 def reset_cache():
     remito_gateway._GLOBAL_LIST_CACHE.clear()
+    remito_gateway._GLOBAL_ITEM_CACHE.clear()
     yield
     remito_gateway._GLOBAL_LIST_CACHE.clear()
+    remito_gateway._GLOBAL_ITEM_CACHE.clear()
 
 
 def test_list_accepts_list_payload(monkeypatch):
@@ -91,3 +93,22 @@ def test_create_invalidates_list_cache(monkeypatch):
     assert calls["create"] == 1
     assert gw.list() == [{"transaccionId": 1}]
     assert calls["list"] == 2
+
+
+def test_prod_mode_disables_get_cache(monkeypatch):
+    calls = {"count": 0}
+
+    def fake_request(*_args, **_kwargs):
+        calls["count"] += 1
+        return httpx.Response(200, json=[{"transaccionId": 5}])
+
+    monkeypatch.setattr(
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
+        fake_request,
+    )
+    monkeypatch.setenv("IS_PROD", "true")
+
+    gw = XubioRemitoGateway()
+    assert gw.list() == [{"transaccionId": 5}]
+    assert gw.list() == [{"transaccionId": 5}]
+    assert calls["count"] == 2

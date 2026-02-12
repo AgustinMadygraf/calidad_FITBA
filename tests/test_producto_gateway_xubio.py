@@ -9,8 +9,10 @@ from src.use_cases.errors import ExternalServiceError
 @pytest.fixture(autouse=True)
 def reset_cache():
     producto_gateway._GLOBAL_LIST_CACHE.clear()
+    producto_gateway._GLOBAL_ITEM_CACHE.clear()
     yield
     producto_gateway._GLOBAL_LIST_CACHE.clear()
+    producto_gateway._GLOBAL_ITEM_CACHE.clear()
 
 
 def test_list_accepts_list_payload(monkeypatch):
@@ -152,3 +154,22 @@ def test_get_falls_back_to_compra_list_on_5xx(monkeypatch):
     )
     gw = XubioProductoGateway()
     assert gw.get(12) == {"productoid": 12}
+
+
+def test_prod_mode_disables_get_cache(monkeypatch):
+    calls = {"count": 0}
+
+    def fake_request(*_args, **_kwargs):
+        calls["count"] += 1
+        return httpx.Response(200, json=[{"productoid": 8}])
+
+    monkeypatch.setattr(
+        "src.infrastructure.httpx.producto_gateway_xubio.request_with_token",
+        fake_request,
+    )
+    monkeypatch.setenv("IS_PROD", "true")
+
+    gw = XubioProductoGateway()
+    assert gw.list() == [{"productoid": 8}]
+    assert gw.list() == [{"productoid": 8}]
+    assert calls["count"] == 2

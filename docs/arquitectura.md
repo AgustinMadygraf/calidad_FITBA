@@ -46,5 +46,5 @@ En la implementacion actual:
 - Refresh automatico ante `invalid_token`.
 
 ## Modo real vs mock
-- `IS_PROD=false`: gateways in-memory.
-- `IS_PROD=true`: gateways HTTPX reales.
+- `IS_PROD=false`: gateways HTTPX Xubio + cache-aside en `GET` y mutaciones bloqueadas (`403`).
+- `IS_PROD=true`: gateways HTTPX Xubio sin cache de lectura y mutaciones habilitadas.
