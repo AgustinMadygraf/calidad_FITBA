@@ -17,35 +17,31 @@ def _raise_value(*_args, **_kwargs):
     raise ValueError("bad input")
 
 
-def test_lazy_gateway_getters_set_app_attributes(monkeypatch):
+def test_gateway_provider_builds_and_caches(monkeypatch):
+    from src.infrastructure.fastapi import gateway_provider as provider_module
+
     cases = [
-        ("cliente_gateway", "_get_cliente_gateway", "get_cliente_gateway"),
-        ("categoria_fiscal_gateway", "_get_categoria_fiscal_gateway", "get_categoria_fiscal_gateway"),
-        ("remito_gateway", "_get_remito_gateway", "get_remito_gateway"),
-        ("producto_gateway", "_get_producto_gateway", "get_producto_gateway"),
-        ("producto_compra_gateway", "_get_producto_compra_gateway", "get_producto_compra_gateway"),
-        ("deposito_gateway", "_get_deposito_gateway", "get_deposito_gateway"),
-        (
-            "identificacion_tributaria_gateway",
-            "_get_identificacion_tributaria_gateway",
-            "get_identificacion_tributaria_gateway",
-        ),
-        ("lista_precio_gateway", "_get_lista_precio_gateway", "get_lista_precio_gateway"),
-        ("moneda_gateway", "_get_moneda_gateway", "get_moneda_gateway"),
-        ("vendedor_gateway", "_get_vendedor_gateway", "get_vendedor_gateway"),
-        (
-            "comprobante_venta_gateway",
-            "_get_comprobante_venta_gateway",
-            "get_comprobante_venta_gateway",
-        ),
+        ("cliente_gateway", "get_cliente_gateway"),
+        ("categoria_fiscal_gateway", "get_categoria_fiscal_gateway"),
+        ("remito_gateway", "get_remito_gateway"),
+        ("producto_gateway", "get_producto_gateway"),
+        ("producto_compra_gateway", "get_producto_compra_gateway"),
+        ("deposito_gateway", "get_deposito_gateway"),
+        ("identificacion_tributaria_gateway", "get_identificacion_tributaria_gateway"),
+        ("lista_precio_gateway", "get_lista_precio_gateway"),
+        ("moneda_gateway", "get_moneda_gateway"),
+        ("vendedor_gateway", "get_vendedor_gateway"),
+        ("comprobante_venta_gateway", "get_comprobante_venta_gateway"),
     ]
-    for attr_name, getter_name, dep_factory_name in cases:
+    for attr_name, dep_factory_name in cases:
         sentinel = object()
-        monkeypatch.setattr(api, dep_factory_name, lambda sentinel=sentinel: sentinel)
-        monkeypatch.delattr(app, attr_name, raising=False)
-        result = getattr(api, getter_name)()
+        monkeypatch.setattr(
+            provider_module, dep_factory_name, lambda sentinel=sentinel: sentinel
+        )
+        provider = provider_module.GatewayProvider()
+        result = getattr(provider, attr_name)
         assert result is sentinel
-        assert getattr(app, attr_name) is sentinel
+        assert getattr(provider, attr_name) is sentinel
 
 
 def test_root_uses_frontend_file_when_available(tmp_path, monkeypatch):

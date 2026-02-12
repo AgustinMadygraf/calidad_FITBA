@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from src.infrastructure.fastapi import deps
 from src.infrastructure.fastapi.api import app
+from src.infrastructure.fastapi.gateway_provider import gateway_provider
 from src.infrastructure.httpx.cliente_gateway_xubio import XubioClienteGateway
 from src.infrastructure.httpx.comprobante_venta_gateway_xubio import (
     XubioComprobanteVentaGateway,
@@ -142,10 +143,8 @@ def test_remito_swagger_put_is_forbidden_in_non_prod(monkeypatch):
 
 def test_patch_is_enabled_in_prod(monkeypatch):
     monkeypatch.setenv("IS_PROD", "true")
-    monkeypatch.setattr(app, "cliente_gateway", InMemoryClienteGateway(), raising=False)
-    monkeypatch.setattr(
-        app, "lista_precio_gateway", InMemoryListaPrecioGateway(), raising=False
-    )
+    gateway_provider.cliente_gateway = InMemoryClienteGateway()
+    gateway_provider.lista_precio_gateway = InMemoryListaPrecioGateway()
     client = TestClient(app)
 
     response = client.patch("/API/1.1/clienteBean/1", json={})
@@ -173,7 +172,7 @@ def test_lista_precio_mutations_forbidden_in_non_prod(monkeypatch):
 
 def test_producto_create_enabled_in_prod(monkeypatch):
     monkeypatch.setenv("IS_PROD", "true")
-    monkeypatch.setattr(app, "producto_gateway", InMemoryProductoGateway(), raising=False)
+    gateway_provider.producto_gateway = InMemoryProductoGateway()
     client = TestClient(app)
 
     response = client.post("/API/1.1/ProductoVentaBean", json={"nombre": "P1"})
@@ -184,9 +183,7 @@ def test_producto_create_enabled_in_prod(monkeypatch):
 
 def test_lista_precio_create_enabled_in_prod(monkeypatch):
     monkeypatch.setenv("IS_PROD", "true")
-    monkeypatch.setattr(
-        app, "lista_precio_gateway", InMemoryListaPrecioGateway(), raising=False
-    )
+    gateway_provider.lista_precio_gateway = InMemoryListaPrecioGateway()
     client = TestClient(app)
 
     response = client.post("/API/1.1/listaPrecioBean", json={"nombre": "LP1"})
@@ -199,7 +196,7 @@ def test_legacy_lowercase_producto_route_still_works(monkeypatch):
     monkeypatch.setenv("IS_PROD", "false")
     gateway = InMemoryProductoGateway()
     gateway.create({"nombre": "P1"})
-    monkeypatch.setattr(app, "producto_gateway", gateway, raising=False)
+    gateway_provider.producto_gateway = gateway
     client = TestClient(app)
 
     response = client.get("/API/1.1/productoVentaBean/")

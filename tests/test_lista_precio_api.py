@@ -3,7 +3,11 @@ import os
 from fastapi.testclient import TestClient
 
 from src.infrastructure.fastapi.api import app as global_app
-from src.infrastructure.fastapi.api import lista_precio_get, lista_precio_list
+from src.infrastructure.fastapi.gateway_provider import gateway_provider
+from src.infrastructure.fastapi.routers.lista_precio import (
+    lista_precio_get,
+    lista_precio_list,
+)
 from src.infrastructure.memory.lista_precio_gateway_memory import (
     InMemoryListaPrecioGateway,
 )
@@ -13,7 +17,7 @@ def test_get_lista_precios_returns_wrapper():
     os.environ["IS_PROD"] = "false"
     gateway = InMemoryListaPrecioGateway()
     gateway.create({"nombre": "LP Base"})
-    global_app.lista_precio_gateway = gateway
+    gateway_provider.lista_precio_gateway = gateway
 
     data = lista_precio_list()
 
@@ -26,7 +30,7 @@ def test_get_lista_precio_by_id_returns_item():
     os.environ["IS_PROD"] = "false"
     gateway = InMemoryListaPrecioGateway()
     gateway.create({"nombre": "LP Base"})
-    global_app.lista_precio_gateway = gateway
+    gateway_provider.lista_precio_gateway = gateway
 
     item = lista_precio_get(1)
 
@@ -38,7 +42,7 @@ def test_lista_precio_crud_routes_in_prod(monkeypatch):
     monkeypatch.setenv("IS_PROD", "true")
     gateway = InMemoryListaPrecioGateway()
     gateway.create({"nombre": "LP Original"})
-    monkeypatch.setattr(global_app, "lista_precio_gateway", gateway, raising=False)
+    gateway_provider.lista_precio_gateway = gateway
     client = TestClient(global_app)
 
     create_response = client.post(

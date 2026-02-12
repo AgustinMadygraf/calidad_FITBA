@@ -10,21 +10,28 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
 
 ## Fase 0 - Estabilizacion de testing HTTP (bloqueante)
 
-- [ ] T0.1 Definir matriz de versiones compatibles para pruebas HTTP.
+- [x] T0.1 Definir matriz de versiones compatibles para pruebas HTTP.
   Descripcion: registrar combinacion estable de `fastapi`, `starlette`, `httpx`, `anyio`, `pytest`, `pytest-cov`.
   Entregable: tabla en este documento + actualizacion de `requirements.txt`.
   Criterio de aceptacion: una app FastAPI minima responde en prueba automatica sin cuelgues.
   Complejidad: Media.
   Dependencias: ninguna.
 
-- [ ] T0.2 Agregar smoke test minimo de transporte HTTP.
+- [ ] T0.1b Confirmar matriz en venv Ubuntu (otra PC).
+  Descripcion: repetir la captura de versiones y smoke test en el entorno Ubuntu.
+  Entregable: fila adicional en el Anexo de matriz de compatibilidad.
+  Criterio de aceptacion: misma prueba `pytest -q tests/test_api_http_smoke.py` pasa.
+  Complejidad: Baja.
+  Dependencias: T0.1.
+
+- [x] T0.2 Agregar smoke test minimo de transporte HTTP.
   Descripcion: crear test aislado que valide `GET /health` con cliente de pruebas.
   Entregable: archivo de test dedicado para detectar incompatibilidad de stack.
   Criterio de aceptacion: el test falla rapido con mensaje claro si hay cuelgue/incompatibilidad.
   Complejidad: Baja.
   Dependencias: T0.1.
 
-- [ ] T0.3 Separar suites de test por tipo.
+- [x] T0.3 Separar suites de test por tipo.
   Descripcion: etiquetar tests en `unit`, `integration`, `api_http`, `contract` para ejecutar pipelines parciales.
   Entregable: markers en pytest + comando documentado por suite.
   Criterio de aceptacion: se pueden correr suites independientes sin depender de toda la bateria.
@@ -33,28 +40,28 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
 
 ## Fase 1 - Modularizacion backend (Clean Architecture aplicada)
 
-- [ ] T1.1 Extraer routers por recurso desde `src/infrastructure/fastapi/api.py`.
+- [x] T1.1 Extraer routers por recurso desde `src/infrastructure/fastapi/api.py`.
   Descripcion: mover rutas de cliente, remito, producto, lista de precio, vendedor, comprobante y catalogos a modulos separados.
   Entregable: paquete `src/infrastructure/fastapi/routers/` con un router por contexto.
   Criterio de aceptacion: `api.py` queda como composition root y registro de routers.
   Complejidad: Alta.
   Dependencias: T0.1.
 
-- [ ] T1.2 Centralizar manejo de errores HTTP.
+- [x] T1.2 Centralizar manejo de errores HTTP.
   Descripcion: reemplazar bloques repetidos `try/except ExternalServiceError` por exception handlers globales.
   Entregable: manejadores globales para `ExternalServiceError` y `ValueError` donde corresponda.
   Criterio de aceptacion: misma semantica HTTP actual (400/404/502/403) con menos duplicacion.
   Complejidad: Media.
   Dependencias: T1.1.
 
-- [ ] T1.3 Consolidar resolucion de gateways en un provider unico.
+- [x] T1.3 Consolidar resolucion de gateways en un provider unico.
   Descripcion: eliminar getters repetidos con atributos dinamicos en `app` y usar provider/factory explicita.
   Entregable: modulo de providers desacoplado de rutas.
   Criterio de aceptacion: instanciacion lazy conservada sin duplicacion de codigo.
   Complejidad: Media.
   Dependencias: T1.1.
 
-- [ ] T1.4 Mantener politicas de runtime en middleware dedicado.
+- [x] T1.4 Mantener politicas de runtime en middleware dedicado.
   Descripcion: preservar bloqueo de mutaciones en no-prod y reglas de debug, desacoplado del wiring de endpoints.
   Entregable: middleware/policy module con pruebas unitarias.
   Criterio de aceptacion: comportamiento actual sin regresiones funcionales.
@@ -63,7 +70,7 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
 
 ## Fase 2 - Compatibilidad total Xubio con contratos verificables
 
-- [ ] T2.1 Definir matriz de contrato local vs Swagger oficial.
+- [x] T2.1 Definir matriz de contrato local vs Swagger oficial.
   Descripcion: documentar por endpoint/metodo si es oficial o extension local formal.
   Entregable: actualizacion de `docs/relevamiento_endpoints_xubio.md`.
   Criterio de aceptacion: 100% de rutas locales clasificadas.
@@ -176,3 +183,8 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
 5. T4.1 -> T4.2 -> T4.3 -> T4.4
 6. T5.1 -> T5.2 -> T5.3
 
+## Anexo - Matriz de compatibilidad (testing HTTP)
+
+| Entorno | Python | fastapi | starlette | httpx | anyio | pytest | pytest-cov | Verificacion |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Windows venv (C:\\proyectos_software\\madypack-dev\\calidad_FITBA\\venv) | 3.10.11 | 0.128.1 | 0.50.0 | 0.28.1 | 4.12.1 | 9.0.2 | 7.0.0 | `pytest -q tests/test_api_http_smoke.py` |

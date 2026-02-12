@@ -1,10 +1,10 @@
 import os
 
-from src.infrastructure.fastapi.api import (
-    app as global_app,
+from src.infrastructure.fastapi.gateway_provider import gateway_provider
+from src.infrastructure.fastapi.routers.catalogos import (
+    identificacion_tributaria_get,
+    identificacion_tributaria_list,
 )
-from src.infrastructure.fastapi.api import identificacion_tributaria_get
-from src.infrastructure.fastapi.api import identificacion_tributaria_list
 from src.infrastructure.memory.identificacion_tributaria_gateway_memory import (
     InMemoryIdentificacionTributariaGateway,
 )
@@ -12,7 +12,7 @@ from src.infrastructure.memory.identificacion_tributaria_gateway_memory import (
 
 def test_get_identificaciones_tributarias_returns_wrapper():
     os.environ["IS_PROD"] = "false"
-    global_app.identificacion_tributaria_gateway = (
+    gateway_provider.identificacion_tributaria_gateway = (
         InMemoryIdentificacionTributariaGateway()
     )
     data = identificacion_tributaria_list()
@@ -23,7 +23,7 @@ def test_get_identificaciones_tributarias_returns_wrapper():
 
 def test_get_identificacion_tributaria_by_id_returns_item():
     os.environ["IS_PROD"] = "false"
-    global_app.identificacion_tributaria_gateway = (
+    gateway_provider.identificacion_tributaria_gateway = (
         InMemoryIdentificacionTributariaGateway()
     )
     item = identificacion_tributaria_get(41)

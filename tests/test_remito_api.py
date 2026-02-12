@@ -2,8 +2,9 @@ import os
 
 from fastapi.testclient import TestClient
 
-from src.infrastructure.fastapi.api import remito_list, remito_create
+from src.infrastructure.fastapi.routers.remito import remito_create, remito_list
 from src.infrastructure.fastapi.api import app as global_app
+from src.infrastructure.fastapi.gateway_provider import gateway_provider
 from src.infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
 from src.infrastructure.memory.deposito_gateway_memory import InMemoryDepositoGateway
 from src.infrastructure.memory.lista_precio_gateway_memory import (
@@ -16,7 +17,7 @@ from src.interface_adapter.schemas.remito_venta import RemitoVentaPayload
 
 def test_get_remitos_returns_wrapper():
     os.environ["IS_PROD"] = "false"
-    global_app.remito_gateway = InMemoryRemitoGateway()
+    gateway_provider.remito_gateway = InMemoryRemitoGateway()
     data = remito_list()
     assert "items" in data
     assert isinstance(data["items"], list)
@@ -24,7 +25,7 @@ def test_get_remitos_returns_wrapper():
 
 def test_write_blocked_when_is_prod_false():
     os.environ["IS_PROD"] = "false"
-    global_app.remito_gateway = InMemoryRemitoGateway()
+    gateway_provider.remito_gateway = InMemoryRemitoGateway()
     try:
         remito_create(body=_make_payload())
     except Exception as exc:
@@ -89,17 +90,11 @@ def test_swagger_put_remito_updates_existing_transaccion(monkeypatch):
     cliente_gateway = InMemoryClienteGateway()
     cliente_gateway.create({"nombre": "ACME"})
 
-    monkeypatch.setattr(global_app, "remito_gateway", remito_gateway, raising=False)
-    monkeypatch.setattr(global_app, "cliente_gateway", cliente_gateway, raising=False)
-    monkeypatch.setattr(
-        global_app, "producto_gateway", InMemoryProductoGateway(), raising=False
-    )
-    monkeypatch.setattr(
-        global_app, "deposito_gateway", InMemoryDepositoGateway(), raising=False
-    )
-    monkeypatch.setattr(
-        global_app, "lista_precio_gateway", InMemoryListaPrecioGateway(), raising=False
-    )
+    gateway_provider.remito_gateway = remito_gateway
+    gateway_provider.cliente_gateway = cliente_gateway
+    gateway_provider.producto_gateway = InMemoryProductoGateway()
+    gateway_provider.deposito_gateway = InMemoryDepositoGateway()
+    gateway_provider.lista_precio_gateway = InMemoryListaPrecioGateway()
 
     client = TestClient(global_app)
     response = client.put(
@@ -125,17 +120,11 @@ def test_put_remito_with_path_rejects_mismatched_body_transaccion_id(monkeypatch
     cliente_gateway = InMemoryClienteGateway()
     cliente_gateway.create({"nombre": "ACME"})
 
-    monkeypatch.setattr(global_app, "remito_gateway", remito_gateway, raising=False)
-    monkeypatch.setattr(global_app, "cliente_gateway", cliente_gateway, raising=False)
-    monkeypatch.setattr(
-        global_app, "producto_gateway", InMemoryProductoGateway(), raising=False
-    )
-    monkeypatch.setattr(
-        global_app, "deposito_gateway", InMemoryDepositoGateway(), raising=False
-    )
-    monkeypatch.setattr(
-        global_app, "lista_precio_gateway", InMemoryListaPrecioGateway(), raising=False
-    )
+    gateway_provider.remito_gateway = remito_gateway
+    gateway_provider.cliente_gateway = cliente_gateway
+    gateway_provider.producto_gateway = InMemoryProductoGateway()
+    gateway_provider.deposito_gateway = InMemoryDepositoGateway()
+    gateway_provider.lista_precio_gateway = InMemoryListaPrecioGateway()
 
     client = TestClient(global_app)
     response = client.put(

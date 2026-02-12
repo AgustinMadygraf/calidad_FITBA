@@ -37,6 +37,11 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - `/API/1.1/monedaBean/{id}` `[GET]`
 - `/API/1.1/vendedorBean/{id}` `[GET]`
 
+## Endpoints locales fuera de Swagger (infra)
+- `/health` `[GET]`
+- `/token/inspect` `[GET]`
+- `/debug/clienteBean` `[GET]` (solo `IS_PROD=false`)
+
 Observaciones:
 - Se incorporo `PUT /API/1.1/remitoVentaBean` alineado a Swagger (update por `transaccionId` en body).
 - `PUT /API/1.1/remitoVentaBean/{id}` se mantiene como extension local de compatibilidad.

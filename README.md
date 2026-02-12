@@ -78,7 +78,7 @@ Documentacion adicional:
 - `docs/arquitectura.md`
 
 ## Requisitos
-- Python 3.11+
+- Python 3.10+
 
 ## Instalacion
 
@@ -151,6 +151,15 @@ python run.py --IS_PROD=false
 
 ```bash
 pytest -q
+```
+
+Suites por marcador:
+
+```bash
+pytest -m unit
+pytest -m integration
+pytest -m api_http
+pytest -m contract
 ```
 
 ## Notas
