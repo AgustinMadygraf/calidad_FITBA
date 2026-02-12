@@ -108,7 +108,7 @@ export const LISTA_PRECIO_COLUMNS = [
 ];
 
 export const COMPROBANTE_VENTA_COLUMNS = [
-  { key: "transaccionid" },
+  { key: "transaccionid", linkType: "comprobanteVenta" },
   { key: "nombre" },
   {
     key: "fecha",
@@ -119,6 +119,31 @@ export const COMPROBANTE_VENTA_COLUMNS = [
   { key: "vendedorNombre", className: "text-nowrap" },
   { key: "importetotal", className: "text-nowrap" },
   { key: "externalId", className: "text-nowrap" }
+];
+
+export const COMPROBANTE_VENTA_DETAIL_COLUMNS = [
+  { key: "transaccionid" },
+  { key: "nombre" },
+  {
+    key: "fecha",
+    className: "text-nowrap",
+    getValue: (comprobante) => formatFechaDDMMYY(comprobante?.fecha)
+  },
+  {
+    key: "fechaVto",
+    className: "text-nowrap",
+    getValue: (comprobante) => formatFechaDDMMYY(comprobante?.fechaVto)
+  },
+  { key: "tipo", className: "text-nowrap" },
+  { key: "numeroDocumento", className: "text-nowrap" },
+  { key: "CAE", className: "text-nowrap" },
+  { key: "clienteNombre", className: "text-nowrap" },
+  { key: "vendedorNombre", className: "text-nowrap" },
+  { key: "importetotal", className: "text-nowrap" },
+  { key: "importeImpuestos", className: "text-nowrap" },
+  { key: "importeGravado", className: "text-nowrap" },
+  { key: "externalId", className: "text-nowrap" },
+  { key: "descripcion" }
 ];
 
 export const PRODUCTO_NESTED_ITEM_COLUMNS = [

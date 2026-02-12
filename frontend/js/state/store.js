@@ -50,6 +50,15 @@ function createComprobantesVentaState() {
   };
 }
 
+function createComprobanteVentaDetail() {
+  return {
+    comprobanteVentaId: null,
+    status: "idle",
+    data: null,
+    errorMessage: null
+  };
+}
+
 function createInitialState() {
   return {
     remitos: [],
@@ -59,6 +68,7 @@ function createInitialState() {
     clienteDetail: createClienteDetail(),
     listaPrecios: createListaPreciosState(),
     comprobantesVenta: createComprobantesVentaState(),
+    comprobanteVentaDetail: createComprobanteVentaDetail(),
     banner: null
   };
 }
@@ -206,7 +216,8 @@ export function clearSelection() {
     ...current,
     selectedTransaccionId: null,
     productoDetail: createProductoDetail(),
-    clienteDetail: createClienteDetail()
+    clienteDetail: createClienteDetail(),
+    comprobanteVentaDetail: createComprobanteVentaDetail()
   }));
 }
 
@@ -215,7 +226,66 @@ export function selectTransaccion(transaccionId) {
     ...current,
     selectedTransaccionId: normalizeId(transaccionId),
     productoDetail: createProductoDetail(),
-    clienteDetail: createClienteDetail()
+    clienteDetail: createClienteDetail(),
+    comprobanteVentaDetail: createComprobanteVentaDetail()
+  }));
+}
+
+export function setComprobanteVentaDetailLoading(comprobanteVentaId) {
+  updateState((current) => ({
+    ...current,
+    comprobanteVentaDetail: {
+      comprobanteVentaId: normalizeId(comprobanteVentaId),
+      status: "loading",
+      data: null,
+      errorMessage: null
+    }
+  }));
+}
+
+export function setComprobanteVentaDetailReady(
+  comprobanteVentaId,
+  comprobanteVentaData
+) {
+  updateState((current) => ({
+    ...current,
+    comprobanteVentaDetail: {
+      comprobanteVentaId: normalizeId(comprobanteVentaId),
+      status: "ready",
+      data: cloneValue(comprobanteVentaData),
+      errorMessage: null
+    }
+  }));
+}
+
+export function setComprobanteVentaDetailNotFound(comprobanteVentaId) {
+  updateState((current) => ({
+    ...current,
+    comprobanteVentaDetail: {
+      comprobanteVentaId: normalizeId(comprobanteVentaId),
+      status: "not_found",
+      data: null,
+      errorMessage: null
+    }
+  }));
+}
+
+export function setComprobanteVentaDetailError(comprobanteVentaId, errorMessage) {
+  updateState((current) => ({
+    ...current,
+    comprobanteVentaDetail: {
+      comprobanteVentaId: normalizeId(comprobanteVentaId),
+      status: "error",
+      data: null,
+      errorMessage
+    }
+  }));
+}
+
+export function resetComprobanteVentaDetail() {
+  updateState((current) => ({
+    ...current,
+    comprobanteVentaDetail: createComprobanteVentaDetail()
   }));
 }
 

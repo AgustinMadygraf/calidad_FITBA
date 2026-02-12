@@ -1,5 +1,8 @@
 import { API_ENDPOINTS, FALLBACK_REMITOS } from "../config.js";
-import { normalizeComprobantesVentaPayload } from "../domain/mappers/comprobanteVentaMapper.js";
+import {
+  normalizeComprobanteVentaDetail,
+  normalizeComprobantesVentaPayload
+} from "../domain/mappers/comprobanteVentaMapper.js";
 import { normalizeRemitosPayload } from "../domain/mappers/remitoMapper.js";
 import { normalizeListaPreciosPayload } from "../domain/mappers/listaPrecioMapper.js";
 import { toClienteVM } from "../domain/mappers/clienteMapper.js";
@@ -50,6 +53,29 @@ function createHttpRepositories() {
       async list() {
         const payload = await getJson(API_ENDPOINTS.comprobantesVenta);
         return normalizeComprobantesVentaPayload(payload);
+      },
+      async getById(comprobanteVentaId) {
+        const safeComprobanteVentaId = encodeURIComponent(String(comprobanteVentaId));
+        const endpoint = `${API_ENDPOINTS.comprobantesVenta}/${safeComprobanteVentaId}`;
+
+        try {
+          const payload = await getJson(endpoint);
+          return normalizeComprobanteVentaDetail(payload);
+        } catch (error) {
+          if (error instanceof HttpError && error.status === 404) {
+            console.warn(
+              "[UI] Comprobante de venta no encontrado en API",
+              comprobanteVentaId
+            );
+            return null;
+          }
+          console.error(
+            "[UI] Error al obtener comprobante de venta por id",
+            comprobanteVentaId,
+            error
+          );
+          throw error;
+        }
       }
     },
     cliente: {
@@ -102,6 +128,9 @@ function createMockRepositories() {
     comprobanteVenta: {
       async list() {
         return normalizeComprobantesVentaPayload([]);
+      },
+      async getById() {
+        return null;
       }
     },
     cliente: {

@@ -1,5 +1,6 @@
 import {
   COMPROBANTE_VENTA_COLUMNS,
+  COMPROBANTE_VENTA_DETAIL_COLUMNS,
   CATEGORIA_FISCAL_COLUMNS,
   CLIENTE_COLUMNS,
   IDENTIFICACION_TRIBUTARIA_COLUMNS,
@@ -32,6 +33,10 @@ import {
   setClienteNotFound,
   setClienteReady,
   setComprobantesVentaError,
+  setComprobanteVentaDetailError,
+  setComprobanteVentaDetailLoading,
+  setComprobanteVentaDetailNotFound,
+  setComprobanteVentaDetailReady,
   setComprobantesVentaLoading,
   setComprobantesVentaReady,
   setListaPreciosError,
@@ -57,6 +62,7 @@ import {
   renderCategoriaFiscalSection,
   renderClienteSection,
   renderComprobanteVentaTable,
+  renderComprobanteVentaDetailSection,
   renderIdentificacionTributariaSection,
   renderItemSection,
   renderListaPrecioTable,
@@ -68,6 +74,48 @@ import {
 
 let domRefs = null;
 let repositories = null;
+const DEBUG_UI = (() => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const debugByQuery = params.get("debugUi");
+  if (debugByQuery === "1" || debugByQuery === "true") {
+    return true;
+  }
+  try {
+    return window.localStorage?.getItem("DEBUG_UI") === "true";
+  } catch (_error) {
+    return false;
+  }
+})();
+
+function logDebug(message, payload = null) {
+  if (!DEBUG_UI) {
+    return;
+  }
+  if (payload === null) {
+    console.debug(`[UI] ${message}`);
+    return;
+  }
+  console.debug(`[UI] ${message}`, payload);
+}
+
+function logWarn(message, payload = null) {
+  if (payload === null) {
+    console.warn(`[UI] ${message}`);
+    return;
+  }
+  console.warn(`[UI] ${message}`, payload);
+}
+
+function logError(message, payload = null) {
+  if (payload === null) {
+    console.error(`[UI] ${message}`);
+    return;
+  }
+  console.error(`[UI] ${message}`, payload);
+}
 
 function createRequestTracker() {
   let currentRequest = 0;
@@ -87,7 +135,8 @@ function createRequestTracker() {
 
 const requestTrackers = {
   cliente: createRequestTracker(),
-  producto: createRequestTracker()
+  producto: createRequestTracker(),
+  comprobanteVenta: createRequestTracker()
 };
 
 async function applyRouteSelectionFromUrl() {
@@ -106,7 +155,8 @@ async function applyRouteSelectionFromUrl() {
       setReady: setProductoReady,
       setError: setProductoError,
       notFoundMessage: UI_MESSAGES.productoNotFound,
-      loadErrorMessage: UI_MESSAGES.productoLoadError
+      loadErrorMessage: UI_MESSAGES.productoLoadError,
+      contextLabel: "producto"
     });
     return;
   }
@@ -123,7 +173,8 @@ async function applyRouteSelectionFromUrl() {
       setReady: setClienteReady,
       setError: setClienteError,
       notFoundMessage: UI_MESSAGES.clienteNotFound,
-      loadErrorMessage: UI_MESSAGES.clienteLoadError
+      loadErrorMessage: UI_MESSAGES.clienteLoadError,
+      contextLabel: "cliente"
     });
     return;
   }
@@ -185,6 +236,13 @@ function hideComprobanteVentaSection() {
   );
 }
 
+function hideComprobanteVentaDetailSection() {
+  hideDetailSection(
+    domRefs.comprobanteVentaDetailSection,
+    domRefs.comprobanteVentaDetailTableBody
+  );
+}
+
 function hideRemitoDetailSections() {
   hideDetailSection(domRefs.itemSection, domRefs.itemTableBody);
   hideDetailSection(domRefs.clienteSection, domRefs.clienteTableBody);
@@ -198,6 +256,7 @@ function renderEmptyState() {
   hideDetailSection(domRefs.remitoTableWrapper, domRefs.remitoTableBody);
   hideListaPrecioSection();
   hideComprobanteVentaSection();
+  hideComprobanteVentaDetailSection();
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideRemitoDetailSections();
@@ -208,6 +267,7 @@ function renderListaPrecioMainMode(state) {
   domRefs.emptyState.classList.add("d-none");
   hideDetailSection(domRefs.remitoTableWrapper, domRefs.remitoTableBody);
   hideComprobanteVentaSection();
+  hideComprobanteVentaDetailSection();
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideRemitoDetailSections();
@@ -237,12 +297,21 @@ function renderComprobanteVentaMainMode(state) {
     COMPROBANTE_VENTA_COLUMNS,
     UI_MESSAGES
   );
+  renderComprobanteVentaDetailSection(
+    domRefs.comprobanteVentaDetailSection,
+    domRefs.comprobanteVentaDetailTitle,
+    domRefs.comprobanteVentaDetailTableBody,
+    state.comprobanteVentaDetail,
+    COMPROBANTE_VENTA_DETAIL_COLUMNS,
+    UI_MESSAGES
+  );
 }
 
 function renderClienteMainMode(state) {
   domRefs.emptyState.classList.add("d-none");
   hideListaPrecioSection();
   hideComprobanteVentaSection();
+  hideComprobanteVentaDetailSection();
   domRefs.remitoTableWrapper.classList.add("d-none");
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideProductoNestedSections();
@@ -284,6 +353,7 @@ function renderProductoMainMode(state) {
   domRefs.emptyState.classList.add("d-none");
   hideListaPrecioSection();
   hideComprobanteVentaSection();
+  hideComprobanteVentaDetailSection();
   domRefs.remitoTableWrapper.classList.add("d-none");
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   renderProductoSection(
@@ -349,6 +419,7 @@ function renderRemitoMainMode(state, visibleRemitos, selectedRemito) {
   domRefs.emptyState.classList.add("d-none");
   hideListaPrecioSection();
   hideComprobanteVentaSection();
+  hideComprobanteVentaDetailSection();
   domRefs.remitoTableWrapper.classList.remove("d-none");
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
@@ -463,31 +534,45 @@ async function loadDetailEntity({
   setReady,
   setError,
   notFoundMessage,
-  loadErrorMessage
+  loadErrorMessage,
+  contextLabel = "entidad"
 }) {
   if (entityId === null || entityId === undefined || String(entityId).trim() === "") {
+    logWarn(`No se pudo cargar ${contextLabel}: id vacio`, { entityId });
     setError(null, notFoundMessage);
     return;
   }
 
   const requestId = requestTracker.next();
+  logDebug(`Cargando ${contextLabel}`, { entityId, requestId });
   setLoading(entityId);
 
   try {
     const entity = await fetchById(entityId);
     if (!requestTracker.isCurrent(requestId)) {
+      logDebug(`Respuesta descartada para ${contextLabel} por request desactualizado`, {
+        entityId,
+        requestId
+      });
       return;
     }
 
     if (entity === null) {
+      logWarn(`${contextLabel} no encontrado`, { entityId });
       setNotFound(entityId);
     } else {
+      logDebug(`${contextLabel} cargado`, { entityId });
       setReady(entityId, entity);
     }
   } catch (error) {
     if (!requestTracker.isCurrent(requestId)) {
+      logDebug(`Error descartado para ${contextLabel} por request desactualizado`, {
+        entityId,
+        requestId
+      });
       return;
     }
+    logError(`Error al cargar ${contextLabel}`, { entityId, error });
     setError(entityId, loadErrorMessage);
   }
 }
@@ -495,6 +580,7 @@ async function loadDetailEntity({
 function handleTransaccionClick(transaccionId) {
   requestTrackers.cliente.invalidate();
   requestTrackers.producto.invalidate();
+  requestTrackers.comprobanteVenta.invalidate();
   writeRouteToUrl({ remitoVentaId: transaccionId });
   showRemitoAsMainTable();
   selectTransaccion(transaccionId);
@@ -529,7 +615,8 @@ async function handleClienteClick(
     setReady: setClienteReady,
     setError: setClienteError,
     notFoundMessage: UI_MESSAGES.clienteNotFound,
-    loadErrorMessage: UI_MESSAGES.clienteLoadError
+    loadErrorMessage: UI_MESSAGES.clienteLoadError,
+    contextLabel: "cliente"
   });
 }
 
@@ -545,7 +632,25 @@ async function handleProductoClick(productoId) {
     setReady: setProductoReady,
     setError: setProductoError,
     notFoundMessage: UI_MESSAGES.productoNotFound,
-    loadErrorMessage: UI_MESSAGES.productoLoadError
+    loadErrorMessage: UI_MESSAGES.productoLoadError,
+    contextLabel: "producto"
+  });
+}
+
+async function handleComprobanteVentaClick(comprobanteVentaId) {
+  logDebug("Click en comprobante de venta", { comprobanteVentaId });
+  showComprobanteVentaAsMainTable();
+  await loadDetailEntity({
+    entityId: comprobanteVentaId,
+    requestTracker: requestTrackers.comprobanteVenta,
+    setLoading: setComprobanteVentaDetailLoading,
+    fetchById: repositories.comprobanteVenta.getById,
+    setNotFound: setComprobanteVentaDetailNotFound,
+    setReady: setComprobanteVentaDetailReady,
+    setError: setComprobanteVentaDetailError,
+    notFoundMessage: UI_MESSAGES.comprobanteVentaDetailNotFound,
+    loadErrorMessage: UI_MESSAGES.comprobanteVentaDetailLoadError,
+    contextLabel: "comprobante de venta"
   });
 }
 
@@ -554,6 +659,7 @@ function bindEvents() {
     const selection = event.target.value;
     requestTrackers.cliente.invalidate();
     requestTrackers.producto.invalidate();
+    requestTrackers.comprobanteVenta.invalidate();
     writeRouteToUrl({});
     clearSelection();
 
@@ -598,6 +704,19 @@ function bindEvents() {
     );
   });
 
+  domRefs.comprobanteVentaTableBody.addEventListener("click", (event) => {
+    const comprobanteLink = event.target.closest(".js-comprobante-venta-link");
+    if (!comprobanteLink) {
+      return;
+    }
+    event.preventDefault();
+    if (!comprobanteLink.dataset.comprobanteVentaId) {
+      logWarn("El link de comprobante no trae data-comprobante-venta-id");
+      return;
+    }
+    void handleComprobanteVentaClick(comprobanteLink.dataset.comprobanteVentaId);
+  });
+
   domRefs.itemTableBody.addEventListener("click", (event) => {
     const productoLink = event.target.closest(".js-producto-link");
     if (!productoLink) {
@@ -610,6 +729,7 @@ function bindEvents() {
   domRefs.showAllButton.addEventListener("click", () => {
     requestTrackers.cliente.invalidate();
     requestTrackers.producto.invalidate();
+    requestTrackers.comprobanteVenta.invalidate();
     writeRouteToUrl({});
     showRemitoAsMainTable();
     clearSelection();
@@ -618,6 +738,7 @@ function bindEvents() {
   domRefs.backButton.addEventListener("click", () => {
     requestTrackers.cliente.invalidate();
     requestTrackers.producto.invalidate();
+    requestTrackers.comprobanteVenta.invalidate();
 
     if (window.history.length > 1) {
       window.history.back();
@@ -634,6 +755,7 @@ function bindLocationEvents() {
   window.addEventListener("popstate", () => {
     requestTrackers.cliente.invalidate();
     requestTrackers.producto.invalidate();
+    requestTrackers.comprobanteVenta.invalidate();
     void applyRouteSelectionFromUrl();
   });
 }

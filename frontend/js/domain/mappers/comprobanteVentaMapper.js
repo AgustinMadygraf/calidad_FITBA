@@ -22,12 +22,19 @@ function toComprobanteVentaVM(item) {
     ),
     nombre: item?.nombre ?? "",
     fecha: item?.fecha ?? "",
+    fechaVto: item?.fechaVto ?? "",
+    tipo: item?.tipo ?? null,
+    numeroDocumento: item?.numeroDocumento ?? "",
+    CAE: item?.CAE ?? "",
+    descripcion: item?.descripcion ?? "",
     externalId: pickFirstDefined(item?.externalId, item?.externalid) ?? "",
     importetotal: pickFirstDefined(
       item?.importetotal,
       item?.importeTotal,
       item?.importeMonPrincipal
     ),
+    importeImpuestos: pickFirstDefined(item?.importeImpuestos, item?.impuestoTotal),
+    importeGravado: item?.importeGravado ?? null,
     clienteNombre: cliente?.nombre ?? "",
     vendedorNombre: normalizeNombreVendedor(vendedor),
     cliente,
@@ -60,4 +67,11 @@ export function normalizeComprobantesVentaPayload(payload) {
       ? payload
       : [];
   return sortComprobantesByFechaDesc(rawItems.map(toComprobanteVentaVM));
+}
+
+export function normalizeComprobanteVentaDetail(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+  return toComprobanteVentaVM(payload);
 }

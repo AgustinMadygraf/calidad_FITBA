@@ -60,6 +60,17 @@ function appendDataRow(tableBody, data, columns) {
       link.textContent = asText(value);
       cell.appendChild(link);
     } else if (
+      column.linkType === "comprobanteVenta" &&
+      value !== undefined &&
+      value !== null
+    ) {
+      const link = document.createElement("a");
+      link.href = "#";
+      link.className = "js-comprobante-venta-link";
+      link.dataset.comprobanteVentaId = asText(value);
+      link.textContent = asText(value);
+      cell.appendChild(link);
+    } else if (
       column.linkType === "producto" &&
       value !== undefined &&
       value !== null
@@ -174,6 +185,64 @@ export function renderComprobanteVentaTable(
   items.forEach((item) => {
     appendDataRow(tableBody, item, columns);
   });
+}
+
+export function renderComprobanteVentaDetailSection(
+  sectionNode,
+  titleNode,
+  tableBodyNode,
+  comprobanteVentaDetail,
+  columns,
+  uiMessages
+) {
+  clearTable(tableBodyNode);
+
+  if (comprobanteVentaDetail?.status === "idle") {
+    sectionNode.classList.add("d-none");
+    return;
+  }
+
+  sectionNode.classList.remove("d-none");
+  titleNode.textContent = `Detalle de comprobante ${asText(
+    comprobanteVentaDetail?.comprobanteVentaId
+  )}`;
+
+  if (comprobanteVentaDetail?.status === "loading") {
+    appendMessageRow(
+      tableBodyNode,
+      uiMessages.comprobanteVentaDetailLoading,
+      columns.length
+    );
+    return;
+  }
+
+  if (comprobanteVentaDetail?.status === "not_found") {
+    appendMessageRow(
+      tableBodyNode,
+      uiMessages.comprobanteVentaDetailNotFound,
+      columns.length
+    );
+    return;
+  }
+
+  if (comprobanteVentaDetail?.status === "error") {
+    const message =
+      comprobanteVentaDetail.errorMessage ||
+      uiMessages.comprobanteVentaDetailLoadError;
+    appendMessageRow(tableBodyNode, message, columns.length);
+    return;
+  }
+
+  if (comprobanteVentaDetail?.status === "ready" && comprobanteVentaDetail.data) {
+    appendDataRow(tableBodyNode, comprobanteVentaDetail.data, columns);
+    return;
+  }
+
+  appendMessageRow(
+    tableBodyNode,
+    uiMessages.comprobanteVentaDetailLoadError,
+    columns.length
+  );
 }
 
 export function hideDetailSection(sectionNode, tableBodyNode) {

@@ -9,6 +9,11 @@ export const UI_MESSAGES = {
   comprobantesVentaLoadError:
     "No se pudo cargar el listado de comprobantes de venta desde la API.",
   noComprobantesVenta: "No hay comprobantes de venta para mostrar.",
+  comprobanteVentaDetailLoading: "Cargando detalle de comprobante de venta...",
+  comprobanteVentaDetailNotFound:
+    "No se encontro el comprobante de venta para el id seleccionado.",
+  comprobanteVentaDetailLoadError:
+    "No se pudo cargar el detalle del comprobante de venta seleccionado.",
   noItems: "Esta transaccion no tiene items.",
   clienteLoading: "Cargando cliente...",
   clienteNotFound: "No se encontro el cliente para el id seleccionado.",
