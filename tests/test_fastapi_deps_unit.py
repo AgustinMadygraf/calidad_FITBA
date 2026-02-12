@@ -38,6 +38,7 @@ def test_gateway_factories_forward_enable_get_cache(monkeypatch):
         ("get_identificacion_tributaria_gateway", "XubioIdentificacionTributariaGateway"),
         ("get_lista_precio_gateway", "XubioListaPrecioGateway"),
         ("get_moneda_gateway", "XubioMonedaGateway"),
+        ("get_comprobante_venta_gateway", "XubioComprobanteVentaGateway"),
     ]:
         monkeypatch.setattr(deps, gateway_attr, _FakeGateway)
         gateway = getattr(deps, factory_name)()
@@ -56,4 +57,3 @@ def test_producto_compra_factory_sets_config(monkeypatch):
     config = gateway.kwargs["config"]
     assert config.primary_bean == "ProductoCompraBean"
     assert config.fallback_bean is None
-

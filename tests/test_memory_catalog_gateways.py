@@ -4,6 +4,9 @@ from src.infrastructure.memory.categoria_fiscal_gateway_memory import (
 from src.infrastructure.memory.identificacion_tributaria_gateway_memory import (
     InMemoryIdentificacionTributariaGateway,
 )
+from src.infrastructure.memory.comprobante_venta_gateway_memory import (
+    InMemoryComprobanteVentaGateway,
+)
 from src.infrastructure.memory.moneda_gateway_memory import InMemoryMonedaGateway
 from src.infrastructure.memory.vendedor_gateway_memory import InMemoryVendedorGateway
 
@@ -67,4 +70,23 @@ def test_vendedor_get_supports_lowercase_id_key():
 
 def test_vendedor_get_returns_none_when_missing():
     gateway = InMemoryVendedorGateway(items=[{"vendedorId": 3, "nombre": "Ana"}])
+    assert gateway.get(999) is None
+
+
+def test_comprobante_venta_get_supports_transaccionid_key():
+    gateway = InMemoryComprobanteVentaGateway(items=[{"transaccionid": 8, "nombre": "FV"}])
+    item = gateway.get(8)
+    assert item is not None
+    assert item["transaccionid"] == 8
+
+
+def test_comprobante_venta_get_supports_transaccion_id_key():
+    gateway = InMemoryComprobanteVentaGateway(items=[{"transaccionId": 9, "nombre": "FV2"}])
+    item = gateway.get(9)
+    assert item is not None
+    assert item["transaccionId"] == 9
+
+
+def test_comprobante_venta_get_returns_none_when_missing():
+    gateway = InMemoryComprobanteVentaGateway(items=[{"transaccionid": 8, "nombre": "FV"}])
     assert gateway.get(999) is None

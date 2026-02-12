@@ -4,6 +4,9 @@ from ...infrastructure.httpx.categoria_fiscal_gateway_xubio import (
     XubioCategoriaFiscalGateway,
 )
 from ...infrastructure.httpx.cliente_gateway_xubio import XubioClienteGateway
+from ...infrastructure.httpx.comprobante_venta_gateway_xubio import (
+    XubioComprobanteVentaGateway,
+)
 from ...infrastructure.httpx.remito_gateway_xubio import XubioRemitoGateway
 from ...infrastructure.httpx.producto_gateway_xubio import (
     ProductoGatewayConfig,
@@ -34,6 +37,7 @@ class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
     identificacion_tributaria_gateway: object
     lista_precio_gateway: object
     moneda_gateway: object
+    comprobante_venta_gateway: object
     vendedor_gateway: object
     token_gateway: object
 
@@ -153,6 +157,17 @@ def get_vendedor_gateway():
     gw = XubioVendedorGateway(enable_get_cache=cache_enabled)
     logger.info(
         "Vendedor gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
+    return gw
+
+
+def get_comprobante_venta_gateway():
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioComprobanteVentaGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Comprobante venta gateway: %s (read cache enabled=%s)",
         gw.__class__.__name__,
         cache_enabled,
     )

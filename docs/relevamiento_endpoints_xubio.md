@@ -7,8 +7,8 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 ## Resumen ejecutivo
 - Endpoints oficiales relevados en Swagger: **62 paths**
 - Operaciones oficiales relevadas (GET/POST/PUT/PATCH/DELETE): **105**
-- Operaciones cubiertas por la API local (matching contra Swagger): **26**
-- Operaciones pendientes respecto de Swagger: **79**
+- Operaciones cubiertas por la API local (matching contra Swagger): **28**
+- Operaciones pendientes respecto de Swagger: **77**
 - Operaciones locales fuera de Swagger (extensiones formales): **11**
 
 ## Endpoints relevados y cubiertos (oficial vs local)
@@ -18,6 +18,8 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - `/API/1.1/categoriaFiscal`: cubierto=`[GET]`
 - `/API/1.1/clienteBean`: cubierto=`[GET, POST]`
 - `/API/1.1/clienteBean/{id}`: cubierto=`[DELETE, GET, PUT]` | local-extra=`[PATCH]`
+- `/API/1.1/comprobanteVentaBean`: cubierto=`[GET]`
+- `/API/1.1/comprobanteVentaBean/{id}`: cubierto=`[GET]`
 - `/API/1.1/depositos`: cubierto=`[GET]`
 - `/API/1.1/identificacionTributaria`: cubierto=`[GET]`
 - `/API/1.1/listaPrecioBean`: cubierto=`[GET, POST]`
@@ -57,8 +59,9 @@ Observaciones:
 
 ### Media prioridad (expansion funcional)
 1. Incorporar recursos contables/comerciales ya publicados en Swagger:
-   - `comprobanteVentaBean`, `comprobanteCompraBean`, `cobranzaBean`, `pagoBean`,
+   - `comprobanteCompraBean`, `cobranzaBean`, `pagoBean`,
      `ordenCompraBean`, `presupuestoBean`, `cuenta`.
+   - `comprobanteVentaBean` queda parcial: falta `POST`, `PUT` y `DELETE`.
 2. Incorporar catalogos de soporte:
    - `banco`, `categoriaCuenta`, `centroDeCostoBean`, `circuitoContableBean`,
      `provinciaBean`, `localidadBean`, `tasaImpositiva`, `unidadMedida`, `talonario`.
@@ -79,7 +82,7 @@ Observaciones:
 - `circuitoContableBean`: 1 ops pendientes (`GET:1`)
 - `cobranzaBean`: 4 ops pendientes (`DELETE:1, GET:1, POST:1, PUT:1`)
 - `comprobanteCompraBean`: 5 ops pendientes (`DELETE:1, GET:2, POST:1, PUT:1`)
-- `comprobanteVentaBean`: 5 ops pendientes (`DELETE:1, GET:2, POST:1, PUT:1`)
+- `comprobanteVentaBean`: 3 ops pendientes (`DELETE:1, POST:1, PUT:1`)
 - `comprobantesAsociados`: 1 ops pendientes (`GET:1`)
 - `cuenta`: 3 ops pendientes (`GET:2, POST:1`)
 - `enviarTransaccionPorMail`: 1 ops pendientes (`POST:1`)

@@ -33,6 +33,11 @@ def test_lazy_gateway_getters_set_app_attributes(monkeypatch):
         ("lista_precio_gateway", "_get_lista_precio_gateway", "get_lista_precio_gateway"),
         ("moneda_gateway", "_get_moneda_gateway", "get_moneda_gateway"),
         ("vendedor_gateway", "_get_vendedor_gateway", "get_vendedor_gateway"),
+        (
+            "comprobante_venta_gateway",
+            "_get_comprobante_venta_gateway",
+            "get_comprobante_venta_gateway",
+        ),
     ]
     for attr_name, getter_name, dep_factory_name in cases:
         sentinel = object()
@@ -120,6 +125,7 @@ def test_debug_route_returns_502_on_gateway_error(monkeypatch):
         ("/API/1.1/listaPrecioBean", "list_lista_precios"),
         ("/API/1.1/monedaBean", "list_monedas"),
         ("/API/1.1/vendedorBean", "list_vendedores"),
+        ("/API/1.1/comprobanteVentaBean", "list_comprobantes_venta"),
     ],
 )
 def test_list_routes_return_502_on_external_errors(monkeypatch, path, handler_name):
@@ -143,6 +149,7 @@ def test_list_routes_return_502_on_external_errors(monkeypatch, path, handler_na
         ("/API/1.1/listaPrecioBean/1", "get_lista_precio"),
         ("/API/1.1/monedaBean/1", "get_moneda"),
         ("/API/1.1/vendedorBean/1", "get_vendedor"),
+        ("/API/1.1/comprobanteVentaBean/1", "get_comprobante_venta"),
     ],
 )
 def test_get_routes_return_404_when_resource_not_found(monkeypatch, path, handler_name):
@@ -166,6 +173,7 @@ def test_get_routes_return_404_when_resource_not_found(monkeypatch, path, handle
         ("/API/1.1/listaPrecioBean/1", "get_lista_precio"),
         ("/API/1.1/monedaBean/1", "get_moneda"),
         ("/API/1.1/vendedorBean/1", "get_vendedor"),
+        ("/API/1.1/comprobanteVentaBean/1", "get_comprobante_venta"),
     ],
 )
 def test_get_routes_return_502_on_external_errors(monkeypatch, path, handler_name):

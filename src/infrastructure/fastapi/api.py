@@ -20,6 +20,7 @@ from ...use_cases import cliente, remito_venta
 from .deps import (
     get_categoria_fiscal_gateway,
     get_cliente_gateway,
+    get_comprobante_venta_gateway,
     get_deposito_gateway,
     get_identificacion_tributaria_gateway,
     get_lista_precio_gateway,
@@ -101,6 +102,12 @@ def _get_vendedor_gateway():
     return app.vendedor_gateway
 
 
+def _get_comprobante_venta_gateway():
+    if not hasattr(app, "comprobante_venta_gateway"):
+        app.comprobante_venta_gateway = get_comprobante_venta_gateway()
+    return app.comprobante_venta_gateway
+
+
 def _build_remito_dependencies() -> remito_venta.RemitoDependencies:
     return remito_venta.RemitoDependencies(
         cliente_gateway=_get_cliente_gateway(),
@@ -173,6 +180,8 @@ LISTA_PRECIO_BASE = "/API/1.1/listaPrecioBean"
 LISTA_PRECIO_BASE_SLASH = "/API/1.1/listaPrecioBean/"
 MONEDA_BASE = "/API/1.1/monedaBean"
 MONEDA_BASE_SLASH = "/API/1.1/monedaBean/"
+COMPROBANTE_VENTA_BASE = "/API/1.1/comprobanteVentaBean"
+COMPROBANTE_VENTA_BASE_SLASH = "/API/1.1/comprobanteVentaBean/"
 VENDEDOR_BASE = "/API/1.1/vendedorBean"
 VENDEDOR_BASE_SLASH = "/API/1.1/vendedorBean/"
 _MUTATION_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -734,6 +743,33 @@ def vendedor_get(vendedor_id: int) -> Dict[str, Any]:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="vendedor no encontrado")
+    return item
+
+
+@app.get(COMPROBANTE_VENTA_BASE)
+@app.get(COMPROBANTE_VENTA_BASE_SLASH, include_in_schema=False)
+def comprobante_venta_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_comprobante_venta_gateway()
+        return handlers.list_comprobantes_venta(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar comprobantes de venta: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get(f"{COMPROBANTE_VENTA_BASE}/{{id}}")
+@app.get(f"{COMPROBANTE_VENTA_BASE}/{{id}}/", include_in_schema=False)
+def comprobante_venta_get(id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_comprobante_venta_gateway()
+        item = handlers.get_comprobante_venta(gateway, id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener comprobante de venta: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(
+            status_code=404, detail="comprobante de venta no encontrado"
+        )
     return item
 
 

@@ -109,6 +109,34 @@ Ejemplo de item:
 }
 ```
 
+## Comprobantes de venta
+- `GET /API/1.1/comprobanteVentaBean`
+- `GET /API/1.1/comprobanteVentaBean/{id}`
+
+Ejemplo de item:
+```json
+{
+  "transaccionid": 0,
+  "externalId": "string",
+  "nombre": "string",
+  "fecha": "2018-12-31",
+  "importetotal": 0,
+  "cliente": {
+    "ID": 0,
+    "nombre": "string",
+    "codigo": "string",
+    "id": 0
+  },
+  "vendedor": {
+    "vendedorId": 0,
+    "nombre": "string",
+    "apellido": "string",
+    "esVendedor": 0,
+    "activo": 0
+  }
+}
+```
+
 ## Extensiones formales fuera de Swagger oficial
 - `GET /API/1.1/ProductoCompraBean/{id}`
 - `GET /API/1.1/categoriaFiscal/{id}`
@@ -135,12 +163,16 @@ Politica:
   - `XUBIO_CATEGORIA_FISCAL_LIST_TTL`
   - `XUBIO_IDENTIFICACION_TRIBUTARIA_LIST_TTL`
   - `XUBIO_VENDEDOR_LIST_TTL`
+  - `XUBIO_COMPROBANTE_VENTA_LIST_TTL`
   - `XUBIO_GET_CACHE_ENABLED` (override general de cache on/off).
 - En catalogos livianos (`monedaBean`, `categoriaFiscal`,
   `identificacionTributaria`, `depositos`), `GET /{id}` resuelve desde la lista
   cacheada + busqueda por ID.
 - En `listaPrecioBean`, `GET /{id}` consulta primero el endpoint detalle oficial
   (`/API/1.1/listaPrecioBean/{id}`) y usa fallback al listado solo ante `5xx`.
+- En `comprobanteVentaBean`, `GET /{id}` consulta primero el endpoint detalle
+  oficial (`/API/1.1/comprobanteVentaBean/{id}`) y usa fallback al listado solo
+  ante `5xx`.
 
 ## Mutaciones por entorno
 - `IS_PROD=false`: `POST/PUT/PATCH/DELETE` responden `403`.

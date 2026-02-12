@@ -40,6 +40,7 @@ XUBIO_LIST_TTL_SECONDS = {
     "XUBIO_CATEGORIA_FISCAL_LIST_TTL": 60.0,
     "XUBIO_IDENTIFICACION_TRIBUTARIA_LIST_TTL": 60.0,
     "XUBIO_VENDEDOR_LIST_TTL": 60.0,
+    "XUBIO_COMPROBANTE_VENTA_LIST_TTL": 60.0,
 }
 
 # ---------------------------------------------------------------------------

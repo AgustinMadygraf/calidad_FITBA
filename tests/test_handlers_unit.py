@@ -147,4 +147,5 @@ def test_generic_gateway_wrappers():
     assert handlers.delete_lista_precio(gateway, 1) is True
     assert handlers.list_monedas(gateway) == {"items": [{"id": 1}]}
     assert handlers.get_moneda(gateway, 1) == {"id": 1}
-
+    assert handlers.list_comprobantes_venta(gateway) == {"items": [{"id": 1}]}
+    assert handlers.get_comprobante_venta(gateway, 1) == {"id": 1}

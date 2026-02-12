@@ -18,6 +18,7 @@ Monorepo Python con dos componentes:
 - Depositos: GET list/get.
 - Lista de precio: GET list/get.
 - Moneda: GET list/get.
+- Comprobante venta: GET list/get.
 - Token inspect local: `GET /token/inspect`.
 
 ## Dependencias de "Lista de Precio" (en este proyecto)
@@ -60,6 +61,8 @@ Monorepo Python con dos componentes:
 - `GET /API/1.1/monedaBean/{id}`
 - `GET /API/1.1/vendedorBean`
 - `GET /API/1.1/vendedorBean/{id}`
+- `GET /API/1.1/comprobanteVentaBean`
+- `GET /API/1.1/comprobanteVentaBean/{id}`
 - `GET /debug/clienteBean` (solo en `IS_PROD=false`)
 
 ## Resumen Xubio API
@@ -112,12 +115,15 @@ Modo en servidor:
 
 Cache de lectura Xubio (TTL en segundos, aplica cuando `IS_PROD=false`):
 - Cliente, Remito, Producto, Deposito, Moneda, Lista de Precio, Vendedor.
+- Comprobante Venta.
 - Categoria Fiscal e Identificacion Tributaria.
 - Los endpoint `GET .../{id}` de catalogos livianos (`monedaBean`,
   `categoriaFiscal`, `identificacionTributaria`, `depositos`) resuelven desde
   `GET list` + busqueda por ID para reducir llamadas.
 - `GET /API/1.1/listaPrecioBean/{id}` consulta primero el endpoint detalle
   oficial y cae al listado solo ante respuestas `5xx`.
+- `GET /API/1.1/comprobanteVentaBean/{id}` consulta primero el detalle oficial
+  y cae al listado solo ante respuestas `5xx`.
 - `XUBIO_GET_CACHE_ENABLED` permite override explicito de cache de lectura.
 
 ## Ejecutar servidor

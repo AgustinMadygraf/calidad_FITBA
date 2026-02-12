@@ -12,6 +12,7 @@ from ...use_cases.ports.identificacion_tributaria_gateway import (
 )
 from ...use_cases.ports.lista_precio_gateway import ListaPrecioGateway
 from ...use_cases.ports.moneda_gateway import MonedaGateway
+from ...use_cases.ports.comprobante_venta_gateway import ComprobanteVentaGateway
 from ...use_cases.ports.vendedor_gateway import VendedorGateway
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, remito_venta, token_inspect
@@ -193,6 +194,17 @@ def get_moneda(gateway: MonedaGateway, moneda_id: int) -> Optional[Dict[str, Any
 def list_vendedores(gateway: VendedorGateway) -> Dict[str, Any]:
     items = gateway.list()
     return {"items": items}
+
+
+def list_comprobantes_venta(gateway: ComprobanteVentaGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_comprobante_venta(
+    gateway: ComprobanteVentaGateway, comprobante_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(comprobante_id)
 
 
 def get_vendedor(

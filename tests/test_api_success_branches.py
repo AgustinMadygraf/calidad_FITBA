@@ -37,6 +37,11 @@ from src.infrastructure.fastapi.api import app
             "get_vendedor",
             {"vendedorId": 1, "nombre": "Ana"},
         ),
+        (
+            "/API/1.1/comprobanteVentaBean/1",
+            "get_comprobante_venta",
+            {"transaccionid": 1, "nombre": "FV-1"},
+        ),
     ],
 )
 def test_get_routes_return_payload_on_success(
