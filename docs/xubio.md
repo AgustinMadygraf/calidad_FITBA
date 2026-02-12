@@ -82,3 +82,11 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints. Ejemplo: `ProductoVen
 - `RemitoVenta` puede depender de ese catalogo via `listaPrecioId`.
 - No se implementaron dependencias inversas (por ejemplo, "que clientes usan una lista")
   dentro de esta API local.
+
+## Estado de relevamiento y pendientes
+- Relevamiento completo contra Swagger oficial (Xubio) en:
+  - `docs/relevamiento_endpoints_xubio.md`
+- Ese documento incluye:
+  - endpoints cubiertos vs pendientes,
+  - desvios de contrato detectados,
+  - To Do List priorizada para cierre de brecha.

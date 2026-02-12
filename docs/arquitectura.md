@@ -52,3 +52,7 @@ En la implementacion actual:
 ## Modo real vs mock
 - `IS_PROD=false`: gateways HTTPX Xubio + cache-aside en `GET` y mutaciones bloqueadas (`403`).
 - `IS_PROD=true`: gateways HTTPX Xubio sin cache de lectura y mutaciones habilitadas.
+
+## Trazabilidad de cobertura
+- Estado de cobertura de endpoints oficiales Xubio y To Do List en:
+  - `docs/relevamiento_endpoints_xubio.md`

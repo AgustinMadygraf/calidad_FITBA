@@ -116,3 +116,7 @@ Dependencias funcionales en esta API local:
 
 ## Debug (solo en IS_PROD=false)
 - `GET /debug/clienteBean`
+
+## Relevamiento Xubio oficial
+- Ver estado de cobertura contra Swagger oficial y backlog de endpoints:
+  - `docs/relevamiento_endpoints_xubio.md`
