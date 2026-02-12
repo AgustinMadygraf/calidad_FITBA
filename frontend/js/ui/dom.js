@@ -18,6 +18,8 @@ export function getDomRefs() {
     remitoTableBody: getById("remito-table-body"),
     listaPrecioTableWrapper: getById("lista-precio-table-wrapper"),
     listaPrecioTableBody: getById("lista-precio-table-body"),
+    comprobanteVentaTableWrapper: getById("comprobante-venta-table-wrapper"),
+    comprobanteVentaTableBody: getById("comprobante-venta-table-body"),
     clienteMainTableWrapper: getById("cliente-main-table-wrapper"),
     clienteMainTableBody: getById("cliente-main-table-body"),
     productoMainTableWrapper: getById("producto-main-table-wrapper"),

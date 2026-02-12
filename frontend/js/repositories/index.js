@@ -1,4 +1,5 @@
 import { API_ENDPOINTS, FALLBACK_REMITOS } from "../config.js";
+import { normalizeComprobantesVentaPayload } from "../domain/mappers/comprobanteVentaMapper.js";
 import { normalizeRemitosPayload } from "../domain/mappers/remitoMapper.js";
 import { normalizeListaPreciosPayload } from "../domain/mappers/listaPrecioMapper.js";
 import { toClienteVM } from "../domain/mappers/clienteMapper.js";
@@ -43,6 +44,12 @@ function createHttpRepositories() {
       async list() {
         const payload = await getJson(API_ENDPOINTS.listaPrecios);
         return normalizeListaPreciosPayload(payload);
+      }
+    },
+    comprobanteVenta: {
+      async list() {
+        const payload = await getJson(API_ENDPOINTS.comprobantesVenta);
+        return normalizeComprobantesVentaPayload(payload);
       }
     },
     cliente: {
@@ -90,6 +97,11 @@ function createMockRepositories() {
     listaPrecio: {
       async list() {
         return normalizeListaPreciosPayload([]);
+      }
+    },
+    comprobanteVenta: {
+      async list() {
+        return normalizeComprobantesVentaPayload([]);
       }
     },
     cliente: {

@@ -142,6 +142,40 @@ export function renderListaPrecioTable(
   });
 }
 
+export function renderComprobanteVentaTable(
+  tableBody,
+  comprobantesVentaState,
+  columns,
+  uiMessages
+) {
+  clearTable(tableBody);
+
+  if (comprobantesVentaState?.status === "loading") {
+    appendMessageRow(tableBody, uiMessages.comprobanteVentaLoading, columns.length);
+    return;
+  }
+
+  if (comprobantesVentaState?.status === "error") {
+    const message =
+      comprobantesVentaState.errorMessage || uiMessages.comprobantesVentaLoadError;
+    appendMessageRow(tableBody, message, columns.length);
+    return;
+  }
+
+  const items = Array.isArray(comprobantesVentaState?.items)
+    ? comprobantesVentaState.items
+    : [];
+
+  if (items.length === 0) {
+    appendMessageRow(tableBody, uiMessages.noComprobantesVenta, columns.length);
+    return;
+  }
+
+  items.forEach((item) => {
+    appendDataRow(tableBody, item, columns);
+  });
+}
+
 export function hideDetailSection(sectionNode, tableBodyNode) {
   clearTable(tableBodyNode);
   sectionNode.classList.add("d-none");

@@ -82,7 +82,7 @@
     <section class="mb-3 mb-md-4">
       <h1 class="h3 fw-semibold">Bienvenido</h1>
       <p class="text-secondary mb-3">
-        Selecciona el modulo para ver Remito de venta o el listado de precios.
+        Selecciona el modulo para ver Remito de venta, listado de precios o comprobantes de venta.
       </p>
       <div class="row g-2 align-items-end">
         <div class="col-12 col-sm-6 col-md-4">
@@ -91,6 +91,7 @@
             <option value="" selected>Seleccionar...</option>
             <option value="remito">Remito de venta</option>
             <option value="listaPrecio">Listado de precios</option>
+            <option value="comprobanteVenta">Comprobante de venta</option>
           </select>
         </div>
       </div>
@@ -143,6 +144,28 @@
               </tr>
             </thead>
             <tbody id="lista-precio-table-body"></tbody>
+          </table>
+        </div>
+        <div
+          class="table-responsive x-table-wrap d-none"
+          id="comprobante-venta-table-wrapper"
+        >
+          <table
+            class="table x-table table-striped table-hover align-middle mb-0"
+            id="comprobante-venta-table"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">transaccionid</th>
+                <th scope="col">nombre</th>
+                <th scope="col">fecha</th>
+                <th scope="col">clienteNombre</th>
+                <th scope="col">vendedorNombre</th>
+                <th scope="col">importetotal</th>
+                <th scope="col">externalId</th>
+              </tr>
+            </thead>
+            <tbody id="comprobante-venta-table-body"></tbody>
           </table>
         </div>
         <div class="table-responsive x-table-wrap d-none" id="cliente-main-table-wrapper">

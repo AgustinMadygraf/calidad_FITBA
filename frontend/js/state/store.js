@@ -42,6 +42,14 @@ function createListaPreciosState() {
   };
 }
 
+function createComprobantesVentaState() {
+  return {
+    status: "idle",
+    items: [],
+    errorMessage: null
+  };
+}
+
 function createInitialState() {
   return {
     remitos: [],
@@ -50,6 +58,7 @@ function createInitialState() {
     productoDetail: createProductoDetail(),
     clienteDetail: createClienteDetail(),
     listaPrecios: createListaPreciosState(),
+    comprobantesVenta: createComprobantesVentaState(),
     banner: null
   };
 }
@@ -135,6 +144,46 @@ export function resetListaPrecios() {
   updateState((current) => ({
     ...current,
     listaPrecios: createListaPreciosState()
+  }));
+}
+
+export function setComprobantesVentaLoading() {
+  updateState((current) => ({
+    ...current,
+    comprobantesVenta: {
+      status: "loading",
+      items: [],
+      errorMessage: null
+    }
+  }));
+}
+
+export function setComprobantesVentaReady(items) {
+  updateState((current) => ({
+    ...current,
+    comprobantesVenta: {
+      status: "ready",
+      items: Array.isArray(items) ? cloneValue(items) : [],
+      errorMessage: null
+    }
+  }));
+}
+
+export function setComprobantesVentaError(errorMessage) {
+  updateState((current) => ({
+    ...current,
+    comprobantesVenta: {
+      status: "error",
+      items: [],
+      errorMessage
+    }
+  }));
+}
+
+export function resetComprobantesVenta() {
+  updateState((current) => ({
+    ...current,
+    comprobantesVenta: createComprobantesVentaState()
   }));
 }
 
@@ -294,6 +343,10 @@ export function showRemitoAsMainTable() {
 
 export function showListaPrecioAsMainTable() {
   setMainTable(MODES.LISTA_PRECIO);
+}
+
+export function showComprobanteVentaAsMainTable() {
+  setMainTable(MODES.COMPROBANTE_VENTA);
 }
 
 export function showEmptyMainTable() {

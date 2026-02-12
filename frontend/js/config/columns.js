@@ -107,6 +107,20 @@ export const LISTA_PRECIO_COLUMNS = [
   { key: "activo" }
 ];
 
+export const COMPROBANTE_VENTA_COLUMNS = [
+  { key: "transaccionid" },
+  { key: "nombre" },
+  {
+    key: "fecha",
+    className: "text-nowrap",
+    getValue: (comprobante) => formatFechaDDMMYY(comprobante?.fecha)
+  },
+  { key: "clienteNombre", className: "text-nowrap" },
+  { key: "vendedorNombre", className: "text-nowrap" },
+  { key: "importetotal", className: "text-nowrap" },
+  { key: "externalId", className: "text-nowrap" }
+];
+
 export const PRODUCTO_NESTED_ITEM_COLUMNS = [
   { key: "ID" },
   { key: "nombre" },

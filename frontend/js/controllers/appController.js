@@ -1,4 +1,5 @@
 import {
+  COMPROBANTE_VENTA_COLUMNS,
   CATEGORIA_FISCAL_COLUMNS,
   CLIENTE_COLUMNS,
   IDENTIFICACION_TRIBUTARIA_COLUMNS,
@@ -9,6 +10,7 @@ import {
   REMITO_COLUMNS,
   UI_MESSAGES
 } from "../config.js";
+import { loadComprobantesVenta as loadComprobantesVentaUseCase } from "../application/comprobanteVentaUseCases.js";
 import { loadListaPrecios as loadListaPreciosUseCase } from "../application/listaPrecioUseCases.js";
 import { loadRemitosWithFallback } from "../application/remitoUseCases.js";
 import {
@@ -29,6 +31,9 @@ import {
   setClienteLoading,
   setClienteNotFound,
   setClienteReady,
+  setComprobantesVentaError,
+  setComprobantesVentaLoading,
+  setComprobantesVentaReady,
   setListaPreciosError,
   setListaPreciosLoading,
   setListaPreciosReady,
@@ -38,6 +43,7 @@ import {
   setProductoReady,
   setRemitos,
   showClienteAsMainTable,
+  showComprobanteVentaAsMainTable,
   showEmptyMainTable,
   showListaPrecioAsMainTable,
   showProductoAsMainTable,
@@ -50,6 +56,7 @@ import {
   renderBanner,
   renderCategoriaFiscalSection,
   renderClienteSection,
+  renderComprobanteVentaTable,
   renderIdentificacionTributariaSection,
   renderItemSection,
   renderListaPrecioTable,
@@ -132,7 +139,10 @@ async function applyRouteSelectionFromUrl() {
     return;
   }
 
-  if (currentState.mainTable === MODES.LISTA_PRECIO) {
+  if (
+    currentState.mainTable === MODES.LISTA_PRECIO ||
+    currentState.mainTable === MODES.COMPROBANTE_VENTA
+  ) {
     renderView();
     return;
   }
@@ -168,6 +178,13 @@ function hideListaPrecioSection() {
   );
 }
 
+function hideComprobanteVentaSection() {
+  hideDetailSection(
+    domRefs.comprobanteVentaTableWrapper,
+    domRefs.comprobanteVentaTableBody
+  );
+}
+
 function hideRemitoDetailSections() {
   hideDetailSection(domRefs.itemSection, domRefs.itemTableBody);
   hideDetailSection(domRefs.clienteSection, domRefs.clienteTableBody);
@@ -180,6 +197,7 @@ function renderEmptyState() {
   domRefs.emptyState.classList.remove("d-none");
   hideDetailSection(domRefs.remitoTableWrapper, domRefs.remitoTableBody);
   hideListaPrecioSection();
+  hideComprobanteVentaSection();
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideRemitoDetailSections();
@@ -189,6 +207,7 @@ function renderListaPrecioMainMode(state) {
   domRefs.mainTitle.textContent = "Listado de precios";
   domRefs.emptyState.classList.add("d-none");
   hideDetailSection(domRefs.remitoTableWrapper, domRefs.remitoTableBody);
+  hideComprobanteVentaSection();
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideRemitoDetailSections();
@@ -202,9 +221,28 @@ function renderListaPrecioMainMode(state) {
   );
 }
 
+function renderComprobanteVentaMainMode(state) {
+  domRefs.mainTitle.textContent = "Comprobante de Venta";
+  domRefs.emptyState.classList.add("d-none");
+  hideDetailSection(domRefs.remitoTableWrapper, domRefs.remitoTableBody);
+  hideListaPrecioSection();
+  hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
+  hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
+  hideRemitoDetailSections();
+
+  domRefs.comprobanteVentaTableWrapper.classList.remove("d-none");
+  renderComprobanteVentaTable(
+    domRefs.comprobanteVentaTableBody,
+    state.comprobantesVenta,
+    COMPROBANTE_VENTA_COLUMNS,
+    UI_MESSAGES
+  );
+}
+
 function renderClienteMainMode(state) {
   domRefs.emptyState.classList.add("d-none");
   hideListaPrecioSection();
+  hideComprobanteVentaSection();
   domRefs.remitoTableWrapper.classList.add("d-none");
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideProductoNestedSections();
@@ -245,6 +283,7 @@ function renderClienteMainMode(state) {
 function renderProductoMainMode(state) {
   domRefs.emptyState.classList.add("d-none");
   hideListaPrecioSection();
+  hideComprobanteVentaSection();
   domRefs.remitoTableWrapper.classList.add("d-none");
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   renderProductoSection(
@@ -309,6 +348,7 @@ function renderRemitoMainMode(state, visibleRemitos, selectedRemito) {
   domRefs.mainTitle.textContent = "Remito de Venta";
   domRefs.emptyState.classList.add("d-none");
   hideListaPrecioSection();
+  hideComprobanteVentaSection();
   domRefs.remitoTableWrapper.classList.remove("d-none");
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
@@ -369,6 +409,7 @@ function renderRemitoMainMode(state, visibleRemitos, selectedRemito) {
 const MAIN_TABLE_RENDERERS = {
   cliente: (state) => renderClienteMainMode(state),
   producto: (state) => renderProductoMainMode(state),
+  comprobanteVenta: (state) => renderComprobanteVentaMainMode(state),
   remito: (state, context) =>
     renderRemitoMainMode(state, context.visibleRemitos, context.selectedRemito)
 };
@@ -388,6 +429,8 @@ function renderView() {
       ? ""
       : activeModule === MODES.LISTA_PRECIO
         ? "listaPrecio"
+        : activeModule === MODES.COMPROBANTE_VENTA
+          ? "comprobanteVenta"
         : "remito";
 
   if (activeModule === MODES.NONE) {
@@ -397,6 +440,11 @@ function renderView() {
 
   if (activeModule === MODES.LISTA_PRECIO) {
     renderListaPrecioMainMode(state);
+    return;
+  }
+
+  if (activeModule === MODES.COMPROBANTE_VENTA) {
+    renderComprobanteVentaMainMode(state);
     return;
   }
 
@@ -520,6 +568,12 @@ function bindEvents() {
       return;
     }
 
+    if (selection === "comprobanteVenta") {
+      showComprobanteVentaAsMainTable();
+      void loadComprobantesVentaView();
+      return;
+    }
+
     showEmptyMainTable();
   });
 
@@ -616,6 +670,28 @@ async function loadListaPreciosView({ force = false } = {}) {
     console.error("No se pudo cargar el listado de precios:", error);
     setListaPreciosError(UI_MESSAGES.listaPreciosLoadError);
     setBanner(UI_MESSAGES.listaPreciosLoadError, "warning");
+  }
+}
+
+async function loadComprobantesVentaView({ force = false } = {}) {
+  const state = getState();
+  if (!force && state.comprobantesVenta?.status === "ready") {
+    renderView();
+    return;
+  }
+
+  setComprobantesVentaLoading();
+
+  try {
+    const { items } = await loadComprobantesVentaUseCase(
+      repositories.comprobanteVenta
+    );
+    setComprobantesVentaReady(items);
+    clearBanner();
+  } catch (error) {
+    console.error("No se pudo cargar el listado de comprobantes de venta:", error);
+    setComprobantesVentaError(UI_MESSAGES.comprobantesVentaLoadError);
+    setBanner(UI_MESSAGES.comprobantesVentaLoadError, "warning");
   }
 }
 
