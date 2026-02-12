@@ -91,3 +91,50 @@ def test_create_invalidates_list_cache(monkeypatch):
     assert calls["create"] == 1
     assert gw.list() == [{"cliente_id": 1}]
     assert calls["list"] == 2
+
+
+def test_single_flow_covers_get_update_delete_and_ttl_zero(monkeypatch):
+    calls = {"list": 0, "get": 0, "update": 0, "delete": 0}
+
+    def fake_request(method, url, **_kwargs):
+        if method == "GET" and url.endswith("/clienteBean"):
+            calls["list"] += 1
+            return httpx.Response(200, json=[{"clienteId": 7}])
+        if method == "GET" and url.endswith("/clienteBean/7"):
+            calls["get"] += 1
+            return httpx.Response(200, json={"cliente_id": 7})
+        if method == "PUT" and url.endswith("/clienteBean/7"):
+            calls["update"] += 1
+            return httpx.Response(200, json={"cliente_id": 7, "updated": True})
+        if method == "DELETE" and url.endswith("/clienteBean/7"):
+            calls["delete"] += 1
+            return httpx.Response(200, json={"status": "ok"})
+        return httpx.Response(404)
+
+    monkeypatch.setattr(
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
+        fake_request,
+    )
+
+    gw = XubioClienteGateway(list_cache_ttl=60)
+    assert gw.list() == [{"clienteId": 7}]
+    assert gw.get(7) == {"clienteId": 7}
+    assert calls["get"] == 0
+
+    assert gw.update(7, {"razonSocial": "Editado"}) == {
+        "cliente_id": 7,
+        "updated": True,
+    }
+    assert calls["update"] == 1
+    assert gw.get(7) == {"cliente_id": 7}
+    assert calls["get"] == 1
+
+    assert gw.delete(7) is True
+    assert calls["delete"] == 1
+    assert gw.list() == [{"clienteId": 7}]
+    assert calls["list"] == 2
+
+    gw_no_cache = XubioClienteGateway(list_cache_ttl=0)
+    assert gw_no_cache.list() == [{"clienteId": 7}]
+    assert gw_no_cache.list() == [{"clienteId": 7}]
+    assert calls["list"] == 4

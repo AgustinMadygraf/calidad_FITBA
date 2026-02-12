@@ -85,11 +85,27 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 - `GET /API/1.1/monedaBean`
 - `GET /API/1.1/monedaBean/{id}`
 
+## Cache de lectura (modo Xubio / `IS_PROD=true`)
+- Se cachean respuestas de `GET list` para reducir carga sobre Xubio.
+- TTL configurable por env:
+  - `XUBIO_CLIENTE_LIST_TTL`
+  - `XUBIO_REMITO_LIST_TTL`
+  - `XUBIO_PRODUCTO_LIST_TTL`
+  - `XUBIO_DEPOSITO_LIST_TTL`
+  - `XUBIO_MONEDA_LIST_TTL`
+  - `XUBIO_LISTA_PRECIO_LIST_TTL`
+  - `XUBIO_CATEGORIA_FISCAL_LIST_TTL`
+  - `XUBIO_IDENTIFICACION_TRIBUTARIA_LIST_TTL`
+- En catalogos (`monedaBean`, `listaPrecioBean`, `categoriaFiscal`,
+  `identificacionTributaria`, `depositos`), `GET /{id}` resuelve desde la lista
+  cacheada + busqueda por ID.
+
 Dependencias funcionales en esta API local:
 - `Cliente` puede referenciar `listaPrecioVenta` (opcional).
 - `RemitoVenta` puede referenciar `listaPrecioId` (opcional).
 - Cuando se informan esos campos, se valida existencia contra `listaPrecioBean/{id}`.
-- `listaPrecioBean` no requiere `clienteId`, `transaccionId` ni `productoId` para su lectura.
+- `listaPrecioBean` no requiere `clienteId`, `transaccionId` ni `productoId`
+  para su lectura.
 
 ## Debug (solo en IS_PROD=false)
 - `GET /debug/clienteBean`
