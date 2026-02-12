@@ -28,3 +28,27 @@ class InMemoryListaPrecioGateway(ListaPrecioGateway):
         record["id"] = lista_precio_id
         self._items[lista_precio_id] = record
         return record
+
+    def update(
+        self, lista_precio_id: int, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        if lista_precio_id not in self._items:
+            return None
+        record = dict(self._items[lista_precio_id])
+        record.update(data)
+        record["listaPrecioID"] = lista_precio_id
+        record["ID"] = lista_precio_id
+        record["id"] = lista_precio_id
+        self._items[lista_precio_id] = record
+        return record
+
+    def patch(
+        self, lista_precio_id: int, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        return self.update(lista_precio_id, data)
+
+    def delete(self, lista_precio_id: int) -> bool:
+        if lista_precio_id in self._items:
+            del self._items[lista_precio_id]
+            return True
+        return False

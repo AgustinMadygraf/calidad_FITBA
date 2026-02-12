@@ -98,8 +98,12 @@ class XubioRemitoGateway(RemitoGateway):
     def update(
         self, transaccion_id: int, data: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        url = self._url(f"{REMITO_PATH}/{transaccion_id}")
-        updated = update_item(url=url, timeout=self._timeout, data=data, logger=logger)
+        url = self._url(REMITO_PATH)
+        payload = dict(data)
+        payload["transaccionId"] = transaccion_id
+        updated = update_item(
+            url=url, timeout=self._timeout, data=payload, logger=logger
+        )
         self._clear_list_cache()
         self._clear_item_cache(transaccion_id)
         return updated

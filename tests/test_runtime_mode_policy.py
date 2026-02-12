@@ -37,6 +37,16 @@ def test_patch_routes_are_registered():
     assert "/API/1.1/clienteBean/{cliente_id}" in patch_paths
     assert "/API/1.1/remitoVentaBean/{transaccion_id}" in patch_paths
     assert "/API/1.1/ProductoVentaBean/{producto_id}" in patch_paths
+    assert "/API/1.1/listaPrecioBean/{lista_precio_id}" in patch_paths
+
+
+def test_remito_swagger_put_route_is_registered():
+    put_paths = {
+        route.path
+        for route in app.routes
+        if hasattr(route, "methods") and "PUT" in route.methods
+    }
+    assert "/API/1.1/remitoVentaBean" in put_paths
 
 
 def test_producto_contract_routes_are_registered():
@@ -48,6 +58,24 @@ def test_producto_contract_routes_are_registered():
     assert "/API/1.1/ProductoVentaBean" in route_paths
     assert "/API/1.1/ProductoVentaBean/{producto_id}" in route_paths
     assert "/API/1.1/ProductoCompraBean" in route_paths
+    assert "/API/1.1/listaPrecioBean" in route_paths
+    assert "/API/1.1/listaPrecioBean/{lista_precio_id}" in route_paths
+
+
+def test_catalog_extension_detail_routes_are_registered():
+    route_paths = {
+        route.path
+        for route in app.routes
+        if hasattr(route, "methods")
+    }
+    assert "/API/1.1/ProductoCompraBean/{producto_id}" in route_paths
+    assert "/API/1.1/categoriaFiscal/{categoria_fiscal_id}" in route_paths
+    assert "/API/1.1/depositos/{deposito_id}" in route_paths
+    assert (
+        "/API/1.1/identificacionTributaria/{identificacion_tributaria_id}"
+        in route_paths
+    )
+    assert "/API/1.1/monedaBean/{moneda_id}" in route_paths
 
 
 def test_patch_is_forbidden_in_non_prod(monkeypatch):
@@ -55,6 +83,15 @@ def test_patch_is_forbidden_in_non_prod(monkeypatch):
     client = TestClient(app)
 
     response = client.patch("/API/1.1/clienteBean/1", json={})
+
+    assert response.status_code == 403
+
+
+def test_remito_swagger_put_is_forbidden_in_non_prod(monkeypatch):
+    monkeypatch.setenv("IS_PROD", "false")
+    client = TestClient(app)
+
+    response = client.put("/API/1.1/remitoVentaBean", json={"transaccionId": 1})
 
     assert response.status_code == 403
 
@@ -81,6 +118,15 @@ def test_producto_mutations_forbidden_in_non_prod(monkeypatch):
     assert response.status_code == 403
 
 
+def test_lista_precio_mutations_forbidden_in_non_prod(monkeypatch):
+    monkeypatch.setenv("IS_PROD", "false")
+    client = TestClient(app)
+
+    response = client.post("/API/1.1/listaPrecioBean", json={"nombre": "LP1"})
+
+    assert response.status_code == 403
+
+
 def test_producto_create_enabled_in_prod(monkeypatch):
     monkeypatch.setenv("IS_PROD", "true")
     monkeypatch.setattr(app, "producto_gateway", InMemoryProductoGateway(), raising=False)
@@ -90,6 +136,19 @@ def test_producto_create_enabled_in_prod(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["productoid"] == 1
+
+
+def test_lista_precio_create_enabled_in_prod(monkeypatch):
+    monkeypatch.setenv("IS_PROD", "true")
+    monkeypatch.setattr(
+        app, "lista_precio_gateway", InMemoryListaPrecioGateway(), raising=False
+    )
+    client = TestClient(app)
+
+    response = client.post("/API/1.1/listaPrecioBean", json={"nombre": "LP1"})
+
+    assert response.status_code == 200
+    assert response.json()["listaPrecioID"] == 1
 
 
 def test_legacy_lowercase_producto_route_still_works(monkeypatch):

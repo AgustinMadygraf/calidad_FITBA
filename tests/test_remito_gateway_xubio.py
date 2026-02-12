@@ -95,6 +95,29 @@ def test_create_invalidates_list_cache(monkeypatch):
     assert calls["list"] == 2
 
 
+def test_update_uses_swagger_put_path_and_body_transaccion_id(monkeypatch):
+    captured = {}
+
+    def fake_request(method, url, **kwargs):
+        captured["method"] = method
+        captured["url"] = url
+        captured["json"] = kwargs.get("json")
+        return httpx.Response(200, json={"transaccionId": 7, "numeroRemito": "R-2"})
+
+    monkeypatch.setattr(
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
+        fake_request,
+    )
+    gw = XubioRemitoGateway()
+
+    updated = gw.update(7, {"transaccionId": 999, "numeroRemito": "R-2"})
+
+    assert updated == {"transaccionId": 7, "numeroRemito": "R-2"}
+    assert captured["method"] == "PUT"
+    assert captured["url"].endswith("/remitoVentaBean")
+    assert captured["json"]["transaccionId"] == 7
+
+
 def test_prod_mode_disables_get_cache(monkeypatch):
     calls = {"count": 0}
 

@@ -51,8 +51,9 @@ Validaciones relevantes:
 ## Remito Venta
 - `GET /API/1.1/remitoVentaBean`
 - `POST /API/1.1/remitoVentaBean`
+- `PUT /API/1.1/remitoVentaBean` (contrato Swagger oficial, requiere `transaccionId` en body)
 - `GET /API/1.1/remitoVentaBean/{id}`
-- `PUT /API/1.1/remitoVentaBean/{id}`
+- `PUT /API/1.1/remitoVentaBean/{id}` (extension local de compatibilidad)
 - `DELETE /API/1.1/remitoVentaBean/{id}`
 
 Validaciones relevantes:
@@ -83,11 +84,26 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 
 ## Listas de precio
 - `GET /API/1.1/listaPrecioBean`
+- `POST /API/1.1/listaPrecioBean`
 - `GET /API/1.1/listaPrecioBean/{id}`
+- `PUT /API/1.1/listaPrecioBean/{id}`
+- `PATCH /API/1.1/listaPrecioBean/{id}`
+- `DELETE /API/1.1/listaPrecioBean/{id}`
 
 ## Monedas
 - `GET /API/1.1/monedaBean`
 - `GET /API/1.1/monedaBean/{id}`
+
+## Extensiones formales fuera de Swagger oficial
+- `GET /API/1.1/ProductoCompraBean/{id}`
+- `GET /API/1.1/categoriaFiscal/{id}`
+- `GET /API/1.1/depositos/{id}`
+- `GET /API/1.1/identificacionTributaria/{id}`
+- `GET /API/1.1/monedaBean/{id}`
+
+Politica:
+- Estas rutas se mantienen como contrato local estable por compatibilidad y usabilidad.
+- No reemplazan el contrato Swagger oficial; son una extension documentada de esta API local.
 
 ## Cache de lectura (modo `IS_PROD=false`)
 - `GET` opera con cache-aside sobre Xubio:

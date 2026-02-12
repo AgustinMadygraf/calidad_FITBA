@@ -1,7 +1,15 @@
 import os
 
+from fastapi.testclient import TestClient
+
 from src.infrastructure.fastapi.api import remito_list, remito_create
 from src.infrastructure.fastapi.api import app as global_app
+from src.infrastructure.memory.cliente_gateway_memory import InMemoryClienteGateway
+from src.infrastructure.memory.deposito_gateway_memory import InMemoryDepositoGateway
+from src.infrastructure.memory.lista_precio_gateway_memory import (
+    InMemoryListaPrecioGateway,
+)
+from src.infrastructure.memory.producto_gateway_memory import InMemoryProductoGateway
 from src.infrastructure.memory.remito_gateway_memory import InMemoryRemitoGateway
 from src.interface_adapter.schemas.remito_venta import RemitoVentaPayload
 
@@ -58,3 +66,87 @@ def test_remito_item_requires_positive_values():
         pass
     else:
         raise AssertionError("Expected ValueError for non-positive cantidad")
+
+
+def test_swagger_put_remito_requires_transaccion_id(monkeypatch):
+    monkeypatch.setenv("IS_PROD", "true")
+    client = TestClient(global_app)
+
+    response = client.put(
+        "/API/1.1/remitoVentaBean",
+        json={"numeroRemito": "R-2", "clienteId": 1, "fecha": "2026-02-10"},
+    )
+
+    assert response.status_code == 400
+    assert "transaccionId" in response.json()["detail"]
+
+
+def test_swagger_put_remito_updates_existing_transaccion(monkeypatch):
+    monkeypatch.setenv("IS_PROD", "true")
+    remito_gateway = InMemoryRemitoGateway()
+    remito_gateway.create({"numeroRemito": "R-1", "clienteId": 1, "fecha": "2026-02-09"})
+
+    cliente_gateway = InMemoryClienteGateway()
+    cliente_gateway.create({"nombre": "ACME"})
+
+    monkeypatch.setattr(global_app, "remito_gateway", remito_gateway, raising=False)
+    monkeypatch.setattr(global_app, "cliente_gateway", cliente_gateway, raising=False)
+    monkeypatch.setattr(
+        global_app, "producto_gateway", InMemoryProductoGateway(), raising=False
+    )
+    monkeypatch.setattr(
+        global_app, "deposito_gateway", InMemoryDepositoGateway(), raising=False
+    )
+    monkeypatch.setattr(
+        global_app, "lista_precio_gateway", InMemoryListaPrecioGateway(), raising=False
+    )
+
+    client = TestClient(global_app)
+    response = client.put(
+        "/API/1.1/remitoVentaBean",
+        json={
+            "transaccionId": 1,
+            "numeroRemito": "R-2",
+            "clienteId": 1,
+            "fecha": "2026-02-10",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["transaccionId"] == 1
+    assert response.json()["numeroRemito"] == "R-2"
+
+
+def test_put_remito_with_path_rejects_mismatched_body_transaccion_id(monkeypatch):
+    monkeypatch.setenv("IS_PROD", "true")
+    remito_gateway = InMemoryRemitoGateway()
+    remito_gateway.create({"numeroRemito": "R-1", "clienteId": 1, "fecha": "2026-02-09"})
+
+    cliente_gateway = InMemoryClienteGateway()
+    cliente_gateway.create({"nombre": "ACME"})
+
+    monkeypatch.setattr(global_app, "remito_gateway", remito_gateway, raising=False)
+    monkeypatch.setattr(global_app, "cliente_gateway", cliente_gateway, raising=False)
+    monkeypatch.setattr(
+        global_app, "producto_gateway", InMemoryProductoGateway(), raising=False
+    )
+    monkeypatch.setattr(
+        global_app, "deposito_gateway", InMemoryDepositoGateway(), raising=False
+    )
+    monkeypatch.setattr(
+        global_app, "lista_precio_gateway", InMemoryListaPrecioGateway(), raising=False
+    )
+
+    client = TestClient(global_app)
+    response = client.put(
+        "/API/1.1/remitoVentaBean/1",
+        json={
+            "transaccionId": 2,
+            "numeroRemito": "R-2",
+            "clienteId": 1,
+            "fecha": "2026-02-10",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "coincidir con el path" in response.json()["detail"]

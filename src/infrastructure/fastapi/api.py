@@ -94,6 +94,58 @@ def _get_moneda_gateway():
     return app.moneda_gateway
 
 
+def _build_remito_dependencies() -> remito_venta.RemitoDependencies:
+    return remito_venta.RemitoDependencies(
+        cliente_gateway=_get_cliente_gateway(),
+        producto_gateway=_get_producto_gateway(),
+        deposito_gateway=_get_deposito_gateway(),
+        lista_precio_gateway=_get_lista_precio_gateway(),
+    )
+
+
+def _resolve_remito_transaccion_id(
+    data: Dict[str, Any],
+    *,
+    path_transaccion_id: int | None = None,
+) -> int:
+    raw_body_id = data.get("transaccionId")
+    if raw_body_id is None:
+        if path_transaccion_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "transaccionId es requerido en body para "
+                    "PUT /API/1.1/remitoVentaBean"
+                ),
+            )
+        data["transaccionId"] = path_transaccion_id
+        return path_transaccion_id
+
+    try:
+        body_transaccion_id = int(raw_body_id)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400, detail="transaccionId debe ser un entero positivo"
+        ) from exc
+
+    if body_transaccion_id <= 0:
+        raise HTTPException(
+            status_code=400, detail="transaccionId debe ser un entero positivo"
+        )
+
+    if (
+        path_transaccion_id is not None
+        and body_transaccion_id != path_transaccion_id
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="transaccionId en body debe coincidir con el path",
+        )
+
+    data["transaccionId"] = body_transaccion_id
+    return body_transaccion_id
+
+
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 CATEGORIA_FISCAL_BASE = "/API/1.1/categoriaFiscal"
@@ -309,20 +361,33 @@ def remito_create(body: RemitoVentaPayload) -> Dict[str, Any]:
     try:
         data = body.model_dump(exclude_none=True)
         gateway = _get_remito_gateway()
-        cliente_gateway = _get_cliente_gateway()
-        producto_gateway = _get_producto_gateway()
-        deps = remito_venta.RemitoDependencies(
-            cliente_gateway=cliente_gateway,
-            producto_gateway=producto_gateway,
-            deposito_gateway=_get_deposito_gateway(),
-            lista_precio_gateway=_get_lista_precio_gateway(),
-        )
+        deps = _build_remito_dependencies()
         return handlers.create_remito(gateway, deps, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ExternalServiceError as exc:
         logger.error("Gateway error al crear remito: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.put(REMITO_BASE)
+@app.put(REMITO_BASE_SLASH, include_in_schema=False)
+def remito_update_by_body(body: RemitoVentaPayload) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        data = body.model_dump(exclude_none=True)
+        transaccion_id = _resolve_remito_transaccion_id(data)
+        gateway = _get_remito_gateway()
+        deps = _build_remito_dependencies()
+        item = handlers.update_remito(gateway, transaccion_id, deps, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al actualizar remito: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="remito no encontrado")
+    return item
 
 
 @app.get(f"{REMITO_BASE}/{{transaccion_id}}")
@@ -347,15 +412,11 @@ def remito_update(transaccion_id: int, body: RemitoVentaPayload) -> Dict[str, An
     _ensure_write_allowed()
     try:
         data = body.model_dump(exclude_none=True)
-        gateway = _get_remito_gateway()
-        cliente_gateway = _get_cliente_gateway()
-        producto_gateway = _get_producto_gateway()
-        deps = remito_venta.RemitoDependencies(
-            cliente_gateway=cliente_gateway,
-            producto_gateway=producto_gateway,
-            deposito_gateway=_get_deposito_gateway(),
-            lista_precio_gateway=_get_lista_precio_gateway(),
+        transaccion_id = _resolve_remito_transaccion_id(
+            data, path_transaccion_id=transaccion_id
         )
+        gateway = _get_remito_gateway()
+        deps = _build_remito_dependencies()
         item = handlers.update_remito(gateway, transaccion_id, deps, data)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -572,6 +633,63 @@ def lista_precio_get(lista_precio_id: int) -> Dict[str, Any]:
     if item is None:
         raise HTTPException(status_code=404, detail="lista de precio no encontrada")
     return item
+
+
+@app.post(LISTA_PRECIO_BASE)
+@app.post(LISTA_PRECIO_BASE_SLASH, include_in_schema=False)
+def lista_precio_create(body: Dict[str, Any]) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_lista_precio_gateway()
+        return handlers.create_lista_precio(gateway, body)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al crear lista de precio: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.put(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}")
+@app.put(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}/", include_in_schema=False)
+def lista_precio_update(lista_precio_id: int, body: Dict[str, Any]) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_lista_precio_gateway()
+        item = handlers.update_lista_precio(gateway, lista_precio_id, body)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al actualizar lista de precio: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="lista de precio no encontrada")
+    return item
+
+
+@app.patch(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}")
+@app.patch(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}/", include_in_schema=False)
+def lista_precio_patch(lista_precio_id: int, body: Dict[str, Any]) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_lista_precio_gateway()
+        item = handlers.patch_lista_precio(gateway, lista_precio_id, body)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al modificar lista de precio: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="lista de precio no encontrada")
+    return item
+
+
+@app.delete(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}")
+@app.delete(f"{LISTA_PRECIO_BASE}/{{lista_precio_id}}/", include_in_schema=False)
+def lista_precio_delete(lista_precio_id: int) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_lista_precio_gateway()
+        ok = handlers.delete_lista_precio(gateway, lista_precio_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al borrar lista de precio: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if not ok:
+        raise HTTPException(status_code=404, detail="lista de precio no encontrada")
+    return {"status": "deleted", "listaPrecioID": lista_precio_id}
 
 
 @app.get(MONEDA_BASE)

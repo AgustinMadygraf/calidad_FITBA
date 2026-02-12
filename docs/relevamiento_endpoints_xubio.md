@@ -7,9 +7,9 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 ## Resumen ejecutivo
 - Endpoints oficiales relevados en Swagger: **62 paths**
 - Operaciones oficiales relevadas (GET/POST/PUT/PATCH/DELETE): **105**
-- Operaciones cubiertas por la API local (matching contra Swagger): **20**
-- Operaciones pendientes respecto de Swagger: **85**
-- Operaciones locales fuera de Swagger (extensiones o desvios): **10**
+- Operaciones cubiertas por la API local (matching contra Swagger): **25**
+- Operaciones pendientes respecto de Swagger: **80**
+- Operaciones locales fuera de Swagger (extensiones formales): **10**
 
 ## Endpoints relevados y cubiertos (oficial vs local)
 - `/API/1.1/ProductoCompraBean`: cubierto=`[GET]`
@@ -20,13 +20,13 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - `/API/1.1/clienteBean/{id}`: cubierto=`[DELETE, GET, PUT]` | local-extra=`[PATCH]`
 - `/API/1.1/depositos`: cubierto=`[GET]`
 - `/API/1.1/identificacionTributaria`: cubierto=`[GET]`
-- `/API/1.1/listaPrecioBean`: cubierto=`[GET]` | faltante=`[POST]`
-- `/API/1.1/listaPrecioBean/{id}`: cubierto=`[GET]` | faltante=`[DELETE, PATCH, PUT]`
+- `/API/1.1/listaPrecioBean`: cubierto=`[GET, POST]`
+- `/API/1.1/listaPrecioBean/{id}`: cubierto=`[DELETE, GET, PATCH, PUT]`
 - `/API/1.1/monedaBean`: cubierto=`[GET]`
-- `/API/1.1/remitoVentaBean`: cubierto=`[GET, POST]` | faltante=`[PUT]`
+- `/API/1.1/remitoVentaBean`: cubierto=`[GET, POST, PUT]`
 - `/API/1.1/remitoVentaBean/{id}`: cubierto=`[DELETE]` | local-extra=`[GET, PATCH, PUT]`
 
-## Endpoints locales fuera de Swagger oficial (desvios actuales)
+## Endpoints locales fuera de Swagger oficial (extensiones formales acordadas)
 - `/API/1.1/ProductoCompraBean/{id}` `[GET]`
 - `/API/1.1/categoriaFiscal/{id}` `[GET]`
 - `/API/1.1/depositos/{id}` `[GET]`
@@ -34,7 +34,9 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - `/API/1.1/monedaBean/{id}` `[GET]`
 
 Observaciones:
-- En Swagger, `PUT` de remito esta en `/remitoVentaBean` (sin `{id}`), mientras en local el update esta en `/remitoVentaBean/{id}`.
+- Se incorporo `PUT /API/1.1/remitoVentaBean` alineado a Swagger (update por `transaccionId` en body).
+- `PUT /API/1.1/remitoVentaBean/{id}` se mantiene como extension local de compatibilidad.
+- Se decide mantener los `GET .../{id}` de catalogos fuera de Swagger como extension formal del contrato local.
 
 ## Pendientes (To Do List)
 
@@ -43,12 +45,13 @@ Observaciones:
    - `GET/POST /API/1.1/ProductoVentaBean`
    - `PUT/PATCH/DELETE /API/1.1/ProductoVentaBean/{id}`
    - `GET /API/1.1/ProductoCompraBean`
-2. Definir y alinear estrategia para update de remito segun Swagger:
+2. [x] Definir y alinear estrategia para update de remito segun Swagger:
    - agregar `PUT /API/1.1/remitoVentaBean` o documentar desviacion como contrato local.
-3. Completar operaciones faltantes de Lista de Precio:
+3. [x] Completar operaciones faltantes de Lista de Precio:
    - `POST /API/1.1/listaPrecioBean`
    - `PUT/PATCH/DELETE /API/1.1/listaPrecioBean/{id}`
-4. Decidir si mantener endpoints locales no documentados en Swagger (`.../{id}` de catalogos) como extension formal.
+4. [x] Decidir si mantener endpoints locales no documentados en Swagger (`.../{id}` de catalogos) como extension formal.
+   - Se mantienen como contrato local estable para compatibilidad y DX.
 
 ### Media prioridad (expansion funcional)
 1. Incorporar recursos contables/comerciales ya publicados en Swagger:
@@ -80,7 +83,6 @@ Observaciones:
 - `enviarTransaccionPorMail`: 1 ops pendientes (`POST:1`)
 - `facturar`: 1 ops pendientes (`POST:1`)
 - `imprimirPDF`: 1 ops pendientes (`GET:1`)
-- `listaPrecioBean`: 4 ops pendientes (`DELETE:1, PATCH:1, POST:1, PUT:1`)
 - `localidadBean`: 1 ops pendientes (`GET:1`)
 - `miempresa`: 1 ops pendientes (`GET:1`)
 - `ordenCompraBean`: 5 ops pendientes (`DELETE:1, GET:2, POST:1, PUT:1`)
@@ -92,7 +94,6 @@ Observaciones:
 - `provinciaBean`: 1 ops pendientes (`GET:1`)
 - `puntoVentaBean`: 1 ops pendientes (`GET:1`)
 - `relacionFacturaNotaDeCredito`: 1 ops pendientes (`GET:1`)
-- `remitoVentaBean`: 1 ops pendientes (`PUT:1`)
 - `retencionBean`: 1 ops pendientes (`GET:1`)
 - `solicitarCAE`: 1 ops pendientes (`POST:1`)
 - `sucursalClienteBean`: 4 ops pendientes (`DELETE:1, GET:1, POST:1, PUT:1`)

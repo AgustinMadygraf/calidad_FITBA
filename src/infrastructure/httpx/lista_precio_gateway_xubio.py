@@ -12,7 +12,13 @@ from .xubio_cache_helpers import (
     default_get_cache_enabled,
     read_cache_ttl,
 )
-from .xubio_crud_helpers import list_items
+from .xubio_crud_helpers import (
+    create_item,
+    delete_item,
+    list_items,
+    patch_item,
+    update_item,
+)
 
 logger = get_logger(__name__)
 
@@ -59,6 +65,35 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
                 return item
         return None
 
+    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        url = self._url(LISTA_PRECIO_PATH)
+        created = create_item(url=url, timeout=self._timeout, data=data, logger=logger)
+        self._clear_list_cache()
+        return created
+
+    def update(
+        self, lista_precio_id: int, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
+        updated = update_item(url=url, timeout=self._timeout, data=data, logger=logger)
+        self._clear_list_cache()
+        return updated
+
+    def patch(
+        self, lista_precio_id: int, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
+        patched = patch_item(url=url, timeout=self._timeout, data=data, logger=logger)
+        self._clear_list_cache()
+        return patched
+
+    def delete(self, lista_precio_id: int) -> bool:
+        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
+        deleted = delete_item(url=url, timeout=self._timeout, logger=logger)
+        if deleted:
+            self._clear_list_cache()
+        return deleted
+
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
         cached = cache_get(
             _GLOBAL_LIST_CACHE, LISTA_PRECIO_PATH, ttl=self._list_cache_ttl
@@ -77,6 +112,9 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
             items,
             ttl=self._list_cache_ttl,
         )
+
+    def _clear_list_cache(self) -> None:
+        _GLOBAL_LIST_CACHE.pop(LISTA_PRECIO_PATH, None)
 
 
 def _match_lista_precio_id(item: Dict[str, Any], lista_precio_id: int) -> bool:

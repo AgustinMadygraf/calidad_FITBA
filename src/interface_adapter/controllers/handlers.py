@@ -158,6 +158,28 @@ def get_lista_precio(
     return gateway.get(lista_precio_id)
 
 
+def create_lista_precio(
+    gateway: ListaPrecioGateway, data: Dict[str, Any]
+) -> Dict[str, Any]:
+    return gateway.create(data)
+
+
+def update_lista_precio(
+    gateway: ListaPrecioGateway, lista_precio_id: int, data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    return gateway.update(lista_precio_id, data)
+
+
+def patch_lista_precio(
+    gateway: ListaPrecioGateway, lista_precio_id: int, data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    return gateway.patch(lista_precio_id, data)
+
+
+def delete_lista_precio(gateway: ListaPrecioGateway, lista_precio_id: int) -> bool:
+    return gateway.delete(lista_precio_id)
+
+
 def list_monedas(gateway: MonedaGateway) -> Dict[str, Any]:
     items = gateway.list()
     return {"items": items}

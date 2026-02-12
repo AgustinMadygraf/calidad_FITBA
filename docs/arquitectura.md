@@ -31,7 +31,7 @@ Este proyecto aplica Clean Architecture con separacion de responsabilidades.
 
 ## Dependencias de Lista de Precio
 En la implementacion actual:
-- `ListaPrecio` es un catalogo consultable (`list/get`) por su gateway.
+- `ListaPrecio` expone CRUD (`list/get/create/update/delete`) por su gateway.
 - `Cliente` depende de `ListaPrecio` de manera opcional:
   - campo: `cliente.cuentas.listaPrecioVenta`
   - validacion: `src/use_cases/cliente.py`

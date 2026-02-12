@@ -21,7 +21,7 @@ Monorepo Python con dos componentes:
 - Token inspect local: `GET /token/inspect`.
 
 ## Dependencias de "Lista de Precio" (en este proyecto)
-- `listaPrecioBean` se usa como catalogo de referencia (lectura `GET list/get`).
+- `listaPrecioBean` se usa como catalogo de referencia (CRUD local alineado a Swagger).
 - `Cliente` depende de `Lista de Precio` de forma opcional por `listaPrecioVenta`.
 - `RemitoVenta` depende de `Lista de Precio` de forma opcional por `listaPrecioId`.
 - `Lista de Precio` no depende de `Cliente`, `RemitoVenta`, `Producto` ni `Deposito`.
@@ -36,6 +36,7 @@ Monorepo Python con dos componentes:
 - `DELETE /API/1.1/clienteBean/{id}`
 - `GET /API/1.1/remitoVentaBean`
 - `POST /API/1.1/remitoVentaBean`
+- `PUT /API/1.1/remitoVentaBean`
 - `GET /API/1.1/remitoVentaBean/{id}`
 - `PUT /API/1.1/remitoVentaBean/{id}`
 - `DELETE /API/1.1/remitoVentaBean/{id}`
@@ -50,7 +51,11 @@ Monorepo Python con dos componentes:
 - `GET /API/1.1/depositos`
 - `GET /API/1.1/depositos/{id}`
 - `GET /API/1.1/listaPrecioBean`
+- `POST /API/1.1/listaPrecioBean`
 - `GET /API/1.1/listaPrecioBean/{id}`
+- `PUT /API/1.1/listaPrecioBean/{id}`
+- `PATCH /API/1.1/listaPrecioBean/{id}`
+- `DELETE /API/1.1/listaPrecioBean/{id}`
 - `GET /API/1.1/monedaBean`
 - `GET /API/1.1/monedaBean/{id}`
 - `GET /debug/clienteBean` (solo en `IS_PROD=false`)
@@ -141,3 +146,10 @@ pytest -q
 ## Notas
 - En modo real, la baja de recursos impacta datos reales en Xubio.
 - En modo real, el cliente requiere doble confirmacion para BAJA.
+- `PUT /API/1.1/remitoVentaBean/{id}` se mantiene como extension local de compatibilidad;
+  el contrato Swagger oficial para update de remito es `PUT /API/1.1/remitoVentaBean`
+  con `transaccionId` en el body.
+- Los endpoints `GET .../{id}` de catalogos fuera de Swagger oficial
+  (`ProductoCompraBean`, `categoriaFiscal`, `depositos`,
+  `identificacionTributaria`, `monedaBean`) se mantienen como extension formal
+  del contrato local.

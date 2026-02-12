@@ -90,6 +90,20 @@ def update_item(
         raise ExternalServiceError(str(exc)) from exc
 
 
+def patch_item(
+    *, url: str, timeout: float, data: Dict[str, Any], logger: Any
+) -> Optional[Dict[str, Any]]:
+    try:
+        resp = request_with_token("PATCH", url, timeout=timeout, json=data)
+        logger.info("Xubio PATCH %s -> %s", url, resp.status_code)
+        if resp.status_code == 404:
+            return None
+        raise_for_status(resp)
+        return resp.json()
+    except httpx.HTTPError as exc:
+        raise ExternalServiceError(str(exc)) from exc
+
+
 def delete_item(*, url: str, timeout: float, logger: Any) -> bool:
     try:
         resp = request_with_token("DELETE", url, timeout=timeout)
