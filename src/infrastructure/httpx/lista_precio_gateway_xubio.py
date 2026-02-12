@@ -15,6 +15,7 @@ from .xubio_cache_helpers import (
 from .xubio_crud_helpers import (
     create_item,
     delete_item,
+    get_item_with_fallback,
     list_items,
     patch_item,
     update_item,
@@ -24,6 +25,7 @@ logger = get_logger(__name__)
 
 LISTA_PRECIO_PATH = "/API/1.1/listaPrecioBean"
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
+_GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 
 
 class XubioListaPrecioGateway(ListaPrecioGateway):
@@ -59,16 +61,27 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
         return items
 
     def get(self, lista_precio_id: int) -> Optional[Dict[str, Any]]:
-        items = self.list()
-        for item in items:
-            if _match_lista_precio_id(item, lista_precio_id):
-                return item
-        return None
+        cached_item = self._get_cached_item(lista_precio_id)
+        if cached_item is not None:
+            logger.info("Xubio listaPrecio detalle: cache hit (%s)", lista_precio_id)
+            return cached_item
+
+        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
+        item = get_item_with_fallback(
+            url=url,
+            timeout=self._timeout,
+            logger=logger,
+            fallback=lambda: self._fallback_get_from_list(lista_precio_id),
+        )
+        if item is not None:
+            self._store_item_cache(lista_precio_id, item)
+        return item
 
     def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
         url = self._url(LISTA_PRECIO_PATH)
         created = create_item(url=url, timeout=self._timeout, data=data, logger=logger)
         self._clear_list_cache()
+        self._clear_item_cache()
         return created
 
     def update(
@@ -77,6 +90,7 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
         url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
         updated = update_item(url=url, timeout=self._timeout, data=data, logger=logger)
         self._clear_list_cache()
+        self._clear_item_cache(lista_precio_id)
         return updated
 
     def patch(
@@ -85,6 +99,7 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
         url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
         patched = patch_item(url=url, timeout=self._timeout, data=data, logger=logger)
         self._clear_list_cache()
+        self._clear_item_cache(lista_precio_id)
         return patched
 
     def delete(self, lista_precio_id: int) -> bool:
@@ -92,7 +107,15 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
         deleted = delete_item(url=url, timeout=self._timeout, logger=logger)
         if deleted:
             self._clear_list_cache()
+            self._clear_item_cache(lista_precio_id)
         return deleted
+
+    def _fallback_get_from_list(self, lista_precio_id: int) -> Optional[Dict[str, Any]]:
+        items = self.list()
+        for item in items:
+            if _match_lista_precio_id(item, lista_precio_id):
+                return item
+        return None
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
         cached = cache_get(
@@ -116,6 +139,27 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
     def _clear_list_cache(self) -> None:
         _GLOBAL_LIST_CACHE.pop(LISTA_PRECIO_PATH, None)
 
+    def _get_cached_item(self, lista_precio_id: int) -> Optional[Dict[str, Any]]:
+        return cache_get(
+            _GLOBAL_ITEM_CACHE,
+            _lista_precio_item_cache_key(lista_precio_id),
+            ttl=self._list_cache_ttl,
+        )
+
+    def _store_item_cache(self, lista_precio_id: int, item: Dict[str, Any]) -> None:
+        cache_set(
+            _GLOBAL_ITEM_CACHE,
+            _lista_precio_item_cache_key(lista_precio_id),
+            item,
+            ttl=self._list_cache_ttl,
+        )
+
+    def _clear_item_cache(self, lista_precio_id: Optional[int] = None) -> None:
+        if lista_precio_id is not None:
+            _GLOBAL_ITEM_CACHE.pop(_lista_precio_item_cache_key(lista_precio_id), None)
+            return
+        _GLOBAL_ITEM_CACHE.clear()
+
 
 def _match_lista_precio_id(item: Dict[str, Any], lista_precio_id: int) -> bool:
     for key in ("listaPrecioID", "listaPrecioId", "ID", "id"):
@@ -123,3 +167,7 @@ def _match_lista_precio_id(item: Dict[str, Any], lista_precio_id: int) -> bool:
         if value == lista_precio_id:
             return True
     return False
+
+
+def _lista_precio_item_cache_key(lista_precio_id: int) -> str:
+    return f"{LISTA_PRECIO_PATH}/{lista_precio_id}"

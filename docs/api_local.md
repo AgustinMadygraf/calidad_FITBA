@@ -119,9 +119,11 @@ Politica:
   - `XUBIO_CATEGORIA_FISCAL_LIST_TTL`
   - `XUBIO_IDENTIFICACION_TRIBUTARIA_LIST_TTL`
   - `XUBIO_GET_CACHE_ENABLED` (override general de cache on/off).
-- En catalogos (`monedaBean`, `listaPrecioBean`, `categoriaFiscal`,
+- En catalogos livianos (`monedaBean`, `categoriaFiscal`,
   `identificacionTributaria`, `depositos`), `GET /{id}` resuelve desde la lista
   cacheada + busqueda por ID.
+- En `listaPrecioBean`, `GET /{id}` consulta primero el endpoint detalle oficial
+  (`/API/1.1/listaPrecioBean/{id}`) y usa fallback al listado solo ante `5xx`.
 
 ## Mutaciones por entorno
 - `IS_PROD=false`: `POST/PUT/PATCH/DELETE` responden `403`.

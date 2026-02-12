@@ -111,9 +111,11 @@ Modo en servidor:
 Cache de lectura Xubio (TTL en segundos, aplica cuando `IS_PROD=false`):
 - Cliente, Remito, Producto, Deposito, Moneda, Lista de Precio.
 - Categoria Fiscal e Identificacion Tributaria.
-- Los endpoint `GET .../{id}` de catalogos (`monedaBean`, `listaPrecioBean`,
+- Los endpoint `GET .../{id}` de catalogos livianos (`monedaBean`,
   `categoriaFiscal`, `identificacionTributaria`, `depositos`) resuelven desde
   `GET list` + busqueda por ID para reducir llamadas.
+- `GET /API/1.1/listaPrecioBean/{id}` consulta primero el endpoint detalle
+  oficial y cae al listado solo ante respuestas `5xx`.
 - `XUBIO_GET_CACHE_ENABLED` permite override explicito de cache de lectura.
 
 ## Ejecutar servidor
