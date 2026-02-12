@@ -9,14 +9,13 @@ import {
   REMITO_COLUMNS,
   UI_MESSAGES
 } from "../config.js";
-import { fetchClienteById } from "../services/clienteService.js";
-import { fetchListaPrecios } from "../services/listaPrecioService.js";
-import { fetchProductoById } from "../services/productoService.js";
+import { loadListaPrecios as loadListaPreciosUseCase } from "../application/listaPrecioUseCases.js";
+import { loadRemitosWithFallback } from "../application/remitoUseCases.js";
 import {
   readRouteFromUrl,
   writeRouteToUrl
 } from "../router/queryState.js";
-import { fetchRemitos, getFallbackRemitos } from "../services/remitoService.js";
+import { createRepositories } from "../repositories/index.js";
 import {
   clearBanner,
   clearSelection,
@@ -24,6 +23,7 @@ import {
   getState,
   getVisibleRemitos,
   selectTransaccion,
+  subscribe,
   setBanner,
   setClienteError,
   setClienteLoading,
@@ -43,6 +43,7 @@ import {
   showProductoAsMainTable,
   showRemitoAsMainTable
 } from "../state/store.js";
+import { getActiveModule, isRemitoFlow, MODES } from "../state/modeMachine.js";
 import { getDomRefs } from "../ui/dom.js";
 import {
   hideDetailSection,
@@ -59,6 +60,7 @@ import {
 } from "../ui/renderers.js";
 
 let domRefs = null;
+let repositories = null;
 
 function createRequestTracker() {
   let currentRequest = 0;
@@ -92,7 +94,7 @@ async function applyRouteSelectionFromUrl() {
       entityId: route.productoId,
       requestTracker: requestTrackers.producto,
       setLoading: setProductoLoading,
-      fetchById: fetchProductoById,
+      fetchById: repositories.producto.getById,
       setNotFound: setProductoNotFound,
       setReady: setProductoReady,
       setError: setProductoError,
@@ -109,7 +111,7 @@ async function applyRouteSelectionFromUrl() {
       entityId: route.clienteId,
       requestTracker: requestTrackers.cliente,
       setLoading: setClienteLoading,
-      fetchById: fetchClienteById,
+      fetchById: repositories.cliente.getById,
       setNotFound: setClienteNotFound,
       setReady: setClienteReady,
       setError: setClienteError,
@@ -122,24 +124,21 @@ async function applyRouteSelectionFromUrl() {
   if (route.remitoVentaId !== null) {
     showRemitoAsMainTable();
     selectTransaccion(route.remitoVentaId);
-    renderView();
     return;
   }
 
-  if (currentState.mainTable === "none") {
+  if (currentState.mainTable === MODES.NONE) {
     clearSelection();
-    renderView();
     return;
   }
 
-  if (currentState.mainTable === "listaPrecio") {
+  if (currentState.mainTable === MODES.LISTA_PRECIO) {
     renderView();
     return;
   }
 
   showRemitoAsMainTable();
   clearSelection();
-  renderView();
 }
 
 function hideProductoNestedSections() {
@@ -376,34 +375,27 @@ const MAIN_TABLE_RENDERERS = {
 
 function renderView() {
   const state = getState();
-  const activeModule =
-    state.mainTable === "listaPrecio"
-      ? "listaPrecio"
-      : state.mainTable === "none"
-        ? "none"
-        : "remito";
+  const activeModule = getActiveModule(state.mainTable);
   const hasActiveSelection =
-    activeModule === "remito" &&
-    (state.selectedTransaccionId !== null ||
-      state.mainTable === "cliente" ||
-      state.mainTable === "producto");
+    activeModule === MODES.REMITO &&
+    (state.selectedTransaccionId !== null || isRemitoFlow(state.mainTable));
 
   renderBanner(domRefs.banner, state.banner);
   renderShowAllButton(domRefs.showAllButton, hasActiveSelection);
   domRefs.backButton.classList.toggle("d-none", !hasActiveSelection);
   domRefs.mainViewSelect.value =
-    activeModule === "none"
+    activeModule === MODES.NONE
       ? ""
-      : activeModule === "listaPrecio"
+      : activeModule === MODES.LISTA_PRECIO
         ? "listaPrecio"
         : "remito";
 
-  if (activeModule === "none") {
+  if (activeModule === MODES.NONE) {
     renderEmptyState();
     return;
   }
 
-  if (activeModule === "listaPrecio") {
+  if (activeModule === MODES.LISTA_PRECIO) {
     renderListaPrecioMainMode(state);
     return;
   }
@@ -427,13 +419,11 @@ async function loadDetailEntity({
 }) {
   if (entityId === null || entityId === undefined || String(entityId).trim() === "") {
     setError(null, notFoundMessage);
-    renderView();
     return;
   }
 
   const requestId = requestTracker.next();
   setLoading(entityId);
-  renderView();
 
   try {
     const entity = await fetchById(entityId);
@@ -452,8 +442,6 @@ async function loadDetailEntity({
     }
     setError(entityId, loadErrorMessage);
   }
-
-  renderView();
 }
 
 function handleTransaccionClick(transaccionId) {
@@ -462,7 +450,6 @@ function handleTransaccionClick(transaccionId) {
   writeRouteToUrl({ remitoVentaId: transaccionId });
   showRemitoAsMainTable();
   selectTransaccion(transaccionId);
-  renderView();
 }
 
 async function handleClienteClick(
@@ -489,7 +476,7 @@ async function handleClienteClick(
     entityId: clienteId,
     requestTracker: requestTrackers.cliente,
     setLoading: setClienteLoading,
-    fetchById: fetchClienteById,
+    fetchById: repositories.cliente.getById,
     setNotFound: setClienteNotFound,
     setReady: setClienteReady,
     setError: setClienteError,
@@ -505,7 +492,7 @@ async function handleProductoClick(productoId) {
     entityId: productoId,
     requestTracker: requestTrackers.producto,
     setLoading: setProductoLoading,
-    fetchById: fetchProductoById,
+    fetchById: repositories.producto.getById,
     setNotFound: setProductoNotFound,
     setReady: setProductoReady,
     setError: setProductoError,
@@ -524,18 +511,16 @@ function bindEvents() {
 
     if (selection === "remito") {
       showRemitoAsMainTable();
-      renderView();
       return;
     }
 
     if (selection === "listaPrecio") {
       showListaPrecioAsMainTable();
-      void loadListaPrecios();
+      void loadListaPreciosView();
       return;
     }
 
     showEmptyMainTable();
-    renderView();
   });
 
   domRefs.remitoTableBody.addEventListener("click", (event) => {
@@ -574,7 +559,6 @@ function bindEvents() {
     writeRouteToUrl({});
     showRemitoAsMainTable();
     clearSelection();
-    renderView();
   });
 
   domRefs.backButton.addEventListener("click", () => {
@@ -589,7 +573,6 @@ function bindEvents() {
     writeRouteToUrl({}, { mode: "replace" });
     showRemitoAsMainTable();
     clearSelection();
-    renderView();
   });
 }
 
@@ -602,20 +585,21 @@ function bindLocationEvents() {
 }
 
 async function loadRemitos() {
-  try {
-    const remitos = await fetchRemitos();
-    setRemitos(remitos);
-    clearBanner();
-  } catch (error) {
+  const { items, usedFallback, error } = await loadRemitosWithFallback(
+    repositories.remito
+  );
+  setRemitos(items);
+  if (usedFallback) {
     console.error("No se pudo cargar la lista de remitos:", error);
-    setRemitos(getFallbackRemitos());
     setBanner(UI_MESSAGES.remitosLoadError, "warning");
+  } else {
+    clearBanner();
   }
 
   await applyRouteSelectionFromUrl();
 }
 
-async function loadListaPrecios({ force = false } = {}) {
+async function loadListaPreciosView({ force = false } = {}) {
   const state = getState();
   if (!force && state.listaPrecios?.status === "ready") {
     renderView();
@@ -623,23 +607,23 @@ async function loadListaPrecios({ force = false } = {}) {
   }
 
   setListaPreciosLoading();
-  renderView();
 
   try {
-    const listaPrecios = await fetchListaPrecios();
-    setListaPreciosReady(listaPrecios);
+    const { items } = await loadListaPreciosUseCase(repositories.listaPrecio);
+    setListaPreciosReady(items);
     clearBanner();
   } catch (error) {
     console.error("No se pudo cargar el listado de precios:", error);
     setListaPreciosError(UI_MESSAGES.listaPreciosLoadError);
     setBanner(UI_MESSAGES.listaPreciosLoadError, "warning");
   }
-
-  renderView();
 }
 
 export async function initApp() {
   domRefs = getDomRefs();
+  repositories = createRepositories();
+  subscribe(renderView);
+  renderView();
   bindEvents();
   bindLocationEvents();
   await loadRemitos();

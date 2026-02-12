@@ -1,3 +1,5 @@
+import { MODES, transitionMode } from "./modeMachine.js";
+
 function cloneValue(value) {
   if (Array.isArray(value)) {
     return value.map(cloneValue);
@@ -43,7 +45,7 @@ function createListaPreciosState() {
 function createInitialState() {
   return {
     remitos: [],
-    mainTable: "none",
+    mainTable: MODES.NONE,
     selectedTransaccionId: null,
     productoDetail: createProductoDetail(),
     clienteDetail: createClienteDetail(),
@@ -53,6 +55,7 @@ function createInitialState() {
 }
 
 let state = createInitialState();
+const listeners = new Set();
 
 function normalizeId(value) {
   if (value === undefined || value === null || value === "") {
@@ -63,11 +66,29 @@ function normalizeId(value) {
 
 function updateState(updater) {
   state = updater(state);
+  if (listeners.size > 0) {
+    listeners.forEach((listener) => {
+      try {
+        listener();
+      } catch (error) {
+        console.error("Error en listener de estado:", error);
+      }
+    });
+  }
   return state;
 }
 
 export function getState() {
   return cloneValue(state);
+}
+
+export function subscribe(listener) {
+  if (typeof listener !== "function") {
+    throw new Error("Listener de estado invalido");
+  }
+
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 export function setRemitos(remitos) {
@@ -260,37 +281,29 @@ export function resetClienteDetail() {
 }
 
 export function showClienteAsMainTable() {
-  updateState((current) => ({
-    ...current,
-    mainTable: "cliente"
-  }));
+  setMainTable(MODES.CLIENTE);
 }
 
 export function showProductoAsMainTable() {
-  updateState((current) => ({
-    ...current,
-    mainTable: "producto"
-  }));
+  setMainTable(MODES.PRODUCTO);
 }
 
 export function showRemitoAsMainTable() {
-  updateState((current) => ({
-    ...current,
-    mainTable: "remito"
-  }));
+  setMainTable(MODES.REMITO);
 }
 
 export function showListaPrecioAsMainTable() {
-  updateState((current) => ({
-    ...current,
-    mainTable: "listaPrecio"
-  }));
+  setMainTable(MODES.LISTA_PRECIO);
 }
 
 export function showEmptyMainTable() {
+  setMainTable(MODES.NONE);
+}
+
+export function setMainTable(nextMode) {
   updateState((current) => ({
     ...current,
-    mainTable: "none"
+    mainTable: transitionMode(current.mainTable, nextMode)
   }));
 }
 

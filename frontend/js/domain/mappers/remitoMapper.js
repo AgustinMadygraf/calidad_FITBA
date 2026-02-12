@@ -38,22 +38,44 @@ export function toRemitoVM(remito) {
   const items = Array.isArray(remito?.transaccionProductoItem)
     ? remito.transaccionProductoItem
     : [];
-  const depositoId = pickFirstDefined(remito?.depositoId, remito?.depositoID);
+  const encabezado = remito?.encabezado ?? null;
+  const relaciones = remito?.relaciones ?? null;
+  const depositoId = pickFirstDefined(
+    remito?.depositoId,
+    remito?.depositoID,
+    relaciones?.depositoId,
+    relaciones?.depositoID,
+    remito?.deposito?.ID,
+    remito?.deposito?.id
+  );
   const circuitoContableId = pickFirstDefined(
     remito?.circuitoContableId,
-    remito?.circuitoContableID
+    remito?.circuitoContableID,
+    relaciones?.circuitoContableId,
+    relaciones?.circuitoContableID,
+    remito?.circuitoContable?.ID,
+    remito?.circuitoContable?.id
   );
   const comisionVendedor = pickFirstDefined(
     remito?.comisionVendedor,
-    remito?.comision_vendedor
+    remito?.comision_vendedor,
+    relaciones?.comisionVendedor,
+    relaciones?.comision_vendedor
+  );
+  const clienteId = pickFirstDefined(
+    remito?.clienteId,
+    remito?.cliente_id,
+    relaciones?.clienteId,
+    relaciones?.cliente_id
   );
 
   return {
     transaccionId: remito?.transaccionId ?? null,
-    numeroRemito: remito?.numeroRemito ?? "",
-    fecha: remito?.fecha ?? "",
-    observacion: remito?.observacion ?? "",
-    clienteId: remito?.clienteId ?? null,
+    numeroRemito: pickFirstDefined(remito?.numeroRemito, encabezado?.numeroRemito) ?? "",
+    fecha: pickFirstDefined(remito?.fecha, encabezado?.fecha) ?? "",
+    observacion:
+      pickFirstDefined(remito?.observacion, encabezado?.observacion) ?? "",
+    clienteId,
     comisionVendedor,
     depositoId,
     circuitoContableId,
