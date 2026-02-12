@@ -108,6 +108,40 @@ export function renderRemitoTable(tableBody, remitos, columns, emptyMessage) {
   });
 }
 
+export function renderListaPrecioTable(
+  tableBody,
+  listaPreciosState,
+  columns,
+  uiMessages
+) {
+  clearTable(tableBody);
+
+  if (listaPreciosState?.status === "loading") {
+    appendMessageRow(tableBody, uiMessages.listaPrecioLoading, columns.length);
+    return;
+  }
+
+  if (listaPreciosState?.status === "error") {
+    const message =
+      listaPreciosState.errorMessage || uiMessages.listaPreciosLoadError;
+    appendMessageRow(tableBody, message, columns.length);
+    return;
+  }
+
+  const items = Array.isArray(listaPreciosState?.items)
+    ? listaPreciosState.items
+    : [];
+
+  if (items.length === 0) {
+    appendMessageRow(tableBody, uiMessages.noListaPrecios, columns.length);
+    return;
+  }
+
+  items.forEach((item) => {
+    appendDataRow(tableBody, item, columns);
+  });
+}
+
 export function hideDetailSection(sectionNode, tableBodyNode) {
   clearTable(tableBodyNode);
   sectionNode.classList.add("d-none");

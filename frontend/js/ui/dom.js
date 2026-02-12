@@ -9,11 +9,15 @@ function getById(id) {
 export function getDomRefs() {
   return {
     banner: getById("status-banner"),
+    mainViewSelect: getById("main-view-select"),
     mainTitle: getById("main-title"),
     backButton: getById("back-btn"),
     showAllButton: getById("show-all-btn"),
+    emptyState: getById("empty-state"),
     remitoTableWrapper: getById("remito-table-wrapper"),
     remitoTableBody: getById("remito-table-body"),
+    listaPrecioTableWrapper: getById("lista-precio-table-wrapper"),
+    listaPrecioTableBody: getById("lista-precio-table-body"),
     clienteMainTableWrapper: getById("cliente-main-table-wrapper"),
     clienteMainTableBody: getById("cliente-main-table-body"),
     productoMainTableWrapper: getById("producto-main-table-wrapper"),

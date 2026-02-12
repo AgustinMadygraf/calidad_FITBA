@@ -3,7 +3,8 @@ import { formatFechaDDMMYY } from "./domain/dateUtils.js";
 export const API_ENDPOINTS = {
   remitos: "/API/1.1/remitoVentaBean",
   clientes: "/API/1.1/clienteBean",
-  productos: "/API/1.1/productoVentaBean"
+  productos: "/API/1.1/productoVentaBean",
+  listaPrecios: "/API/1.1/listaPrecioBean"
 };
 
 export const REMITO_COLUMNS = [
@@ -77,6 +78,23 @@ export const PRODUCTO_COLUMNS = [
   { key: "precioUltCompra" },
   { key: "activo" },
   { key: "sincronizaStock" }
+];
+
+export const LISTA_PRECIO_COLUMNS = [
+  {
+    key: "listaPrecioID",
+    getValue: (listaPrecio) =>
+      listaPrecio?.listaPrecioID ??
+      listaPrecio?.listaPrecioId ??
+      listaPrecio?.ID ??
+      listaPrecio?.id
+  },
+  { key: "nombre" },
+  {
+    key: "descripcion",
+    getValue: (listaPrecio) => listaPrecio?.descripcion ?? listaPrecio?.detalle
+  },
+  { key: "activo" }
 ];
 
 export const PRODUCTO_NESTED_ITEM_COLUMNS = [
@@ -160,6 +178,9 @@ export const UI_MESSAGES = {
   remitosLoadError:
     "No se pudo cargar la lista de remitos desde la API. Se muestran datos de ejemplo.",
   noRemitos: "No hay remitos para mostrar.",
+  listaPrecioLoading: "Cargando listado de precios...",
+  listaPreciosLoadError: "No se pudo cargar el listado de precios desde la API.",
+  noListaPrecios: "No hay listas de precio para mostrar.",
   noItems: "Esta transaccion no tiene items.",
   clienteLoading: "Cargando cliente...",
   clienteNotFound: "No se encontro el cliente para el id seleccionado.",

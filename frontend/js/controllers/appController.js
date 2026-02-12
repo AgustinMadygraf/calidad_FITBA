@@ -3,12 +3,14 @@ import {
   CLIENTE_COLUMNS,
   IDENTIFICACION_TRIBUTARIA_COLUMNS,
   ITEM_COLUMNS,
+  LISTA_PRECIO_COLUMNS,
   PRODUCTO_NESTED_ITEM_COLUMNS,
   PRODUCTO_COLUMNS,
   REMITO_COLUMNS,
   UI_MESSAGES
 } from "../config.js";
 import { fetchClienteById } from "../services/clienteService.js";
+import { fetchListaPrecios } from "../services/listaPrecioService.js";
 import { fetchProductoById } from "../services/productoService.js";
 import {
   readRouteFromUrl,
@@ -27,12 +29,17 @@ import {
   setClienteLoading,
   setClienteNotFound,
   setClienteReady,
+  setListaPreciosError,
+  setListaPreciosLoading,
+  setListaPreciosReady,
   setProductoError,
   setProductoLoading,
   setProductoNotFound,
   setProductoReady,
   setRemitos,
   showClienteAsMainTable,
+  showEmptyMainTable,
+  showListaPrecioAsMainTable,
   showProductoAsMainTable,
   showRemitoAsMainTable
 } from "../state/store.js";
@@ -44,6 +51,7 @@ import {
   renderClienteSection,
   renderIdentificacionTributariaSection,
   renderItemSection,
+  renderListaPrecioTable,
   renderProductoNestedSection,
   renderProductoSection,
   renderRemitoTable,
@@ -75,6 +83,7 @@ const requestTrackers = {
 
 async function applyRouteSelectionFromUrl() {
   const route = readRouteFromUrl();
+  const currentState = getState();
 
   if (route.productoId !== null) {
     clearSelection();
@@ -110,14 +119,26 @@ async function applyRouteSelectionFromUrl() {
     return;
   }
 
-  showRemitoAsMainTable();
-  if (route.remitoVentaId === null) {
+  if (route.remitoVentaId !== null) {
+    showRemitoAsMainTable();
+    selectTransaccion(route.remitoVentaId);
+    renderView();
+    return;
+  }
+
+  if (currentState.mainTable === "none") {
     clearSelection();
     renderView();
     return;
   }
 
-  selectTransaccion(route.remitoVentaId);
+  if (currentState.mainTable === "listaPrecio") {
+    renderView();
+    return;
+  }
+
+  showRemitoAsMainTable();
+  clearSelection();
   renderView();
 }
 
@@ -141,7 +162,50 @@ function hideClienteNestedSections() {
   hideDetailSection(domRefs.categoriaFiscalSection, domRefs.categoriaFiscalTableBody);
 }
 
+function hideListaPrecioSection() {
+  hideDetailSection(
+    domRefs.listaPrecioTableWrapper,
+    domRefs.listaPrecioTableBody
+  );
+}
+
+function hideRemitoDetailSections() {
+  hideDetailSection(domRefs.itemSection, domRefs.itemTableBody);
+  hideDetailSection(domRefs.clienteSection, domRefs.clienteTableBody);
+  hideClienteNestedSections();
+  hideProductoNestedSections();
+}
+
+function renderEmptyState() {
+  domRefs.mainTitle.textContent = "Selecciona un modulo";
+  domRefs.emptyState.classList.remove("d-none");
+  hideDetailSection(domRefs.remitoTableWrapper, domRefs.remitoTableBody);
+  hideListaPrecioSection();
+  hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
+  hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
+  hideRemitoDetailSections();
+}
+
+function renderListaPrecioMainMode(state) {
+  domRefs.mainTitle.textContent = "Listado de precios";
+  domRefs.emptyState.classList.add("d-none");
+  hideDetailSection(domRefs.remitoTableWrapper, domRefs.remitoTableBody);
+  hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
+  hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
+  hideRemitoDetailSections();
+
+  domRefs.listaPrecioTableWrapper.classList.remove("d-none");
+  renderListaPrecioTable(
+    domRefs.listaPrecioTableBody,
+    state.listaPrecios,
+    LISTA_PRECIO_COLUMNS,
+    UI_MESSAGES
+  );
+}
+
 function renderClienteMainMode(state) {
+  domRefs.emptyState.classList.add("d-none");
+  hideListaPrecioSection();
   domRefs.remitoTableWrapper.classList.add("d-none");
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideProductoNestedSections();
@@ -180,6 +244,8 @@ function renderClienteMainMode(state) {
 }
 
 function renderProductoMainMode(state) {
+  domRefs.emptyState.classList.add("d-none");
+  hideListaPrecioSection();
   domRefs.remitoTableWrapper.classList.add("d-none");
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   renderProductoSection(
@@ -242,6 +308,8 @@ function renderProductoMainMode(state) {
 
 function renderRemitoMainMode(state, visibleRemitos, selectedRemito) {
   domRefs.mainTitle.textContent = "Remito de Venta";
+  domRefs.emptyState.classList.add("d-none");
+  hideListaPrecioSection();
   domRefs.remitoTableWrapper.classList.remove("d-none");
   hideDetailSection(domRefs.clienteMainTableWrapper, domRefs.clienteMainTableBody);
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
@@ -308,17 +376,40 @@ const MAIN_TABLE_RENDERERS = {
 
 function renderView() {
   const state = getState();
-  const visibleRemitos = getVisibleRemitos();
-  const selectedRemito = getSelectedRemito();
+  const activeModule =
+    state.mainTable === "listaPrecio"
+      ? "listaPrecio"
+      : state.mainTable === "none"
+        ? "none"
+        : "remito";
   const hasActiveSelection =
-    state.selectedTransaccionId !== null ||
-    state.mainTable === "cliente" ||
-    state.mainTable === "producto";
+    activeModule === "remito" &&
+    (state.selectedTransaccionId !== null ||
+      state.mainTable === "cliente" ||
+      state.mainTable === "producto");
 
   renderBanner(domRefs.banner, state.banner);
   renderShowAllButton(domRefs.showAllButton, hasActiveSelection);
   domRefs.backButton.classList.toggle("d-none", !hasActiveSelection);
+  domRefs.mainViewSelect.value =
+    activeModule === "none"
+      ? ""
+      : activeModule === "listaPrecio"
+        ? "listaPrecio"
+        : "remito";
 
+  if (activeModule === "none") {
+    renderEmptyState();
+    return;
+  }
+
+  if (activeModule === "listaPrecio") {
+    renderListaPrecioMainMode(state);
+    return;
+  }
+
+  const visibleRemitos = getVisibleRemitos();
+  const selectedRemito = getSelectedRemito();
   const renderer = MAIN_TABLE_RENDERERS[state.mainTable] || MAIN_TABLE_RENDERERS.remito;
   renderer(state, { visibleRemitos, selectedRemito });
 }
@@ -424,6 +515,29 @@ async function handleProductoClick(productoId) {
 }
 
 function bindEvents() {
+  domRefs.mainViewSelect.addEventListener("change", (event) => {
+    const selection = event.target.value;
+    requestTrackers.cliente.invalidate();
+    requestTrackers.producto.invalidate();
+    writeRouteToUrl({});
+    clearSelection();
+
+    if (selection === "remito") {
+      showRemitoAsMainTable();
+      renderView();
+      return;
+    }
+
+    if (selection === "listaPrecio") {
+      showListaPrecioAsMainTable();
+      void loadListaPrecios();
+      return;
+    }
+
+    showEmptyMainTable();
+    renderView();
+  });
+
   domRefs.remitoTableBody.addEventListener("click", (event) => {
     const transaccionLink = event.target.closest(".js-transaccion-link");
     if (transaccionLink) {
@@ -499,6 +613,29 @@ async function loadRemitos() {
   }
 
   await applyRouteSelectionFromUrl();
+}
+
+async function loadListaPrecios({ force = false } = {}) {
+  const state = getState();
+  if (!force && state.listaPrecios?.status === "ready") {
+    renderView();
+    return;
+  }
+
+  setListaPreciosLoading();
+  renderView();
+
+  try {
+    const listaPrecios = await fetchListaPrecios();
+    setListaPreciosReady(listaPrecios);
+    clearBanner();
+  } catch (error) {
+    console.error("No se pudo cargar el listado de precios:", error);
+    setListaPreciosError(UI_MESSAGES.listaPreciosLoadError);
+    setBanner(UI_MESSAGES.listaPreciosLoadError, "warning");
+  }
+
+  renderView();
 }
 
 export async function initApp() {

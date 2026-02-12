@@ -32,13 +32,22 @@ function createClienteDetail() {
   };
 }
 
+function createListaPreciosState() {
+  return {
+    status: "idle",
+    items: [],
+    errorMessage: null
+  };
+}
+
 function createInitialState() {
   return {
     remitos: [],
-    mainTable: "remito",
+    mainTable: "none",
     selectedTransaccionId: null,
     productoDetail: createProductoDetail(),
     clienteDetail: createClienteDetail(),
+    listaPrecios: createListaPreciosState(),
     banner: null
   };
 }
@@ -68,6 +77,46 @@ export function setRemitos(remitos) {
   }));
 }
 
+export function setListaPreciosLoading() {
+  updateState((current) => ({
+    ...current,
+    listaPrecios: {
+      status: "loading",
+      items: [],
+      errorMessage: null
+    }
+  }));
+}
+
+export function setListaPreciosReady(items) {
+  updateState((current) => ({
+    ...current,
+    listaPrecios: {
+      status: "ready",
+      items: Array.isArray(items) ? cloneValue(items) : [],
+      errorMessage: null
+    }
+  }));
+}
+
+export function setListaPreciosError(errorMessage) {
+  updateState((current) => ({
+    ...current,
+    listaPrecios: {
+      status: "error",
+      items: [],
+      errorMessage
+    }
+  }));
+}
+
+export function resetListaPrecios() {
+  updateState((current) => ({
+    ...current,
+    listaPrecios: createListaPreciosState()
+  }));
+}
+
 export function setBanner(message, variant = "warning") {
   updateState((current) => ({
     ...current,
@@ -85,7 +134,6 @@ export function clearBanner() {
 export function clearSelection() {
   updateState((current) => ({
     ...current,
-    mainTable: "remito",
     selectedTransaccionId: null,
     productoDetail: createProductoDetail(),
     clienteDetail: createClienteDetail()
@@ -229,6 +277,20 @@ export function showRemitoAsMainTable() {
   updateState((current) => ({
     ...current,
     mainTable: "remito"
+  }));
+}
+
+export function showListaPrecioAsMainTable() {
+  updateState((current) => ({
+    ...current,
+    mainTable: "listaPrecio"
+  }));
+}
+
+export function showEmptyMainTable() {
+  updateState((current) => ({
+    ...current,
+    mainTable: "none"
   }));
 }
 
