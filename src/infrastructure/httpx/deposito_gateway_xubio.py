@@ -9,7 +9,7 @@ import time
 from ...use_cases.ports.deposito_gateway import DepositoGateway
 from ...shared.logger import get_logger
 from .xubio_cache_helpers import read_cache_ttl
-from .xubio_crud_helpers import get_item_with_fallback, list_items
+from .xubio_crud_helpers import list_items
 
 logger = get_logger(__name__)
 
@@ -45,13 +45,11 @@ class XubioDepositoGateway(DepositoGateway):
         return items
 
     def get(self, deposito_id: int) -> Optional[Dict[str, Any]]:
-        url = self._url(f"{DEPOSITO_PATH}/{deposito_id}")
-        return get_item_with_fallback(
-            url=url,
-            timeout=self._timeout,
-            logger=logger,
-            fallback=lambda: self._fallback_get_from_list(deposito_id),
-        )
+        items = self.list()
+        for item in items:
+            if _match_deposito_id(item, deposito_id):
+                return item
+        return None
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
         cached: Optional[List[Dict[str, Any]]] = None
@@ -70,14 +68,6 @@ class XubioDepositoGateway(DepositoGateway):
         if self._list_cache_ttl <= 0:
             return
         _GLOBAL_LIST_CACHE[DEPOSITO_PATH] = (time.time(), list(items))
-
-    def _fallback_get_from_list(self, deposito_id: int) -> Optional[Dict[str, Any]]:
-        items = self.list()
-        for item in items:
-            if _match_deposito_id(item, deposito_id):
-                return item
-        return None
-
 
 def _match_deposito_id(item: Dict[str, Any], deposito_id: int) -> bool:
     for key in ("ID", "id", "depositoId"):

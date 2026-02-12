@@ -81,6 +81,10 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 - `GET /API/1.1/listaPrecioBean`
 - `GET /API/1.1/listaPrecioBean/{id}`
 
+## Monedas
+- `GET /API/1.1/monedaBean`
+- `GET /API/1.1/monedaBean/{id}`
+
 Dependencias funcionales en esta API local:
 - `Cliente` puede referenciar `listaPrecioVenta` (opcional).
 - `RemitoVenta` puede referenciar `listaPrecioId` (opcional).

@@ -17,6 +17,7 @@ Monorepo Python con dos componentes:
 - Producto venta y compra: GET list/get.
 - Depositos: GET list/get.
 - Lista de precio: GET list/get.
+- Moneda: GET list/get.
 - Token inspect local: `GET /token/inspect`.
 
 ## Dependencias de "Lista de Precio" (en este proyecto)
@@ -46,6 +47,8 @@ Monorepo Python con dos componentes:
 - `GET /API/1.1/depositos/{id}`
 - `GET /API/1.1/listaPrecioBean`
 - `GET /API/1.1/listaPrecioBean/{id}`
+- `GET /API/1.1/monedaBean`
+- `GET /API/1.1/monedaBean/{id}`
 - `GET /debug/clienteBean` (solo en `IS_PROD=false`)
 
 ## Resumen Xubio API
@@ -85,7 +88,7 @@ Nota: `IS_PROD` acepta `true/false`, `1/0`, `yes/no`.
 
 Modo en servidor:
 - `IS_PROD=false`: usa gateways in-memory para clientes, remitos, productos,
-  depositos y listas de precio.
+  depositos, listas de precio y monedas.
 - `IS_PROD=true`: usa gateways HTTPX y requiere OAuth2 (token real de Xubio).
 
 ## Ejecutar servidor

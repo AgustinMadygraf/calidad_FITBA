@@ -24,6 +24,7 @@ from .deps import (
     get_deposito_gateway,
     get_identificacion_tributaria_gateway,
     get_lista_precio_gateway,
+    get_moneda_gateway,
     get_producto_compra_gateway,
     get_producto_gateway,
     get_remito_gateway,
@@ -88,6 +89,12 @@ def _get_lista_precio_gateway():
     return app.lista_precio_gateway
 
 
+def _get_moneda_gateway():
+    if not hasattr(app, "moneda_gateway"):
+        app.moneda_gateway = get_moneda_gateway()
+    return app.moneda_gateway
+
+
 CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 CATEGORIA_FISCAL_BASE = "/API/1.1/categoriaFiscal"
@@ -102,6 +109,8 @@ IDENTIFICACION_TRIBUTARIA_BASE = "/API/1.1/identificacionTributaria"
 IDENTIFICACION_TRIBUTARIA_BASE_SLASH = "/API/1.1/identificacionTributaria/"
 LISTA_PRECIO_BASE = "/API/1.1/listaPrecioBean"
 LISTA_PRECIO_BASE_SLASH = "/API/1.1/listaPrecioBean/"
+MONEDA_BASE = "/API/1.1/monedaBean"
+MONEDA_BASE_SLASH = "/API/1.1/monedaBean/"
 
 
 @app.get("/", include_in_schema=False)
@@ -480,6 +489,31 @@ def lista_precio_get(lista_precio_id: int) -> Dict[str, Any]:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="lista de precio no encontrada")
+    return item
+
+
+@app.get(MONEDA_BASE)
+@app.get(MONEDA_BASE_SLASH, include_in_schema=False)
+def moneda_list() -> Dict[str, Any]:
+    try:
+        gateway = _get_moneda_gateway()
+        return handlers.list_monedas(gateway)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al listar monedas: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get(f"{MONEDA_BASE}/{{moneda_id}}")
+@app.get(f"{MONEDA_BASE}/{{moneda_id}}/", include_in_schema=False)
+def moneda_get(moneda_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_moneda_gateway()
+        item = handlers.get_moneda(gateway, moneda_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener moneda: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="moneda no encontrada")
     return item
 
 

@@ -16,6 +16,7 @@ from ...infrastructure.httpx.identificacion_tributaria_gateway_xubio import (
 from ...infrastructure.httpx.lista_precio_gateway_xubio import (
     XubioListaPrecioGateway,
 )
+from ...infrastructure.httpx.moneda_gateway_xubio import XubioMonedaGateway
 from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
 from ...infrastructure.memory.categoria_fiscal_gateway_memory import (
     InMemoryCategoriaFiscalGateway,
@@ -29,6 +30,7 @@ from ...infrastructure.memory.identificacion_tributaria_gateway_memory import (
 from ...infrastructure.memory.lista_precio_gateway_memory import (
     InMemoryListaPrecioGateway,
 )
+from ...infrastructure.memory.moneda_gateway_memory import InMemoryMonedaGateway
 from ...infrastructure.memory.remito_gateway_memory import InMemoryRemitoGateway
 from ...shared.config import is_prod
 from ...shared.logger import get_logger
@@ -44,6 +46,7 @@ class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
     deposito_gateway: object
     identificacion_tributaria_gateway: object
     lista_precio_gateway: object
+    moneda_gateway: object
     token_gateway: object
 
 
@@ -106,4 +109,10 @@ def get_identificacion_tributaria_gateway():
 def get_lista_precio_gateway():
     gw = XubioListaPrecioGateway() if is_prod() else InMemoryListaPrecioGateway()
     logger.info("Lista precio gateway: %s", gw.__class__.__name__)
+    return gw
+
+
+def get_moneda_gateway():
+    gw = XubioMonedaGateway() if is_prod() else InMemoryMonedaGateway()
+    logger.info("Moneda gateway: %s", gw.__class__.__name__)
     return gw

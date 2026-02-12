@@ -58,6 +58,11 @@ class XubioProductoGateway(ProductoGateway):
 
     def get(self, producto_id: int) -> Optional[Dict[str, Any]]:
         result: Optional[Dict[str, Any]] = None
+        cached = self._get_cached_list(self._primary_bean)
+        if cached is not None:
+            for item in cached:
+                if _match_producto_id(item, producto_id):
+                    return item
         status, item = self._get_from_bean(self._primary_bean, producto_id)
         if status == "ok":
             result = item

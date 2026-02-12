@@ -18,7 +18,7 @@ def test_list_accepts_list_payload(monkeypatch):
         return httpx.Response(200, json=[{"id": 1}])
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.deposito_gateway_xubio.request_with_token",
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
         fake_request,
     )
     gw = XubioDepositoGateway()
@@ -30,7 +30,7 @@ def test_list_accepts_items_wrapper(monkeypatch):
         return httpx.Response(200, json={"items": [{"id": 2}]})
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.deposito_gateway_xubio.request_with_token",
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
         fake_request,
     )
     gw = XubioDepositoGateway()
@@ -42,7 +42,7 @@ def test_list_raises_on_error_status(monkeypatch):
         return httpx.Response(500, text="boom")
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.deposito_gateway_xubio.request_with_token",
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
         fake_request,
     )
     gw = XubioDepositoGateway()
@@ -50,16 +50,16 @@ def test_list_raises_on_error_status(monkeypatch):
         gw.list()
 
 
-def test_get_falls_back_to_list_on_5xx(monkeypatch):
+def test_get_reads_from_list_only(monkeypatch):
     def fake_request(_method, url, **_kwargs):
         if url.endswith("/depositos/9"):
-            return httpx.Response(500, text="boom")
+            raise AssertionError("No debe llamar al endpoint detalle de depositos")
         if url.endswith("/depositos"):
             return httpx.Response(200, json=[{"id": 9}])
         return httpx.Response(404)
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.deposito_gateway_xubio.request_with_token",
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
         fake_request,
     )
     gw = XubioDepositoGateway()
@@ -74,7 +74,7 @@ def test_list_uses_cache_within_ttl(monkeypatch):
         return httpx.Response(200, json=[{"id": 1}])
 
     monkeypatch.setattr(
-        "src.infrastructure.httpx.deposito_gateway_xubio.request_with_token",
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token",
         fake_request,
     )
     gw = XubioDepositoGateway(list_cache_ttl=60)
