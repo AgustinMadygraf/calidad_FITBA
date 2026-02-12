@@ -135,3 +135,91 @@ def test_prod_mode_disables_get_cache(monkeypatch):
     assert gw.list() == [{"transaccionId": 5}]
     assert gw.list() == [{"transaccionId": 5}]
     assert calls["count"] == 2
+
+
+def test_get_uses_item_cache_without_http_calls(monkeypatch):
+    gw = XubioRemitoGateway(list_cache_ttl=60)
+    gw._store_item_cache(9, {"transaccionId": 9, "numeroRemito": "R-9"})
+
+    monkeypatch.setattr(
+        remito_gateway,
+        "request_with_token",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("No debe llamar HTTP")
+        ),
+    )
+
+    assert gw.get(9) == {"transaccionId": 9, "numeroRemito": "R-9"}
+
+
+def test_get_uses_list_cache_without_http_calls(monkeypatch):
+    gw = XubioRemitoGateway(list_cache_ttl=60)
+    gw._store_cache([{"transaccionId": 10, "numeroRemito": "R-10"}])
+
+    monkeypatch.setattr(
+        remito_gateway,
+        "request_with_token",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("No debe llamar HTTP")
+        ),
+    )
+
+    assert gw.get(10) == {"transaccionId": 10, "numeroRemito": "R-10"}
+
+
+def test_get_returns_none_on_404(monkeypatch):
+    monkeypatch.setattr(
+        remito_gateway,
+        "request_with_token",
+        lambda *_args, **_kwargs: httpx.Response(404, json={}),
+    )
+
+    gw = XubioRemitoGateway()
+    assert gw.get(99) is None
+
+
+def test_get_falls_back_to_list_on_5xx(monkeypatch):
+    def fake_detail(_method, _url, **_kwargs):
+        return httpx.Response(500, text="boom")
+
+    def fake_list(_method, _url, **_kwargs):
+        return httpx.Response(200, json=[{"transaccionId": 33}])
+
+    monkeypatch.setattr(remito_gateway, "request_with_token", fake_detail)
+    monkeypatch.setattr(
+        "src.infrastructure.httpx.xubio_crud_helpers.request_with_token", fake_list
+    )
+
+    gw = XubioRemitoGateway()
+    assert gw.get(33) == {"transaccionId": 33}
+
+
+def test_get_wraps_http_error(monkeypatch):
+    request = httpx.Request("GET", "https://xubio.local")
+
+    def boom(*_args, **_kwargs):
+        raise httpx.ConnectError("boom", request=request)
+
+    monkeypatch.setattr(remito_gateway, "request_with_token", boom)
+
+    gw = XubioRemitoGateway()
+    with pytest.raises(ExternalServiceError):
+        gw.get(1)
+
+
+def test_delete_invalidates_cache_only_when_deleted(monkeypatch):
+    gw = XubioRemitoGateway(list_cache_ttl=60)
+    gw._store_cache([{"transaccionId": 1}])
+    gw._store_item_cache(1, {"transaccionId": 1})
+
+    monkeypatch.setattr(remito_gateway, "delete_item", lambda **_kwargs: True)
+    assert gw.delete(1) is True
+    assert remito_gateway._GLOBAL_LIST_CACHE == {}
+    assert remito_gateway._GLOBAL_ITEM_CACHE == {}
+
+    gw._store_cache([{"transaccionId": 2}])
+    gw._store_item_cache(2, {"transaccionId": 2})
+    monkeypatch.setattr(remito_gateway, "delete_item", lambda **_kwargs: False)
+    assert gw.delete(2) is False
+    assert remito_gateway._GLOBAL_LIST_CACHE
+    assert remito_gateway._GLOBAL_ITEM_CACHE
