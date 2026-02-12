@@ -98,10 +98,14 @@ CLIENTE_BASE = "/API/1.1/clienteBean"
 CLIENTE_BASE_SLASH = "/API/1.1/clienteBean/"
 CATEGORIA_FISCAL_BASE = "/API/1.1/categoriaFiscal"
 CATEGORIA_FISCAL_BASE_SLASH = "/API/1.1/categoriaFiscal/"
-PRODUCTO_BASE = "/API/1.1/productoVentaBean"
-PRODUCTO_BASE_SLASH = "/API/1.1/productoVentaBean/"
-PRODUCTO_COMPRA_BASE = "/API/1.1/productoCompraBean"
-PRODUCTO_COMPRA_BASE_SLASH = "/API/1.1/productoCompraBean/"
+PRODUCTO_BASE = "/API/1.1/ProductoVentaBean"
+PRODUCTO_BASE_SLASH = "/API/1.1/ProductoVentaBean/"
+PRODUCTO_COMPRA_BASE = "/API/1.1/ProductoCompraBean"
+PRODUCTO_COMPRA_BASE_SLASH = "/API/1.1/ProductoCompraBean/"
+LEGACY_PRODUCTO_BASE = "/API/1.1/productoVentaBean"
+LEGACY_PRODUCTO_BASE_SLASH = "/API/1.1/productoVentaBean/"
+LEGACY_PRODUCTO_COMPRA_BASE = "/API/1.1/productoCompraBean"
+LEGACY_PRODUCTO_COMPRA_BASE_SLASH = "/API/1.1/productoCompraBean/"
 DEPOSITO_BASE = "/API/1.1/depositos"
 DEPOSITO_BASE_SLASH = "/API/1.1/depositos/"
 IDENTIFICACION_TRIBUTARIA_BASE = "/API/1.1/identificacionTributaria"
@@ -380,6 +384,8 @@ def remito_delete(transaccion_id: int) -> Dict[str, Any]:
 
 @app.get(PRODUCTO_BASE)
 @app.get(PRODUCTO_BASE_SLASH, include_in_schema=False)
+@app.get(LEGACY_PRODUCTO_BASE, include_in_schema=False)
+@app.get(LEGACY_PRODUCTO_BASE_SLASH, include_in_schema=False)
 def producto_list() -> Dict[str, Any]:
     try:
         gateway = _get_producto_gateway()
@@ -391,6 +397,8 @@ def producto_list() -> Dict[str, Any]:
 
 @app.get(f"{PRODUCTO_BASE}/{{producto_id}}")
 @app.get(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+@app.get(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}", include_in_schema=False)
+@app.get(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
 def producto_get(producto_id: int) -> Dict[str, Any]:
     try:
         gateway = _get_producto_gateway()
@@ -403,8 +411,62 @@ def producto_get(producto_id: int) -> Dict[str, Any]:
     return item
 
 
+@app.post(PRODUCTO_BASE)
+@app.post(PRODUCTO_BASE_SLASH, include_in_schema=False)
+@app.post(LEGACY_PRODUCTO_BASE, include_in_schema=False)
+@app.post(LEGACY_PRODUCTO_BASE_SLASH, include_in_schema=False)
+def producto_create(body: Dict[str, Any]) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_producto_gateway()
+        return handlers.create_producto(gateway, body)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al crear producto: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.put(f"{PRODUCTO_BASE}/{{producto_id}}")
+@app.put(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+@app.patch(f"{PRODUCTO_BASE}/{{producto_id}}")
+@app.patch(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+@app.put(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}", include_in_schema=False)
+@app.put(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+@app.patch(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}", include_in_schema=False)
+@app.patch(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+def producto_update(producto_id: int, body: Dict[str, Any]) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_producto_gateway()
+        item = handlers.update_producto(gateway, producto_id, body)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al actualizar producto: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="producto no encontrado")
+    return item
+
+
+@app.delete(f"{PRODUCTO_BASE}/{{producto_id}}")
+@app.delete(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+@app.delete(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}", include_in_schema=False)
+@app.delete(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
+def producto_delete(producto_id: int) -> Dict[str, Any]:
+    _ensure_write_allowed()
+    try:
+        gateway = _get_producto_gateway()
+        ok = handlers.delete_producto(gateway, producto_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al borrar producto: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if not ok:
+        raise HTTPException(status_code=404, detail="producto no encontrado")
+    return {"status": "deleted", "productoid": producto_id}
+
+
 @app.get(PRODUCTO_COMPRA_BASE)
 @app.get(PRODUCTO_COMPRA_BASE_SLASH, include_in_schema=False)
+@app.get(LEGACY_PRODUCTO_COMPRA_BASE, include_in_schema=False)
+@app.get(LEGACY_PRODUCTO_COMPRA_BASE_SLASH, include_in_schema=False)
 def producto_compra_list() -> Dict[str, Any]:
     try:
         gateway = _get_producto_compra_gateway()
@@ -416,6 +478,8 @@ def producto_compra_list() -> Dict[str, Any]:
 
 @app.get(f"{PRODUCTO_COMPRA_BASE}/{{producto_id}}")
 @app.get(f"{PRODUCTO_COMPRA_BASE}/{{producto_id}}/", include_in_schema=False)
+@app.get(f"{LEGACY_PRODUCTO_COMPRA_BASE}/{{producto_id}}", include_in_schema=False)
+@app.get(f"{LEGACY_PRODUCTO_COMPRA_BASE}/{{producto_id}}/", include_in_schema=False)
 def producto_compra_get(producto_id: int) -> Dict[str, Any]:
     try:
         gateway = _get_producto_compra_gateway()

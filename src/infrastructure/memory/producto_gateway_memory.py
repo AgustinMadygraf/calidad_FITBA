@@ -26,3 +26,18 @@ class InMemoryProductoGateway(ProductoGateway):
         record["productoid"] = producto_id
         self._items[producto_id] = record
         return record
+
+    def update(self, producto_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if producto_id not in self._items:
+            return None
+        record = dict(self._items[producto_id])
+        record.update(data)
+        record["productoid"] = producto_id
+        self._items[producto_id] = record
+        return record
+
+    def delete(self, producto_id: int) -> bool:
+        if producto_id in self._items:
+            del self._items[producto_id]
+            return True
+        return False

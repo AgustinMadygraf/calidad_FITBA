@@ -7,11 +7,14 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 ## Resumen ejecutivo
 - Endpoints oficiales relevados en Swagger: **62 paths**
 - Operaciones oficiales relevadas (GET/POST/PUT/PATCH/DELETE): **105**
-- Operaciones cubiertas por la API local (matching contra Swagger): **14**
-- Operaciones pendientes respecto de Swagger: **91**
-- Operaciones locales fuera de Swagger (extensiones o desvios): **12**
+- Operaciones cubiertas por la API local (matching contra Swagger): **20**
+- Operaciones pendientes respecto de Swagger: **85**
+- Operaciones locales fuera de Swagger (extensiones o desvios): **10**
 
 ## Endpoints relevados y cubiertos (oficial vs local)
+- `/API/1.1/ProductoCompraBean`: cubierto=`[GET]`
+- `/API/1.1/ProductoVentaBean`: cubierto=`[GET, POST]`
+- `/API/1.1/ProductoVentaBean/{id}`: cubierto=`[DELETE, PATCH, PUT]` | local-extra=`[GET]`
 - `/API/1.1/categoriaFiscal`: cubierto=`[GET]`
 - `/API/1.1/clienteBean`: cubierto=`[GET, POST]`
 - `/API/1.1/clienteBean/{id}`: cubierto=`[DELETE, GET, PUT]` | local-extra=`[PATCH]`
@@ -24,23 +27,19 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - `/API/1.1/remitoVentaBean/{id}`: cubierto=`[DELETE]` | local-extra=`[GET, PATCH, PUT]`
 
 ## Endpoints locales fuera de Swagger oficial (desvios actuales)
+- `/API/1.1/ProductoCompraBean/{id}` `[GET]`
 - `/API/1.1/categoriaFiscal/{id}` `[GET]`
 - `/API/1.1/depositos/{id}` `[GET]`
 - `/API/1.1/identificacionTributaria/{id}` `[GET]`
 - `/API/1.1/monedaBean/{id}` `[GET]`
-- `/API/1.1/productoCompraBean` `[GET]`
-- `/API/1.1/productoCompraBean/{id}` `[GET]`
-- `/API/1.1/productoVentaBean` `[GET]`
-- `/API/1.1/productoVentaBean/{id}` `[GET]`
 
 Observaciones:
-- Swagger oficial usa `ProductoVentaBean` y `ProductoCompraBean` (mayuscula inicial), mientras la API local expone `productoVentaBean`/`productoCompraBean`.
 - En Swagger, `PUT` de remito esta en `/remitoVentaBean` (sin `{id}`), mientras en local el update esta en `/remitoVentaBean/{id}`.
 
 ## Pendientes (To Do List)
 
 ### Alta prioridad (alineacion de contrato)
-1. Alinear paths de productos al contrato oficial:
+1. [x] Alinear paths de productos al contrato oficial:
    - `GET/POST /API/1.1/ProductoVentaBean`
    - `PUT/PATCH/DELETE /API/1.1/ProductoVentaBean/{id}`
    - `GET /API/1.1/ProductoCompraBean`
@@ -66,8 +65,6 @@ Observaciones:
 2. Agregar tracking de estado por endpoint en roadmap tecnico (owner, fase, fecha objetivo).
 
 ## Pendientes por recurso (resumen de brecha)
-- `ProductoCompraBean`: 1 ops pendientes (`GET:1`)
-- `ProductoVentaBean`: 5 ops pendientes (`DELETE:1, GET:1, PATCH:1, POST:1, PUT:1`)
 - `ProveedorBean`: 5 ops pendientes (`DELETE:1, GET:2, POST:1, PUT:1`)
 - `ajusteStockBean`: 5 ops pendientes (`DELETE:1, GET:2, POST:1, PUT:1`)
 - `asientoContableManualBean`: 5 ops pendientes (`DELETE:1, GET:2, POST:1, PUT:1`)

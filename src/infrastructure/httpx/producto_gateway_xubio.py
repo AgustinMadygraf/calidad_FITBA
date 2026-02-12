@@ -11,6 +11,7 @@ from ...use_cases.ports.producto_gateway import ProductoGateway
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .token_client import request_with_token
+from .xubio_crud_helpers import create_item, delete_item, update_item
 from .xubio_cache_helpers import (
     cache_get,
     cache_set,
@@ -114,6 +115,28 @@ class XubioProductoGateway(ProductoGateway):
                         )
         return result
 
+    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        url = self._url(f"/API/1.1/{self._primary_bean}")
+        created = create_item(url=url, timeout=self._timeout, data=data, logger=logger)
+        self._clear_list_cache(self._primary_bean)
+        self._clear_item_cache(self._primary_bean)
+        return created
+
+    def update(self, producto_id: int, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        url = self._url(f"/API/1.1/{self._primary_bean}/{producto_id}")
+        updated = update_item(url=url, timeout=self._timeout, data=data, logger=logger)
+        self._clear_list_cache(self._primary_bean)
+        self._clear_item_cache(self._primary_bean, producto_id)
+        return updated
+
+    def delete(self, producto_id: int) -> bool:
+        url = self._url(f"/API/1.1/{self._primary_bean}/{producto_id}")
+        deleted = delete_item(url=url, timeout=self._timeout, logger=logger)
+        if deleted:
+            self._clear_list_cache(self._primary_bean)
+            self._clear_item_cache(self._primary_bean, producto_id)
+        return deleted
+
     def _list_with_fallback(
         self, primary_bean: str, fallback_bean: Optional[str]
     ) -> List[Dict[str, Any]]:
@@ -210,6 +233,17 @@ class XubioProductoGateway(ProductoGateway):
             item,
             ttl=self._list_cache_ttl,
         )
+
+    def _clear_list_cache(self, bean: str) -> None:
+        _GLOBAL_LIST_CACHE.pop(bean, None)
+
+    def _clear_item_cache(self, bean: str, producto_id: Optional[int] = None) -> None:
+        if producto_id is not None:
+            _GLOBAL_ITEM_CACHE.pop(_producto_item_cache_key(bean, producto_id), None)
+            return
+        keys = [key for key in _GLOBAL_ITEM_CACHE if key.startswith(f"/API/1.1/{bean}/")]
+        for key in keys:
+            _GLOBAL_ITEM_CACHE.pop(key, None)
 
 
 def _match_producto_id(item: Dict[str, Any], producto_id: int) -> bool:

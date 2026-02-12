@@ -109,6 +109,20 @@ def get_producto(
     return gateway.get(producto_id)
 
 
+def create_producto(gateway: ProductoGateway, data: Dict[str, Any]) -> Dict[str, Any]:
+    return gateway.create(data)
+
+
+def update_producto(
+    gateway: ProductoGateway, producto_id: int, data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    return gateway.update(producto_id, data)
+
+
+def delete_producto(gateway: ProductoGateway, producto_id: int) -> bool:
+    return gateway.delete(producto_id)
+
+
 def list_depositos(gateway: DepositoGateway) -> Dict[str, Any]:
     items = gateway.list()
     return {"items": items}

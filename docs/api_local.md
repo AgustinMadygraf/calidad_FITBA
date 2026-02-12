@@ -62,10 +62,14 @@ Validaciones relevantes:
 - `depositoId` (cabecera o item) debe existir si se informa.
 
 ## Productos
-- `GET /API/1.1/productoVentaBean`
-- `GET /API/1.1/productoVentaBean/{id}`
-- `GET /API/1.1/productoCompraBean`
-- `GET /API/1.1/productoCompraBean/{id}`
+- `GET /API/1.1/ProductoVentaBean`
+- `POST /API/1.1/ProductoVentaBean`
+- `GET /API/1.1/ProductoVentaBean/{id}`
+- `PUT /API/1.1/ProductoVentaBean/{id}`
+- `PATCH /API/1.1/ProductoVentaBean/{id}`
+- `DELETE /API/1.1/ProductoVentaBean/{id}`
+- `GET /API/1.1/ProductoCompraBean`
+- `GET /API/1.1/ProductoCompraBean/{id}`
 
 Nota: Xubio es sensible a mayusculas en algunos endpoints.
 
