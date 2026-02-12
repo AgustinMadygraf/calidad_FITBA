@@ -89,7 +89,7 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 - `GET` opera con cache-aside sobre Xubio:
   - hit: responde desde cache.
   - miss: consulta Xubio y persiste en cache.
-- TTL configurable por env:
+- TTL/configuracion centralizada en `src/shared/config.py`:
   - `XUBIO_CLIENTE_LIST_TTL`
   - `XUBIO_REMITO_LIST_TTL`
   - `XUBIO_PRODUCTO_LIST_TTL`

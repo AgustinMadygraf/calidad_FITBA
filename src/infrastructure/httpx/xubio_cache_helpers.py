@@ -2,39 +2,20 @@
 Path: src/infrastructure/httpx/xubio_cache_helpers.py
 """
 
-import os
 import time
 from copy import deepcopy
 from typing import Any, Dict, Hashable, Optional, Tuple
 
-from ...shared.config import is_prod
+from ...shared.config import get_cache_enabled, get_cache_ttl, is_prod
 
 CacheStore = Dict[Hashable, Tuple[float, Any]]
 
-_TRUE_VALUES = {"1", "true", "yes", "y", "on"}
-_FALSE_VALUES = {"0", "false", "no", "n", "off"}
-
-
 def read_cache_ttl(env_key: str, *, default: float = 60.0) -> float:
-    raw = os.getenv(env_key, "").strip()
-    if not raw:
-        return default
-    try:
-        value = float(raw)
-    except ValueError:
-        return default
-    return value
+    return get_cache_ttl(env_key, default=default)
 
 
 def read_cache_enabled(env_key: str, *, default: bool) -> bool:
-    raw = os.getenv(env_key, "").strip().lower()
-    if not raw:
-        return default
-    if raw in _TRUE_VALUES:
-        return True
-    if raw in _FALSE_VALUES:
-        return False
-    return default
+    return get_cache_enabled(env_key, default=default)
 
 
 def default_get_cache_enabled() -> bool:

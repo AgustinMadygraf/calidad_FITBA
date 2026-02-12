@@ -1,9 +1,8 @@
-import os
 import sys
 
 import uvicorn
 
-from src.shared.config import load_env
+from src.shared.config import get_host, get_port, load_env, set_runtime_is_prod
 from src.shared.logger import get_logger
 
 
@@ -17,12 +16,12 @@ def main() -> int:
     for idx, arg in enumerate(argv):
         if arg.startswith("--IS_PROD="):
             _, value = arg.split("=", 1)
-            os.environ["IS_PROD"] = value
+            set_runtime_is_prod(value)
         elif arg == "--IS_PROD" and idx + 1 < len(argv):
-            os.environ["IS_PROD"] = argv[idx + 1]
+            set_runtime_is_prod(argv[idx + 1])
 
-    host = os.getenv("HOST", "localhost")
-    port = int(os.getenv("PORT", "8000"))
+    host = get_host()
+    port = get_port()
     logger.info("Iniciando FastAPI en %s:%d", host, port)
     uvicorn.run(
         "src.infrastructure.fastapi.api:app",

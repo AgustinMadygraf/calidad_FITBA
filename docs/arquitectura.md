@@ -18,7 +18,7 @@ Este proyecto aplica Clean Architecture con separacion de responsabilidades.
 ## Puertos y Gateways
 - Cada entidad externa tiene un port (Protocol) en `src/use_cases/ports/`.
 - Los gateways HTTPX implementan llamadas a Xubio.
-- Los gateways in-memory se usan en `IS_PROD=false`.
+- `IS_PROD=false` y `IS_PROD=true` usan gateways HTTPX; cambia la politica de cache/mutaciones.
 
 ## Validaciones clave
 - Remito venta:
@@ -44,6 +44,10 @@ En la implementacion actual:
 - OAuth2 `client_credentials` con `XUBIO_CLIENT_ID` y `XUBIO_SECRET_ID`.
 - Endpoint por defecto: `https://xubio.com/API/1.1/TokenEndpoint`.
 - Refresh automatico ante `invalid_token`.
+
+## Configuracion
+- `.env` mantiene solo credenciales/DB: `DATABASE_URL`, `XUBIO_CLIENT_ID`, `XUBIO_SECRET_ID`.
+- Configuracion de runtime (modo, host/port, endpoint token y TTL/cache) en `src/shared/config.py`.
 
 ## Modo real vs mock
 - `IS_PROD=false`: gateways HTTPX Xubio + cache-aside en `GET` y mutaciones bloqueadas (`403`).

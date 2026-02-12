@@ -2,7 +2,6 @@
 Path: src/infrastructure/fastapi/api.py
 """
 
-import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -14,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from ...interface_adapter.controllers import handlers
 from ...interface_adapter.schemas.cliente import ClientePayload
 from ...interface_adapter.schemas.remito_venta import RemitoVentaPayload
-from ...shared.config import is_prod, load_env
+from ...shared.config import get_host, get_port, is_prod, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from ...use_cases import cliente, remito_venta
@@ -543,8 +542,8 @@ else:
 
 
 def run() -> None:
-    host = os.getenv("HOST", "localhost")
-    port = int(os.getenv("PORT", "8000"))
+    host = get_host()
+    port = get_port()
     logger.info("Iniciando FastAPI en %s:%d", host, port)
     uvicorn.run(
         "src.infrastructure.fastapi.api:app", host=host, port=port, reload=True

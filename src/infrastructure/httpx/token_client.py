@@ -2,15 +2,12 @@
 Path: src/infrastructure/httpx/token_client.py
 """
 
-import os
 import time
 from typing import Any, Dict, Optional
 
 import httpx
 
-from ...shared.config import build_xubio_token
-
-DEFAULT_TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
+from ...shared.config import build_xubio_token, get_xubio_token_endpoint
 _CACHE: Dict[str, Any] = {
     "access_token": None,
     "token_type": None,
@@ -33,7 +30,7 @@ def build_auth_header() -> str:
 
 
 def get_token_endpoint() -> str:
-    return os.getenv("XUBIO_TOKEN_ENDPOINT", DEFAULT_TOKEN_ENDPOINT)
+    return get_xubio_token_endpoint()
 
 
 def _now() -> int:

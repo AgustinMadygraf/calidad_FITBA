@@ -77,23 +77,19 @@ pip install -r requirements.txt
 ## Variables de entorno
 
 ```
-IS_PROD=false
+DATABASE_URL=mysql+pymysql://user:pass@localhost:3306/xubio_db
 XUBIO_CLIENT_ID=...
 XUBIO_SECRET_ID=...
-XUBIO_TOKEN_ENDPOINT=https://xubio.com/API/1.1/TokenEndpoint
-XUBIO_GET_CACHE_ENABLED=true
-XUBIO_CLIENTE_LIST_TTL=30
-XUBIO_REMITO_LIST_TTL=15
-XUBIO_PRODUCTO_LIST_TTL=60
-XUBIO_DEPOSITO_LIST_TTL=60
-XUBIO_MONEDA_LIST_TTL=60
-XUBIO_LISTA_PRECIO_LIST_TTL=60
-XUBIO_CATEGORIA_FISCAL_LIST_TTL=60
-XUBIO_IDENTIFICACION_TRIBUTARIA_LIST_TTL=60
-PORT=8000
 ```
 
-Nota: `IS_PROD` acepta `true/false`, `1/0`, `yes/no`.
+El resto de configuraciones vive en `src/shared/config.py`:
+- modo (`APP_IS_PROD`)
+- host/port (`APP_HOST`, `APP_PORT`)
+- endpoint token (`XUBIO_TOKEN_ENDPOINT`)
+- cache-aside (`XUBIO_GET_CACHE_ENABLED` y `XUBIO_LIST_TTL_SECONDS`)
+- editar el bloque `TEAM-EDITABLE CONFIGURATION`
+
+Nota: `IS_PROD` puede sobreescribirse por argumento al ejecutar `run.py`.
 
 Modo en servidor:
 - `IS_PROD=false`: usa gateways HTTPX Xubio en modo solo lectura:
@@ -125,7 +121,7 @@ python -m src.infrastructure.fastapi.api
 python run.py
 ```
 
-Override por argumento (prioridad sobre `.env`):
+Override por argumento:
 
 ```bash
 python run.py --IS_PROD=true
