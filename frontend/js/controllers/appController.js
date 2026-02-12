@@ -74,32 +74,6 @@ import {
 
 let domRefs = null;
 let repositories = null;
-const DEBUG_UI = (() => {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  const params = new URLSearchParams(window.location.search);
-  const debugByQuery = params.get("debugUi");
-  if (debugByQuery === "1" || debugByQuery === "true") {
-    return true;
-  }
-  try {
-    return window.localStorage?.getItem("DEBUG_UI") === "true";
-  } catch (_error) {
-    return false;
-  }
-})();
-
-function logDebug(message, payload = null) {
-  if (!DEBUG_UI) {
-    return;
-  }
-  if (payload === null) {
-    console.debug(`[UI] ${message}`);
-    return;
-  }
-  console.debug(`[UI] ${message}`, payload);
-}
 
 function logWarn(message, payload = null) {
   if (payload === null) {
@@ -290,13 +264,24 @@ function renderComprobanteVentaMainMode(state) {
   hideDetailSection(domRefs.productoMainTableWrapper, domRefs.productoMainTableBody);
   hideRemitoDetailSections();
 
-  domRefs.comprobanteVentaTableWrapper.classList.remove("d-none");
-  renderComprobanteVentaTable(
-    domRefs.comprobanteVentaTableBody,
-    state.comprobantesVenta,
-    COMPROBANTE_VENTA_COLUMNS,
-    UI_MESSAGES
-  );
+  const detailStatus = state.comprobanteVentaDetail?.status ?? "idle";
+  const showOnlyDetail = detailStatus !== "idle";
+
+  if (showOnlyDetail) {
+    hideDetailSection(
+      domRefs.comprobanteVentaTableWrapper,
+      domRefs.comprobanteVentaTableBody
+    );
+  } else {
+    domRefs.comprobanteVentaTableWrapper.classList.remove("d-none");
+    renderComprobanteVentaTable(
+      domRefs.comprobanteVentaTableBody,
+      state.comprobantesVenta,
+      COMPROBANTE_VENTA_COLUMNS,
+      UI_MESSAGES
+    );
+  }
+
   renderComprobanteVentaDetailSection(
     domRefs.comprobanteVentaDetailSection,
     domRefs.comprobanteVentaDetailTitle,
@@ -488,9 +473,13 @@ const MAIN_TABLE_RENDERERS = {
 function renderView() {
   const state = getState();
   const activeModule = getActiveModule(state.mainTable);
+  const hasComprobanteDetailSelection =
+    activeModule === MODES.COMPROBANTE_VENTA &&
+    state.comprobanteVentaDetail?.status !== "idle";
   const hasActiveSelection =
-    activeModule === MODES.REMITO &&
-    (state.selectedTransaccionId !== null || isRemitoFlow(state.mainTable));
+    (activeModule === MODES.REMITO &&
+      (state.selectedTransaccionId !== null || isRemitoFlow(state.mainTable))) ||
+    hasComprobanteDetailSelection;
 
   renderBanner(domRefs.banner, state.banner);
   renderShowAllButton(domRefs.showAllButton, hasActiveSelection);
@@ -525,6 +514,13 @@ function renderView() {
   renderer(state, { visibleRemitos, selectedRemito });
 }
 
+function showComprobanteVentaListFromDetail() {
+  writeRouteToUrl({});
+  showComprobanteVentaAsMainTable();
+  clearSelection();
+  void loadComprobantesVentaView();
+}
+
 async function loadDetailEntity({
   entityId,
   requestTracker,
@@ -544,16 +540,11 @@ async function loadDetailEntity({
   }
 
   const requestId = requestTracker.next();
-  logDebug(`Cargando ${contextLabel}`, { entityId, requestId });
   setLoading(entityId);
 
   try {
     const entity = await fetchById(entityId);
     if (!requestTracker.isCurrent(requestId)) {
-      logDebug(`Respuesta descartada para ${contextLabel} por request desactualizado`, {
-        entityId,
-        requestId
-      });
       return;
     }
 
@@ -561,15 +552,10 @@ async function loadDetailEntity({
       logWarn(`${contextLabel} no encontrado`, { entityId });
       setNotFound(entityId);
     } else {
-      logDebug(`${contextLabel} cargado`, { entityId });
       setReady(entityId, entity);
     }
   } catch (error) {
     if (!requestTracker.isCurrent(requestId)) {
-      logDebug(`Error descartado para ${contextLabel} por request desactualizado`, {
-        entityId,
-        requestId
-      });
       return;
     }
     logError(`Error al cargar ${contextLabel}`, { entityId, error });
@@ -638,20 +624,34 @@ async function handleProductoClick(productoId) {
 }
 
 async function handleComprobanteVentaClick(comprobanteVentaId) {
-  logDebug("Click en comprobante de venta", { comprobanteVentaId });
-  showComprobanteVentaAsMainTable();
-  await loadDetailEntity({
-    entityId: comprobanteVentaId,
-    requestTracker: requestTrackers.comprobanteVenta,
-    setLoading: setComprobanteVentaDetailLoading,
-    fetchById: repositories.comprobanteVenta.getById,
-    setNotFound: setComprobanteVentaDetailNotFound,
-    setReady: setComprobanteVentaDetailReady,
-    setError: setComprobanteVentaDetailError,
-    notFoundMessage: UI_MESSAGES.comprobanteVentaDetailNotFound,
-    loadErrorMessage: UI_MESSAGES.comprobanteVentaDetailLoadError,
-    contextLabel: "comprobante de venta"
-  });
+  try {
+    showComprobanteVentaAsMainTable();
+    await loadDetailEntity({
+      entityId: comprobanteVentaId,
+      requestTracker: requestTrackers.comprobanteVenta,
+      setLoading: setComprobanteVentaDetailLoading,
+      fetchById: repositories.comprobanteVenta.getById,
+      setNotFound: setComprobanteVentaDetailNotFound,
+      setReady: setComprobanteVentaDetailReady,
+      setError: setComprobanteVentaDetailError,
+      notFoundMessage: UI_MESSAGES.comprobanteVentaDetailNotFound,
+      loadErrorMessage: UI_MESSAGES.comprobanteVentaDetailLoadError,
+      contextLabel: "comprobante de venta"
+    });
+    const currentState = getState();
+    if (
+      currentState.comprobanteVentaDetail?.status &&
+      currentState.comprobanteVentaDetail.status !== "idle"
+    ) {
+      domRefs.comprobanteVentaDetailSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  } catch (error) {
+    logError("Excepcion inesperada al cargar comprobante de venta", error);
+    throw error;
+  }
 }
 
 function bindEvents() {
@@ -705,16 +705,29 @@ function bindEvents() {
   });
 
   domRefs.comprobanteVentaTableBody.addEventListener("click", (event) => {
-    const comprobanteLink = event.target.closest(".js-comprobante-venta-link");
-    if (!comprobanteLink) {
-      return;
+    try {
+      const target = event.target;
+      if (!target || typeof target.closest !== "function") {
+        logWarn("Target de click invalido en tabla de comprobantes", target);
+        return;
+      }
+      const comprobanteLink = target.closest(".js-comprobante-venta-link");
+      if (!comprobanteLink) {
+        return;
+      }
+      event.preventDefault();
+      if (!comprobanteLink.dataset.comprobanteVentaId) {
+        logWarn("El link de comprobante no trae data-comprobante-venta-id");
+        return;
+      }
+      void handleComprobanteVentaClick(
+        comprobanteLink.dataset.comprobanteVentaId
+      ).catch((error) => {
+        logError("Error inesperado en handleComprobanteVentaClick", error);
+      });
+    } catch (error) {
+      logError("Error en evento click de comprobante de venta", error);
     }
-    event.preventDefault();
-    if (!comprobanteLink.dataset.comprobanteVentaId) {
-      logWarn("El link de comprobante no trae data-comprobante-venta-id");
-      return;
-    }
-    void handleComprobanteVentaClick(comprobanteLink.dataset.comprobanteVentaId);
   });
 
   domRefs.itemTableBody.addEventListener("click", (event) => {
@@ -730,6 +743,15 @@ function bindEvents() {
     requestTrackers.cliente.invalidate();
     requestTrackers.producto.invalidate();
     requestTrackers.comprobanteVenta.invalidate();
+    const state = getState();
+    const activeModule = getActiveModule(state.mainTable);
+    if (
+      activeModule === MODES.COMPROBANTE_VENTA &&
+      state.comprobanteVentaDetail?.status !== "idle"
+    ) {
+      showComprobanteVentaListFromDetail();
+      return;
+    }
     writeRouteToUrl({});
     showRemitoAsMainTable();
     clearSelection();
@@ -739,6 +761,15 @@ function bindEvents() {
     requestTrackers.cliente.invalidate();
     requestTrackers.producto.invalidate();
     requestTrackers.comprobanteVenta.invalidate();
+    const state = getState();
+    const activeModule = getActiveModule(state.mainTable);
+    if (
+      activeModule === MODES.COMPROBANTE_VENTA &&
+      state.comprobanteVentaDetail?.status !== "idle"
+    ) {
+      showComprobanteVentaListFromDetail();
+      return;
+    }
 
     if (window.history.length > 1) {
       window.history.back();
@@ -811,7 +842,7 @@ async function loadComprobantesVentaView({ force = false } = {}) {
     setComprobantesVentaReady(items);
     clearBanner();
   } catch (error) {
-    console.error("No se pudo cargar el listado de comprobantes de venta:", error);
+    logError("No se pudo cargar el listado de comprobantes de venta", error);
     setComprobantesVentaError(UI_MESSAGES.comprobantesVentaLoadError);
     setBanner(UI_MESSAGES.comprobantesVentaLoadError, "warning");
   }
