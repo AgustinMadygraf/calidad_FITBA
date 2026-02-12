@@ -142,6 +142,7 @@ def test_list_routes_return_502_on_external_errors(monkeypatch, path, handler_na
         ("/API/1.1/identificacionTributaria/1", "get_identificacion_tributaria"),
         ("/API/1.1/listaPrecioBean/1", "get_lista_precio"),
         ("/API/1.1/monedaBean/1", "get_moneda"),
+        ("/API/1.1/vendedorBean/1", "get_vendedor"),
     ],
 )
 def test_get_routes_return_404_when_resource_not_found(monkeypatch, path, handler_name):
@@ -164,6 +165,7 @@ def test_get_routes_return_404_when_resource_not_found(monkeypatch, path, handle
         ("/API/1.1/identificacionTributaria/1", "get_identificacion_tributaria"),
         ("/API/1.1/listaPrecioBean/1", "get_lista_precio"),
         ("/API/1.1/monedaBean/1", "get_moneda"),
+        ("/API/1.1/vendedorBean/1", "get_vendedor"),
     ],
 )
 def test_get_routes_return_502_on_external_errors(monkeypatch, path, handler_name):

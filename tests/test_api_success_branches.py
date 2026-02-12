@@ -32,6 +32,11 @@ from src.infrastructure.fastapi.api import app
             {"productoid": 1, "nombre": "PC1"},
         ),
         ("/API/1.1/depositos/1", "get_deposito", {"id": 1, "nombre": "D1"}),
+        (
+            "/API/1.1/vendedorBean/1",
+            "get_vendedor",
+            {"vendedorId": 1, "nombre": "Ana"},
+        ),
     ],
 )
 def test_get_routes_return_payload_on_success(

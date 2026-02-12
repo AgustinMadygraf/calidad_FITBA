@@ -195,6 +195,12 @@ def list_vendedores(gateway: VendedorGateway) -> Dict[str, Any]:
     return {"items": items}
 
 
+def get_vendedor(
+    gateway: VendedorGateway, vendedor_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(vendedor_id)
+
+
 def create_cliente(
     gateway: ClienteGateway,
     deps: cliente.ClienteDependencies,

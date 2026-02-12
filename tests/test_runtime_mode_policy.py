@@ -96,6 +96,7 @@ def test_catalog_extension_detail_routes_are_registered():
         in route_paths
     )
     assert "/API/1.1/monedaBean/{moneda_id}" in route_paths
+    assert "/API/1.1/vendedorBean/{vendedor_id}" in route_paths
 
 
 def test_patch_is_forbidden_in_non_prod(monkeypatch):

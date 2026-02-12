@@ -723,6 +723,20 @@ def vendedor_list() -> Dict[str, Any]:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
+@app.get(f"{VENDEDOR_BASE}/{{vendedor_id}}")
+@app.get(f"{VENDEDOR_BASE}/{{vendedor_id}}/", include_in_schema=False)
+def vendedor_get(vendedor_id: int) -> Dict[str, Any]:
+    try:
+        gateway = _get_vendedor_gateway()
+        item = handlers.get_vendedor(gateway, vendedor_id)
+    except ExternalServiceError as exc:
+        logger.error("Gateway error al obtener vendedor: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="vendedor no encontrado")
+    return item
+
+
 @app.get(f"{MONEDA_BASE}/{{moneda_id}}")
 @app.get(f"{MONEDA_BASE}/{{moneda_id}}/", include_in_schema=False)
 def moneda_get(moneda_id: int) -> Dict[str, Any]:

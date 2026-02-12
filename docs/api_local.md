@@ -96,6 +96,7 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints.
 
 ## Vendedores
 - `GET /API/1.1/vendedorBean`
+- `GET /API/1.1/vendedorBean/{id}` (extension local)
 
 Ejemplo de item:
 ```json
@@ -114,6 +115,7 @@ Ejemplo de item:
 - `GET /API/1.1/depositos/{id}`
 - `GET /API/1.1/identificacionTributaria/{id}`
 - `GET /API/1.1/monedaBean/{id}`
+- `GET /API/1.1/vendedorBean/{id}`
 
 Politica:
 - Estas rutas se mantienen como contrato local estable por compatibilidad y usabilidad.

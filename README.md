@@ -59,6 +59,7 @@ Monorepo Python con dos componentes:
 - `GET /API/1.1/monedaBean`
 - `GET /API/1.1/monedaBean/{id}`
 - `GET /API/1.1/vendedorBean`
+- `GET /API/1.1/vendedorBean/{id}`
 - `GET /debug/clienteBean` (solo en `IS_PROD=false`)
 
 ## Resumen Xubio API
@@ -154,5 +155,5 @@ pytest -q
   con `transaccionId` en el body.
 - Los endpoints `GET .../{id}` de catalogos fuera de Swagger oficial
   (`ProductoCompraBean`, `categoriaFiscal`, `depositos`,
-  `identificacionTributaria`, `monedaBean`) se mantienen como extension formal
+  `identificacionTributaria`, `monedaBean`, `vendedorBean`) se mantienen como extension formal
   del contrato local.

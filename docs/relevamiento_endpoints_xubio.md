@@ -9,7 +9,7 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - Operaciones oficiales relevadas (GET/POST/PUT/PATCH/DELETE): **105**
 - Operaciones cubiertas por la API local (matching contra Swagger): **26**
 - Operaciones pendientes respecto de Swagger: **79**
-- Operaciones locales fuera de Swagger (extensiones formales): **10**
+- Operaciones locales fuera de Swagger (extensiones formales): **11**
 
 ## Endpoints relevados y cubiertos (oficial vs local)
 - `/API/1.1/ProductoCompraBean`: cubierto=`[GET]`
@@ -33,6 +33,7 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 - `/API/1.1/depositos/{id}` `[GET]`
 - `/API/1.1/identificacionTributaria/{id}` `[GET]`
 - `/API/1.1/monedaBean/{id}` `[GET]`
+- `/API/1.1/vendedorBean/{id}` `[GET]`
 
 Observaciones:
 - Se incorporo `PUT /API/1.1/remitoVentaBean` alineado a Swagger (update por `transaccionId` en body).
