@@ -15,6 +15,25 @@ Este proyecto aplica Clean Architecture con separacion de responsabilidades.
 - `interface_adapter` traduce entre formatos externos y casos de uso.
 - `infrastructure` implementa los puertos.
 
+## CLI AS400 (modularizacion)
+- `src/use_cases/terminal_cli.py`:
+  - reglas puras del flujo CLI (aliases, parseo de comandos, validacion de entity, plan de accion).
+  - armado/validacion de payload de producto sin IO de consola ni red.
+- `src/use_cases/terminal_cli_product.py` + `src/use_cases/ports/terminal_cli_product_gateway.py`:
+  - caso de uso para `create_product`.
+  - puerto explicito para desacoplar la operacion de infraestructura HTTP.
+- `src/interface_adapter/presenter/terminal_cli_presenter.py`:
+  - render de menu, prompt y formateo textual del estado.
+- `src/interface_adapter/controllers/terminal_cli.py`:
+  - orquestacion de IO de consola, dispatch de comandos y coordinacion de use cases.
+- `src/infrastructure/httpx/terminal_cli_gateway_xubio.py`:
+  - implementacion concreta del puerto con HTTPX + OAuth2 client_credentials.
+
+Direccion de dependencias CLI:
+- controller -> use_cases + presenter
+- infrastructure -> use_cases (implementa puertos)
+- use_cases no depende de infrastructure ni de presenter
+
 ## Puertos y Gateways
 - Cada entidad externa tiene un port (Protocol) en `src/use_cases/ports/`.
 - Los gateways HTTPX implementan llamadas a Xubio.

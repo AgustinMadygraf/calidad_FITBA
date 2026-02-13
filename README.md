@@ -208,11 +208,18 @@ Estado MVP:
 - El resto de operaciones y entidades se mantienen en modo `stub`.
 - En `CREATE ProductoVentaBean`, el body respeta `ProductoVentaBean` del Swagger oficial.
 - El CLI usa OAuth2 `client_credentials` reutilizando `src/infrastructure/httpx/token_client.py`.
+- La arquitectura del CLI por capas esta documentada en `docs/arquitectura.md`.
 
 ## Tests
 
 ```bash
 pytest -q
+```
+
+Tests unitarios utiles de CLI:
+
+```bash
+./venv/bin/pytest -q tests/test_run_cli.py tests/test_use_case_terminal_cli.py
 ```
 
 Suites por marcador:
