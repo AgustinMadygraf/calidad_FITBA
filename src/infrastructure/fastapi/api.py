@@ -2,7 +2,6 @@
 Path: src/infrastructure/fastapi/api.py
 """
 
-from pathlib import Path
 from typing import Any, Dict
 
 import uvicorn
@@ -11,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from ...interface_adapter.controllers import handlers
-from ...shared.config import get_host, get_port, load_env
+from ...shared.config import get_host, get_port, get_static_dir, load_env
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .app import app
@@ -32,8 +31,8 @@ logger = get_logger(__name__)
 
 load_env()
 token_gateway = get_token_gateway()
-FRONTEND_DIR = Path(__file__).resolve().parents[3] / "frontend"
-FRONTEND_INDEX = FRONTEND_DIR / "index.html"
+STATIC_DIR = get_static_dir()
+STATIC_INDEX = STATIC_DIR / "index.html"
 
 
 # Kept for tests
@@ -50,8 +49,8 @@ def _resolve_remito_transaccion_id(
 
 @app.get("/", include_in_schema=False)
 def root():
-    if FRONTEND_INDEX.exists():
-        return FileResponse(FRONTEND_INDEX)
+    if STATIC_INDEX.exists():
+        return FileResponse(STATIC_INDEX)
     return handlers.root()
 
 
@@ -103,10 +102,10 @@ app.include_router(comprobante_router.router)
 app.include_router(catalogos.router)
 
 
-if FRONTEND_DIR.exists():
-    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+if STATIC_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 else:
-    logger.warning("Directorio frontend no encontrado: %s", FRONTEND_DIR)
+    logger.warning("Directorio estatico no encontrado: %s", STATIC_DIR)
 
 
 def run() -> None:

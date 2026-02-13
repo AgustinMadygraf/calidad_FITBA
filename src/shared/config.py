@@ -25,6 +25,7 @@ FALSE_VALUES = {"0", "false", "no", "n", "off"}
 APP_HOST = "localhost"
 APP_PORT = 8000
 APP_IS_PROD = False
+APP_STATIC_DIR = r"C:\proyectos_software\madypack-dev\calidad_FITBA-www"
 
 # Xubio integration defaults
 XUBIO_TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
@@ -109,6 +110,13 @@ def get_port() -> int:
     return APP_PORT
 
 
+def get_static_dir() -> Path:
+    env_value = os.getenv("STATIC_DIR", "").strip()
+    if env_value:
+        return _resolve_path(env_value)
+    return _resolve_path(APP_STATIC_DIR)
+
+
 def get_xubio_token_endpoint() -> str:
     return XUBIO_TOKEN_ENDPOINT
 
@@ -135,3 +143,11 @@ def _parse_bool(raw: str) -> Optional[bool]:
     if value in FALSE_VALUES:
         return False
     return None
+
+
+def _resolve_path(raw: str) -> Path:
+    path = Path(raw)
+    if path.is_absolute():
+        return path
+    project_root = Path(__file__).resolve().parents[2]
+    return (project_root / path).resolve()

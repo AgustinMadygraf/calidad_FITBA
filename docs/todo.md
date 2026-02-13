@@ -1,11 +1,10 @@
 # TODO Tecnico
 
-Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
+Documento de trabajo para ejecutar mejoras de arquitectura y testing.
 
 ## Decisiones vigentes
 
 - Compatibilidad total con Xubio: no romper contrato de endpoints ni nombres de campos.
-- Migracion incremental a Vue: sin reescritura total.
 - Runtime objetivo actual: single-instance.
 
 ## Fase 0 - Estabilizacion de testing HTTP (bloqueante)
@@ -77,7 +76,7 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
   Complejidad: Baja.
   Dependencias: ninguna.
 
-- [x] T2.2 Implementar contract tests automáticos contra `docs/swagger.json`.
+- [x] T2.2 Implementar contract tests automaticos contra `docs/swagger.json`.
   Descripcion: validar que endpoints oficiales implementados respetan verbos esperados y codigos base.
   Entregable: suite `contract` ejecutable en CI local.
   Criterio de aceptacion: cada cambio de rutas se valida contra contrato.
@@ -121,36 +120,6 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
   Complejidad: Media.
   Dependencias: T3.2.
 
-## Fase 4 - Frontend incremental a Vue (islands)
-
-- [ ] T4.1 Definir arquitectura de convivencia JS modular + Vue.
-  Descripcion: acordar donde montar islas Vue y que parte de estado/control mantiene JS actual.
-  Entregable: decision record en docs + guia de integracion.
-  Criterio de aceptacion: flujo de trabajo claro para migrar modulo por modulo.
-  Complejidad: Baja.
-  Dependencias: ninguna.
-
-- [ ] T4.2 Extraer capa de datos compartida para reutilizar en Vue.
-  Descripcion: aislar repositorios/client HTTP y mappers para que los use tanto JS actual como Vue.
-  Entregable: modulo de data-access estable y testeado.
-  Criterio de aceptacion: sin duplicar llamadas API entre implementaciones.
-  Complejidad: Media.
-  Dependencias: T4.1.
-
-- [ ] T4.3 Migrar modulo "comprobante de venta" a primer island Vue.
-  Descripcion: reemplazar render/eventos de ese modulo por componente Vue manteniendo rutas y contrato.
-  Entregable: pantalla de listado + detalle en Vue.
-  Criterio de aceptacion: mismas funcionalidades actuales (click detalle, volver al listado, estados loading/error/not_found).
-  Complejidad: Alta.
-  Dependencias: T4.2.
-
-- [ ] T4.4 Reducir tamaño de `appController.js`.
-  Descripcion: luego del island, delegar navegacion/orquestacion por modulo y quitar responsabilidades del controlador global.
-  Entregable: controlador dividido por dominio funcional.
-  Criterio de aceptacion: `appController.js` deja de ser punto unico de cambio.
-  Complejidad: Media.
-  Dependencias: T4.3.
-
 ## Fase 5 - Cobertura y calidad continua
 
 - [ ] T5.1 Incorporar cobertura minima por suite.
@@ -159,13 +128,6 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
   Criterio de aceptacion: falla automatica cuando cobertura cae bajo umbral acordado.
   Complejidad: Baja.
   Dependencias: T0.3.
-
-- [ ] T5.2 Agregar tests frontend.
-  Descripcion: pruebas unitarias de mappers/store y e2e de flujos criticos de UI.
-  Entregable: setup de test frontend + casos minimos.
-  Criterio de aceptacion: flujo principal remito/lista precio/comprobante cubierto.
-  Complejidad: Alta.
-  Dependencias: T4.2.
 
 - [ ] T5.3 Checklist de release tecnico.
   Descripcion: validar contrato, tests, logs y politicas de runtime antes de merge.
@@ -180,8 +142,7 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
 2. T1.1 -> T1.2 -> T1.3 -> T1.4
 3. T2.1 -> T2.2 -> T2.3 -> T2.4
 4. T3.1 -> T3.2 -> T3.3
-5. T4.1 -> T4.2 -> T4.3 -> T4.4
-6. T5.1 -> T5.2 -> T5.3
+5. T5.1 -> T5.3
 
 ## Anexo - Matriz de compatibilidad (testing HTTP)
 
