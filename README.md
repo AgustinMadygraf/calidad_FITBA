@@ -147,6 +147,33 @@ python run.py --IS_PROD=true
 python run.py --IS_PROD=false
 ```
 
+## Ejecutar CLI AS400 (MVP)
+
+```bash
+python run_cli.py --base-url http://localhost:8000
+```
+
+Flags utiles:
+- `--base-url`: URL base de la API local (default `http://localhost:8000`).
+- `--timeout`: timeout HTTP en segundos.
+- `--no-banner`: inicia sin imprimir el menu.
+
+Comandos disponibles:
+- `MENU`
+- `ENTER <entity_type>`
+- `CREATE <entity_type>`
+- `UPDATE <entity_type>`
+- `DELETE <entity_type>`
+- `GET <entity_type> <id>`
+- `LIST <entity_type>`
+- `BACK`
+- `EXIT`
+
+Estado MVP:
+- Solo `CREATE product` hace `POST` real a `/API/1.1/ProductoVentaBean`.
+- El resto de operaciones y entidades se mantienen en modo `stub`.
+- Si el server esta en `IS_PROD=false`, la API devolvera `403` para mutaciones.
+
 ## Tests
 
 ```bash
