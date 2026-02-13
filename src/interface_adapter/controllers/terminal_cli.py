@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import os
 from dataclasses import dataclass
@@ -68,7 +69,7 @@ CommandHandler: TypeAlias = Callable[[list[str], CommandContext], bool]
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="AS400-like terminal client (MVP) for Xubio API."
+        description="Xubio CLI interactiva (MVP)."
     )
     parser.add_argument(
         "--base-url",
@@ -84,7 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-banner",
         action="store_true",
-        help="Start without printing the AS400 menu banner.",
+        help="Inicia sin imprimir la ayuda inicial del CLI.",
     )
     return parser
 
@@ -298,7 +299,14 @@ def process_command(
     )
     handler = handlers.get(canonical_command)
     if handler is None:
-        write_output(f"Comando no reconocido: {command}. Usa MENU para ayuda.")
+        suggestion = _suggest_command(command, handlers.keys())
+        if suggestion is None:
+            write_output(f"Comando no reconocido: {command}. Usa HELP para ayuda.")
+        else:
+            write_output(
+                f"Comando no reconocido: {command}. Quisiste decir {suggestion}? "
+                "Usa HELP para ayuda."
+            )
         return False
 
     context = CommandContext(
@@ -309,6 +317,14 @@ def process_command(
         write_output=write_output,
     )
     return handler(canonical_args, context)
+
+
+def _suggest_command(command: str, options: Any) -> Optional[str]:
+    candidates = list(options)
+    matches = difflib.get_close_matches(command.upper(), candidates, n=1, cutoff=0.6)
+    if not matches:
+        return None
+    return matches[0]
 
 
 def main(

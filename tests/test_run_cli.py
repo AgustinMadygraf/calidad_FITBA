@@ -85,8 +85,8 @@ def test_collect_product_payload_rejects_empty_json_object():
 def test_normalize_entity_accepts_only_official_entity_names():
     assert run_cli.normalize_entity("ProductoVentaBean") == run_cli.PRODUCT_ENTITY
     assert run_cli.normalize_entity("clienteBean") == "clienteBean"
-    assert run_cli.normalize_entity("1") == "ProductoVentaBean"
-    assert run_cli.normalize_entity("4") == "listaPrecioBean"
+    assert run_cli.normalize_entity("1") is None
+    assert run_cli.normalize_entity("4") is None
     assert run_cli.normalize_entity("product") is None
 
 
@@ -211,7 +211,7 @@ def test_process_command_create_rejects_empty_payload_without_post(monkeypatch):
     assert outputs[0] == run_cli.EMPTY_PRODUCT_PAYLOAD_MESSAGE
 
 
-def test_expand_numeric_selection_maps_menu():
+def test_expand_numeric_selection_rejects_numeric_shortcuts():
     outputs = []
     state = run_cli.CLIState()
     expanded = run_cli._expand_numeric_selection(
@@ -220,93 +220,59 @@ def test_expand_numeric_selection_maps_menu():
         read_input=lambda _prompt: "",
         write_output=outputs.append,
     )
-    assert expanded == "MENU"
-    assert outputs == []
+    assert expanded is None
+    assert outputs
+    assert "Atajos numericos deshabilitados" in outputs[0]
 
 
-def test_expand_numeric_selection_maps_function_keys():
-    outputs = []
-    state = run_cli.CLIState()
-    assert (
-        run_cli._expand_numeric_selection(
-            "f1",
-            state,
-            read_input=lambda _prompt: "",
-            write_output=outputs.append,
-        )
-        == "MENU"
-    )
-    assert (
-        run_cli._expand_numeric_selection(
-            "F12",
-            state,
-            read_input=lambda _prompt: "",
-            write_output=outputs.append,
-        )
-        == "BACK"
-    )
-    assert outputs == []
-
-
-def test_expand_numeric_selection_create_uses_current_entity_on_empty():
-    outputs = []
-    state = run_cli.CLIState(current_entity=run_cli.PRODUCT_ENTITY)
-    expanded = run_cli._expand_numeric_selection(
-        "3",
-        state,
-        read_input=lambda _prompt: "",
-        write_output=outputs.append,
-    )
-    assert expanded == f"CREATE {run_cli.PRODUCT_ENTITY}"
-    assert outputs == []
-
-
-def test_expand_numeric_selection_enter_accepts_entity_number():
+def test_expand_numeric_selection_rejects_function_key_shortcuts():
     outputs = []
     state = run_cli.CLIState()
     expanded = run_cli._expand_numeric_selection(
-        "2",
-        state,
-        read_input=lambda _prompt: "1",
-        write_output=outputs.append,
-    )
-    assert expanded == "ENTER ProductoVentaBean"
-    assert outputs == []
-
-
-def test_expand_numeric_selection_rejects_invalid_option():
-    outputs = []
-    state = run_cli.CLIState()
-    expanded = run_cli._expand_numeric_selection(
-        "10",
+        "F12",
         state,
         read_input=lambda _prompt: "",
         write_output=outputs.append,
     )
     assert expanded is None
     assert outputs
-    assert "Opcion numerica invalida" in outputs[0]
+    assert "Atajos function-key legacy deshabilitados" in outputs[0]
 
 
-def test_process_command_numeric_create_runs_create_flow(monkeypatch):
+def test_expand_numeric_selection_passthrough_for_textual_commands():
+    outputs = []
+    state = run_cli.CLIState()
+    expanded = run_cli._expand_numeric_selection(
+        "CREATE ProductoVentaBean",
+        state,
+        read_input=lambda _prompt: "",
+        write_output=outputs.append,
+    )
+    assert expanded == "CREATE ProductoVentaBean"
+    assert outputs == []
+
+
+def test_process_command_numeric_shortcut_is_rejected(monkeypatch):
     outputs = []
     state = run_cli.CLIState(current_entity=run_cli.PRODUCT_ENTITY)
+    called = {"post": False}
 
     monkeypatch.setattr(
         run_cli,
         "collect_product_payload",
         lambda _read_input, _write_output: {"nombre": "P1"},
     )
-    monkeypatch.setattr(
-        run_cli,
-        "post_product",
-        lambda _base_url, _payload, _timeout: run_cli.PostResult(
+
+    def _should_not_post(_base_url, _payload, _timeout):
+        called["post"] = True
+        return run_cli.PostResult(
             ok=True,
             status_code=200,
-            message="Producto creado",
-            payload={"productoid": 1},
-        ),
-    )
+            message="NO_DEBERIA_OCURRIR",
+            payload=None,
+        )
+
+    monkeypatch.setattr(run_cli, "post_product", _should_not_post)
 
     should_exit = run_cli.process_command(
         "3",
@@ -318,7 +284,9 @@ def test_process_command_numeric_create_runs_create_flow(monkeypatch):
     )
 
     assert should_exit is False
-    assert outputs[0] == "Producto creado"
+    assert called["post"] is False
+    assert outputs
+    assert "Atajos numericos deshabilitados" in outputs[0]
 
 
 def test_process_command_abbreviation_cr_runs_create_flow(monkeypatch):
@@ -372,7 +340,7 @@ def test_process_command_abbreviation_dsp_routes_to_get_with_id():
     outputs = []
     state = run_cli.CLIState()
     should_exit = run_cli.process_command(
-        "DSP 1 55",
+        "DSP ProductoVentaBean 55",
         state,
         "https://xubio.com",
         10.0,
@@ -410,18 +378,22 @@ def test_process_command_abbreviation_dsp_no_args_without_context_shows_menu():
     )
     assert should_exit is False
     assert outputs
-    assert "XUBIO-LIKE TERMINAL (AS400 MVP)" in outputs[0]
+    assert "XUBIO CLI (MVP)" in outputs[0]
 
 
-def test_process_command_function_key_exit():
+def test_process_command_function_key_shortcut_is_rejected():
+    outputs = []
     state = run_cli.CLIState()
     should_exit = run_cli.process_command(
         "F3",
         state,
         "https://xubio.com",
         10.0,
+        write_output=outputs.append,
     )
-    assert should_exit is True
+    assert should_exit is False
+    assert outputs
+    assert "Atajos function-key legacy deshabilitados" in outputs[0]
 
 
 def test_process_command_exit_aliases():
@@ -442,10 +414,40 @@ def test_process_command_help_alias_renders_menu():
     )
     assert should_exit is False
     assert outputs
-    assert "XUBIO-LIKE TERMINAL (AS400 MVP)" in outputs[0]
+    assert "XUBIO CLI (MVP)" in outputs[0]
 
 
-def test_process_command_enter_supports_entity_number():
+def test_process_command_unknown_command_suggests_closest_match():
+    outputs = []
+    state = run_cli.CLIState()
+    should_exit = run_cli.process_command(
+        "meny",
+        state,
+        "https://xubio.com",
+        10.0,
+        write_output=outputs.append,
+    )
+    assert should_exit is False
+    assert outputs
+    assert "Quisiste decir MENU?" in outputs[0]
+
+
+def test_process_command_unknown_command_without_close_match():
+    outputs = []
+    state = run_cli.CLIState()
+    should_exit = run_cli.process_command(
+        "zzzzz",
+        state,
+        "https://xubio.com",
+        10.0,
+        write_output=outputs.append,
+    )
+    assert should_exit is False
+    assert outputs
+    assert outputs[0] == "Comando no reconocido: ZZZZZ. Usa HELP para ayuda."
+
+
+def test_process_command_enter_rejects_entity_number():
     outputs = []
     state = run_cli.CLIState()
 
@@ -458,15 +460,23 @@ def test_process_command_enter_supports_entity_number():
     )
 
     assert should_exit is False
-    assert state.current_entity == "clienteBean"
+    assert state.current_entity is None
+    assert outputs
+    assert "Entity type no soportado" in outputs[0]
 
 
 def test_render_menu_includes_status_line():
     state = run_cli.CLIState(last_status="Operacion completada")
     rendered = run_cli.render_menu(state, "https://xubio.com")
-    assert "STATUS: Operacion completada" in rendered
+    assert "Estado: Operacion completada" in rendered
 
 
 def test_render_menu_includes_abbreviation_help():
     rendered = run_cli.render_menu(run_cli.CLIState(), "https://xubio.com")
     assert "Abreviaturas: CR=CREATE DLT=DELETE DSP=LIST/GET" in rendered
+    assert "Atajos numericos/function-key: deshabilitados" in rendered
+
+
+def test_prompt_for_uses_cli_style():
+    assert run_cli.prompt_for(run_cli.CLIState()) == "xubio[menu]> "
+    assert run_cli.prompt_for(run_cli.CLIState(current_entity="clienteBean")) == "xubio[clienteBean]> "

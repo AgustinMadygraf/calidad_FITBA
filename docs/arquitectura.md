@@ -15,10 +15,11 @@ Este proyecto aplica Clean Architecture con separacion de responsabilidades.
 - `interface_adapter` traduce entre formatos externos y casos de uso.
 - `infrastructure` implementa los puertos.
 
-## CLI AS400 (modularizacion)
+## CLI (modularizacion)
 - `src/use_cases/terminal_cli.py`:
   - reglas puras del flujo CLI (aliases, parseo de comandos, validacion de entity, plan de accion).
   - armado/validacion de payload de producto sin IO de consola ni red.
+  - atajos numericos y function-key legacy deshabilitados (CLI 100% textual).
 - `src/use_cases/terminal_cli_product.py` + `src/use_cases/ports/terminal_cli_product_gateway.py`:
   - caso de uso para `create_product`.
   - puerto explicito para desacoplar la operacion de infraestructura HTTP.

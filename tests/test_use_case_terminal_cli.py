@@ -75,7 +75,7 @@ def test_enter_entity_rejects_invalid_entity():
 
 def test_enter_entity_sets_context():
     state = terminal_cli.CLIState()
-    result = terminal_cli.enter_entity(["2"], state)
+    result = terminal_cli.enter_entity(["clienteBean"], state)
     assert result.ok is True
     assert result.message == "Contexto actual: clienteBean"
     assert state.current_entity == "clienteBean"
@@ -124,16 +124,24 @@ def test_resolve_alias_command_maps_dsp_variants():
     assert command == "LIST"
     assert args == ["clienteBean"]
 
-    command, args = terminal_cli.resolve_alias_command("DSP", ["1"], state_without_ctx)
+    command, args = terminal_cli.resolve_alias_command(
+        "DSP",
+        ["ProductoVentaBean"],
+        state_without_ctx,
+    )
     assert command == "LIST"
-    assert args == ["1"]
+    assert args == ["ProductoVentaBean"]
 
-    command, args = terminal_cli.resolve_alias_command("DSP", ["1", "55"], state_without_ctx)
+    command, args = terminal_cli.resolve_alias_command(
+        "DSP",
+        ["ProductoVentaBean", "55"],
+        state_without_ctx,
+    )
     assert command == "GET"
-    assert args == ["1", "55"]
+    assert args == ["ProductoVentaBean", "55"]
 
 
-def test_expand_numeric_selection_supports_function_keys_and_invalid_options():
+def test_expand_numeric_selection_rejects_legacy_shortcuts():
     outputs = []
     state = terminal_cli.CLIState()
     expanded = terminal_cli.expand_numeric_selection(
@@ -142,9 +150,11 @@ def test_expand_numeric_selection_supports_function_keys_and_invalid_options():
         read_input=lambda _prompt: "",
         write_output=outputs.append,
     )
-    assert expanded == "MENU"
-    assert outputs == []
+    assert expanded is None
+    assert outputs
+    assert "Atajos function-key legacy deshabilitados" in outputs[0]
 
+    outputs = []
     expanded = terminal_cli.expand_numeric_selection(
         "10",
         state,
@@ -153,4 +163,4 @@ def test_expand_numeric_selection_supports_function_keys_and_invalid_options():
     )
     assert expanded is None
     assert outputs
-    assert "Opcion numerica invalida" in outputs[0]
+    assert "Atajos numericos deshabilitados" in outputs[0]

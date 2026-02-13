@@ -23,31 +23,12 @@ ENTITY_ALIASES = {
     "listapreciobean": "listaPrecioBean",
 }
 ENTITY_HELP = "ProductoVentaBean, clienteBean, remitoVentaBean, listaPrecioBean"
-FUNCTION_KEY_COMMANDS = {
-    "F1": "MENU",
-    "F3": "EXIT",
-    "F12": "BACK",
-}
-ENTITY_NUMERIC_MAP = {
-    1: "ProductoVentaBean",
-    2: "clienteBean",
-    3: "remitoVentaBean",
-    4: "listaPrecioBean",
-}
-MENU_NUMERIC_COMMANDS = {
-    1: "MENU",
-    2: "ENTER",
-    3: "CREATE",
-    4: "UPDATE",
-    5: "DELETE",
-    6: "GET",
-    7: "LIST",
-    8: "BACK",
-    9: "EXIT",
-}
-ENTITY_NUMERIC_HELP = " ".join(f"{idx}={entity}" for idx, entity in ENTITY_NUMERIC_MAP.items())
-NUMERIC_MENU_HELP = " ".join(f"{idx}={command}" for idx, command in MENU_NUMERIC_COMMANDS.items())
-FUNCTION_KEY_HELP = " ".join(f"{key}={command}" for key, command in FUNCTION_KEY_COMMANDS.items())
+FUNCTION_KEY_COMMANDS: Dict[str, str] = {}
+ENTITY_NUMERIC_MAP: Dict[int, str] = {}
+MENU_NUMERIC_COMMANDS: Dict[int, str] = {}
+ENTITY_NUMERIC_HELP = "deshabilitado"
+NUMERIC_MENU_HELP = "deshabilitado"
+FUNCTION_KEY_HELP = "deshabilitado"
 COMMAND_ALIASES = {
     "HELP": "MENU",
     "QUIT": "EXIT",
@@ -160,12 +141,6 @@ def normalize_entity(raw: str) -> Optional[str]:
     if not value:
         return None
 
-    if value.isdigit():
-        idx = int(value) - 1
-        if 0 <= idx < len(OFFICIAL_ENTITIES):
-            return OFFICIAL_ENTITIES[idx]
-        return None
-
     return ENTITY_ALIASES.get(value.lower())
 
 
@@ -233,58 +208,15 @@ def expand_numeric_selection(
 ) -> Optional[str]:
     raw = line.strip()
     upper_raw = raw.upper()
-    if upper_raw in FUNCTION_KEY_COMMANDS:
-        return FUNCTION_KEY_COMMANDS[upper_raw]
-    if not raw.isdigit():
-        return line
-
-    selection = int(raw)
-    if selection == 1:
-        return MENU_NUMERIC_COMMANDS[1]
-    if selection == 2:
-        entity = read_entity_for_numeric_action(
-            state,
-            read_input,
-            write_output,
-            allow_current_on_empty=False,
+    if upper_raw.startswith("F") and upper_raw[1:].isdigit():
+        write_output(
+            "Atajos function-key legacy deshabilitados. Usa comandos textuales (HELP)."
         )
-        if entity is None:
-            return None
-        return f"{MENU_NUMERIC_COMMANDS[2]} {entity}"
-    if selection in {3, 4, 5, 7}:
-        action = MENU_NUMERIC_COMMANDS[selection]
-        entity = read_entity_for_numeric_action(
-            state,
-            read_input,
-            write_output,
-            allow_current_on_empty=True,
-        )
-        if entity is None:
-            return None
-        return f"{action} {entity}"
-    if selection == 6:
-        entity = read_entity_for_numeric_action(
-            state,
-            read_input,
-            write_output,
-            allow_current_on_empty=True,
-        )
-        if entity is None:
-            return None
-        item_id = read_input("id: ").strip()
-        if not item_id:
-            write_output("Debes indicar id.")
-            return None
-        return f"{MENU_NUMERIC_COMMANDS[6]} {entity} {item_id}"
-    if selection == 8:
-        return MENU_NUMERIC_COMMANDS[8]
-    if selection == 9:
-        return MENU_NUMERIC_COMMANDS[9]
-
-    write_output(
-        "Opcion numerica invalida. Usa 1..9 o MENU para ver comandos disponibles."
-    )
-    return None
+        return None
+    if raw.isdigit():
+        write_output("Atajos numericos deshabilitados. Usa comandos textuales (HELP).")
+        return None
+    return line
 
 
 def resolve_alias_command(

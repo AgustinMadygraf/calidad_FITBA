@@ -2,7 +2,7 @@
 
 Monorepo Python con dos componentes:
 - FastAPI (API local Xubio-like).
-- CLI estilo terminal AS400 (stub).
+- CLI interactiva (con atajos legacy de terminal AS400).
 
 ## Arquitectura (Clean Architecture)
 - `src/entities/`: entidades y modelos de dominio.
@@ -148,7 +148,7 @@ python run.py --IS_PROD=true
 python run.py --IS_PROD=false
 ```
 
-## Ejecutar CLI AS400 (MVP)
+## Ejecutar CLI (MVP)
 
 ```bash
 python run_cli.py
@@ -157,19 +157,13 @@ python run_cli.py
 Flags utiles:
 - `--base-url`: URL base de la API (default `https://xubio.com`).
 - `--timeout`: timeout HTTP en segundos.
-- `--no-banner`: inicia sin imprimir el menu.
+- `--no-banner`: inicia sin imprimir la ayuda inicial del CLI.
 
 Entity types sugeridos (contrato oficial Xubio):
 - `ProductoVentaBean`
 - `clienteBean`
 - `remitoVentaBean`
 - `listaPrecioBean`
-
-Atajos numericos de `entity_type`:
-- `1=ProductoVentaBean`
-- `2=clienteBean`
-- `3=remitoVentaBean`
-- `4=listaPrecioBean`
 
 Comandos disponibles:
 - `MENU`
@@ -181,26 +175,14 @@ Comandos disponibles:
 - `LIST <entity_type>`
 - `BACK`
 - `EXIT`
-- Abreviaturas AS400-like:
+- Abreviaturas:
   - `CR` -> `CREATE`
   - `DLT` -> `DELETE`
   - `DSP` -> `LIST <entity>` o `GET <entity> <id>` segun argumentos/contexto
 
-Seleccion numerica equivalente:
-- `1=MENU`
-- `2=ENTER`
-- `3=CREATE`
-- `4=UPDATE`
-- `5=DELETE`
-- `6=GET`
-- `7=LIST`
-- `8=BACK`
-- `9=EXIT`
-
-Teclas AS400-like:
-- `F1=MENU`
-- `F3=EXIT`
-- `F12=BACK`
+Atajos legacy deshabilitados:
+- Numericos
+- Function-key (`F1/F3/F12`)
 
 Estado MVP:
 - Solo `CREATE ProductoVentaBean` hace `POST` real a `/API/1.1/ProductoVentaBean`.
