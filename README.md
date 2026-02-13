@@ -63,6 +63,7 @@ Monorepo Python con dos componentes:
 - `GET /API/1.1/vendedorBean/{id}`
 - `GET /API/1.1/comprobanteVentaBean`
 - `GET /API/1.1/comprobanteVentaBean/{id}`
+- `POST /observability/events`
 - `GET /debug/clienteBean` (solo en `IS_PROD=false`)
 
 ## Resumen Xubio API

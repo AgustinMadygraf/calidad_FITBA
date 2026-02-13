@@ -26,6 +26,38 @@ Respuesta (ejemplo):
 }
 ```
 
+## Observabilidad frontend (MVP)
+- `POST /observability/events`
+
+Headers:
+- `Content-Type: application/json`
+
+CORS MVP:
+- `allow_origins`: `http://127.0.0.1:5173`
+- `allow_methods`: `POST`, `OPTIONS`
+- `allow_headers`: `Content-Type`
+
+Envelope minimo:
+```json
+{
+  "type": "http_request | route_navigation | page_load | frontend_error",
+  "level": "info | warn | error",
+  "timestamp": "2026-02-13T11:23:45.120Z",
+  "context": {}
+}
+```
+
+Reglas MVP implementadas:
+- Requiere `type`, `level`, `timestamp`, `context`.
+- `type` permitido: `http_request`, `route_navigation`, `page_load`, `frontend_error`.
+- `level` permitido: `info`, `warn`, `error`.
+- `context` debe ser objeto JSON.
+- `timestamp` debe ser ISO-8601 UTC.
+- Limite de body por evento: `32KB` (`413` si excede).
+- En `frontend_error`, si `context.stack` supera `8KB`, se trunca server-side.
+- Incluye `requestId` en respuesta y logs.
+- Rate-limit basico por IP: `120 req/min` (`429` si excede).
+
 ## Cliente
 - `GET /API/1.1/clienteBean`
 - `POST /API/1.1/clienteBean`

@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 import uvicorn
 from fastapi import HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -22,6 +23,7 @@ from .routers import (
     cliente as cliente_router,
     comprobante_venta as comprobante_router,
     lista_precio as lista_precio_router,
+    observability as observability_router,
     producto as producto_router,
     remito as remito_router,
     vendedor as vendedor_router,
@@ -29,12 +31,22 @@ from .routers import (
 
 logger = get_logger(__name__)
 
+FRONTEND_CORS_ORIGINS = ["http://127.0.0.1:5173"]
+
 load_env()
 token_gateway = get_token_gateway()
 STATIC_DIR = get_static_dir()
 FRONTEND_INDEX = STATIC_DIR / "index.html"
 
 logger.info("Directorio estatico configurado: %s", STATIC_DIR)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=FRONTEND_CORS_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 
 
 # Kept for tests
@@ -107,6 +119,7 @@ app.include_router(lista_precio_router.router)
 app.include_router(vendedor_router.router)
 app.include_router(comprobante_router.router)
 app.include_router(catalogos.router)
+app.include_router(observability_router.router)
 
 
 if STATIC_DIR.exists():
