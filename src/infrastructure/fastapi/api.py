@@ -32,7 +32,9 @@ logger = get_logger(__name__)
 load_env()
 token_gateway = get_token_gateway()
 STATIC_DIR = get_static_dir()
-STATIC_INDEX = STATIC_DIR / "index.html"
+FRONTEND_INDEX = STATIC_DIR / "index.html"
+
+logger.info("Directorio estatico configurado: %s", STATIC_DIR)
 
 
 # Kept for tests
@@ -49,8 +51,13 @@ def _resolve_remito_transaccion_id(
 
 @app.get("/", include_in_schema=False)
 def root():
-    if STATIC_INDEX.exists():
-        return FileResponse(STATIC_INDEX)
+    if FRONTEND_INDEX.exists():
+        logger.debug("Sirviendo index del frontend: %s", FRONTEND_INDEX)
+        return FileResponse(FRONTEND_INDEX)
+    logger.warning(
+        "No se encontro index del frontend en %s; devolviendo fallback API root",
+        FRONTEND_INDEX,
+    )
     return handlers.root()
 
 
@@ -103,6 +110,11 @@ app.include_router(catalogos.router)
 
 
 if STATIC_DIR.exists():
+    if not FRONTEND_INDEX.exists():
+        logger.warning(
+            "Directorio estatico existe pero falta index.html: %s",
+            FRONTEND_INDEX,
+        )
     app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 else:
     logger.warning("Directorio estatico no encontrado: %s", STATIC_DIR)

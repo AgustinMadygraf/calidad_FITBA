@@ -1,3 +1,7 @@
+"""
+Path: src/interface_adapter/controllers/handlers.py
+"""
+
 from typing import Any, Dict, Optional
 
 from ...entities.cliente import Cliente
