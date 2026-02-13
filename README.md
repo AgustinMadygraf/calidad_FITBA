@@ -151,13 +151,25 @@ python run.py --IS_PROD=false
 ## Ejecutar CLI AS400 (MVP)
 
 ```bash
-python run_cli.py --base-url http://localhost:8000
+python run_cli.py
 ```
 
 Flags utiles:
-- `--base-url`: URL base de la API local (default `http://localhost:8000`).
+- `--base-url`: URL base de la API (default `https://xubio.com`).
 - `--timeout`: timeout HTTP en segundos.
 - `--no-banner`: inicia sin imprimir el menu.
+
+Entity types sugeridos (contrato oficial Xubio):
+- `ProductoVentaBean`
+- `clienteBean`
+- `remitoVentaBean`
+- `listaPrecioBean`
+
+Atajos numericos de `entity_type`:
+- `1=ProductoVentaBean`
+- `2=clienteBean`
+- `3=remitoVentaBean`
+- `4=listaPrecioBean`
 
 Comandos disponibles:
 - `MENU`
@@ -169,11 +181,33 @@ Comandos disponibles:
 - `LIST <entity_type>`
 - `BACK`
 - `EXIT`
+- Abreviaturas AS400-like:
+  - `CR` -> `CREATE`
+  - `DLT` -> `DELETE`
+  - `DSP` -> `LIST <entity>` o `GET <entity> <id>` segun argumentos/contexto
+
+Seleccion numerica equivalente:
+- `1=MENU`
+- `2=ENTER`
+- `3=CREATE`
+- `4=UPDATE`
+- `5=DELETE`
+- `6=GET`
+- `7=LIST`
+- `8=BACK`
+- `9=EXIT`
+
+Teclas AS400-like:
+- `F1=MENU`
+- `F3=EXIT`
+- `F12=BACK`
 
 Estado MVP:
-- Solo `CREATE product` hace `POST` real a `/API/1.1/ProductoVentaBean`.
+- Solo `CREATE ProductoVentaBean` hace `POST` real a `/API/1.1/ProductoVentaBean`.
+- El cliente bloquea `CREATE ProductoVentaBean` con payload vacio.
 - El resto de operaciones y entidades se mantienen en modo `stub`.
-- Si el server esta en `IS_PROD=false`, la API devolvera `403` para mutaciones.
+- En `CREATE ProductoVentaBean`, el body respeta `ProductoVentaBean` del Swagger oficial.
+- El CLI usa OAuth2 `client_credentials` reutilizando `src/infrastructure/httpx/token_client.py`.
 
 ## Tests
 
