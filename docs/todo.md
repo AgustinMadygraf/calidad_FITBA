@@ -77,14 +77,14 @@ Documento de trabajo para ejecutar mejoras de arquitectura, testing y frontend.
   Complejidad: Baja.
   Dependencias: ninguna.
 
-- [ ] T2.2 Implementar contract tests automáticos contra `docs/swagger.json`.
+- [x] T2.2 Implementar contract tests automáticos contra `docs/swagger.json`.
   Descripcion: validar que endpoints oficiales implementados respetan verbos esperados y codigos base.
   Entregable: suite `contract` ejecutable en CI local.
   Criterio de aceptacion: cada cambio de rutas se valida contra contrato.
   Complejidad: Media.
   Dependencias: T0.3.
 
-- [ ] T2.3 Consolidar mapeo de ids/campos variantes en anti-corruption layer.
+- [x] T2.3 Consolidar mapeo de ids/campos variantes en anti-corruption layer.
   Descripcion: centralizar logica `ID/id/...` para evitar divergencia en gateways y mappers.
   Entregable: utilitarios comunes de normalizacion y matching.
   Criterio de aceptacion: no hay logica duplicada de matching de IDs por recurso.

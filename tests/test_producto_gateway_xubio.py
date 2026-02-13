@@ -5,9 +5,8 @@ import src.infrastructure.httpx.producto_gateway_xubio as producto_gateway
 from src.infrastructure.httpx.producto_gateway_xubio import (
     ProductoGatewayConfig,
     XubioProductoGateway,
-    _extract_producto_id,
-    _match_producto_id,
 )
+from src.shared.id_mapping import extract_int_id, match_any_id
 from src.use_cases.errors import ExternalServiceError
 
 
@@ -295,14 +294,15 @@ def test_store_item_cache_none_and_clear_item_cache_for_bean():
 
 
 def test_match_and_extract_producto_id_helpers():
-    assert _match_producto_id({"productoid": 7}, 7) is True
-    assert _match_producto_id({"productoId": 7}, 7) is True
-    assert _match_producto_id({"ID": 7}, 7) is True
-    assert _match_producto_id({"id": 7}, 7) is True
-    assert _match_producto_id({"id": 6}, 7) is False
+    keys = producto_gateway.PRODUCTO_ID_KEYS
+    assert match_any_id({"productoid": 7}, 7, keys) is True
+    assert match_any_id({"productoId": 7}, 7, keys) is True
+    assert match_any_id({"ID": 7}, 7, keys) is True
+    assert match_any_id({"id": 7}, 7, keys) is True
+    assert match_any_id({"id": 6}, 7, keys) is False
 
-    assert _extract_producto_id({"productoid": 8}) == 8
-    assert _extract_producto_id({"productoId": 9}) == 9
-    assert _extract_producto_id({"ID": 10}) == 10
-    assert _extract_producto_id({"id": 11}) == 11
-    assert _extract_producto_id({"id": "x"}) is None
+    assert extract_int_id({"productoid": 8}, keys) == 8
+    assert extract_int_id({"productoId": 9}, keys) == 9
+    assert extract_int_id({"ID": 10}, keys) == 10
+    assert extract_int_id({"id": 11}, keys) == 11
+    assert extract_int_id({"id": "x"}, keys) is None

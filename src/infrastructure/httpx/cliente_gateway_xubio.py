@@ -5,6 +5,7 @@ Path: src/infrastructure/httpx/cliente_gateway_xubio.py
 from typing import Any, Dict, List, Optional, Tuple
 
 from ...use_cases.ports.cliente_gateway import ClienteGateway
+from ...shared.id_mapping import extract_int_id, match_any_id
 from ...shared.logger import get_logger
 from .xubio_cache_helpers import (
     cache_get,
@@ -23,6 +24,7 @@ from .xubio_crud_helpers import (
 logger = get_logger(__name__)
 
 CLIENTE_PATH = "/API/1.1/clienteBean"
+CLIENTE_ID_KEYS = ("cliente_id", "clienteId", "ID", "id")
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 _GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 
@@ -67,7 +69,7 @@ class XubioClienteGateway(ClienteGateway):
         cached = self._get_cached_list()
         if cached is not None:
             for item in cached:
-                if _match_cliente_id(item, cliente_id):
+                if match_any_id(item, cliente_id, CLIENTE_ID_KEYS):
                     self._store_item_cache(cliente_id, item)
                     return item
         url = self._url(f"{CLIENTE_PATH}/{cliente_id}")
@@ -107,7 +109,7 @@ class XubioClienteGateway(ClienteGateway):
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
         cache_set(_GLOBAL_LIST_CACHE, CLIENTE_PATH, items, ttl=self._list_cache_ttl)
         for item in items:
-            item_id = _extract_cliente_id(item)
+            item_id = extract_int_id(item, CLIENTE_ID_KEYS)
             if item_id is not None:
                 self._store_item_cache(item_id, item)
 
@@ -134,22 +136,6 @@ class XubioClienteGateway(ClienteGateway):
             _GLOBAL_ITEM_CACHE.pop(_cliente_item_cache_key(cliente_id), None)
             return
         _GLOBAL_ITEM_CACHE.clear()
-
-
-def _match_cliente_id(item: Dict[str, Any], cliente_id: int) -> bool:
-    for key in ("cliente_id", "clienteId", "ID", "id"):
-        value = item.get(key)
-        if value == cliente_id:
-            return True
-    return False
-
-
-def _extract_cliente_id(item: Dict[str, Any]) -> Optional[int]:
-    for key in ("cliente_id", "clienteId", "ID", "id"):
-        value = item.get(key)
-        if isinstance(value, int):
-            return value
-    return None
 
 
 def _cliente_item_cache_key(cliente_id: int) -> str:

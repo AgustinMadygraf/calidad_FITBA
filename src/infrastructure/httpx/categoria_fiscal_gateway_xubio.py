@@ -4,6 +4,7 @@ Path: src/infrastructure/httpx/categoria_fiscal_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.categoria_fiscal_gateway import CategoriaFiscalGateway
 from .xubio_cache_helpers import (
@@ -17,6 +18,7 @@ from .xubio_crud_helpers import list_items
 logger = get_logger(__name__)
 
 CATEGORIA_FISCAL_PATH = "/API/1.1/categoriaFiscal"
+CATEGORIA_FISCAL_ID_KEYS = ("ID", "id")
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
@@ -58,7 +60,7 @@ class XubioCategoriaFiscalGateway(CategoriaFiscalGateway):
     def get(self, categoria_fiscal_id: int) -> Optional[Dict[str, Any]]:
         items = self.list()
         for item in items:
-            if _match_categoria_fiscal_id(item, categoria_fiscal_id):
+            if match_any_id(item, categoria_fiscal_id, CATEGORIA_FISCAL_ID_KEYS):
                 return item
         return None
 
@@ -81,10 +83,3 @@ class XubioCategoriaFiscalGateway(CategoriaFiscalGateway):
             ttl=self._list_cache_ttl,
         )
 
-
-def _match_categoria_fiscal_id(item: Dict[str, Any], categoria_fiscal_id: int) -> bool:
-    for key in ("ID", "id"):
-        value = item.get(key)
-        if value == categoria_fiscal_id:
-            return True
-    return False

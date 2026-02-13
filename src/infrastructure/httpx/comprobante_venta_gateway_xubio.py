@@ -4,6 +4,7 @@ Path: src/infrastructure/httpx/comprobante_venta_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.comprobante_venta_gateway import ComprobanteVentaGateway
 from .xubio_cache_helpers import (
@@ -17,6 +18,7 @@ from .xubio_crud_helpers import get_item_with_fallback, list_items
 logger = get_logger(__name__)
 
 COMPROBANTE_VENTA_PATH = "/API/1.1/comprobanteVentaBean"
+COMPROBANTE_ID_KEYS = ("transaccionid", "transaccionId", "ID", "id")
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 _GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 
@@ -79,7 +81,7 @@ class XubioComprobanteVentaGateway(ComprobanteVentaGateway):
     def _fallback_get_from_list(self, comprobante_id: int) -> Optional[Dict[str, Any]]:
         items = self.list()
         for item in items:
-            if _match_comprobante_id(item, comprobante_id):
+            if match_any_id(item, comprobante_id, COMPROBANTE_ID_KEYS):
                 return item
         return None
 
@@ -118,14 +120,6 @@ class XubioComprobanteVentaGateway(ComprobanteVentaGateway):
             item,
             ttl=self._list_cache_ttl,
         )
-
-
-def _match_comprobante_id(item: Dict[str, Any], comprobante_id: int) -> bool:
-    for key in ("transaccionid", "transaccionId", "ID", "id"):
-        value = item.get(key)
-        if value == comprobante_id:
-            return True
-    return False
 
 
 def _comprobante_item_cache_key(comprobante_id: int) -> str:

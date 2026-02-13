@@ -4,6 +4,7 @@ Path: src/infrastructure/memory/comprobante_venta_gateway_memory.py
 
 from typing import Any, Dict, List, Optional
 
+from ...shared.id_mapping import match_any_id
 from ...use_cases.ports.comprobante_venta_gateway import ComprobanteVentaGateway
 
 
@@ -37,12 +38,8 @@ class InMemoryComprobanteVentaGateway(ComprobanteVentaGateway):
 
     def get(self, comprobante_id: int) -> Optional[Dict[str, Any]]:
         for item in self._items:
-            if item.get("transaccionid") == comprobante_id:
-                return dict(item)
-            if item.get("transaccionId") == comprobante_id:
-                return dict(item)
-            if item.get("ID") == comprobante_id:
-                return dict(item)
-            if item.get("id") == comprobante_id:
+            if match_any_id(
+                item, comprobante_id, ("transaccionid", "transaccionId", "ID", "id")
+            ):
                 return dict(item)
         return None

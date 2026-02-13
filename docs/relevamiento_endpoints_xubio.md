@@ -31,10 +31,14 @@ Swagger usado: `https://xubio.com/API/1.1/swagger.json`
 
 ## Endpoints locales fuera de Swagger oficial (extensiones formales acordadas)
 - `/API/1.1/ProductoCompraBean/{id}` `[GET]`
+- `/API/1.1/productoCompraBean` `[GET]` (legacy)
+- `/API/1.1/productoCompraBean/{id}` `[GET]` (legacy)
 - `/API/1.1/categoriaFiscal/{id}` `[GET]`
 - `/API/1.1/depositos/{id}` `[GET]`
 - `/API/1.1/identificacionTributaria/{id}` `[GET]`
 - `/API/1.1/monedaBean/{id}` `[GET]`
+- `/API/1.1/productoVentaBean` `[GET, POST]` (legacy)
+- `/API/1.1/productoVentaBean/{id}` `[GET, PUT, PATCH, DELETE]` (legacy)
 - `/API/1.1/vendedorBean/{id}` `[GET]`
 
 ## Endpoints locales fuera de Swagger (infra)

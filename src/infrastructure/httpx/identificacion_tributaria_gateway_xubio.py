@@ -4,6 +4,7 @@ Path: src/infrastructure/httpx/identificacion_tributaria_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.identificacion_tributaria_gateway import (
     IdentificacionTributariaGateway,
@@ -19,6 +20,7 @@ from .xubio_crud_helpers import list_items
 logger = get_logger(__name__)
 
 IDENTIFICACION_TRIBUTARIA_PATH = "/API/1.1/identificacionTributaria"
+IDENTIFICACION_TRIBUTARIA_ID_KEYS = ("ID", "id")
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
@@ -62,7 +64,9 @@ class XubioIdentificacionTributariaGateway(IdentificacionTributariaGateway):
     def get(self, identificacion_tributaria_id: int) -> Optional[Dict[str, Any]]:
         items = self.list()
         for item in items:
-            if _match_identificacion_tributaria_id(item, identificacion_tributaria_id):
+            if match_any_id(
+                item, identificacion_tributaria_id, IDENTIFICACION_TRIBUTARIA_ID_KEYS
+            ):
                 return item
         return None
 
@@ -87,12 +91,3 @@ class XubioIdentificacionTributariaGateway(IdentificacionTributariaGateway):
             ttl=self._list_cache_ttl,
         )
 
-
-def _match_identificacion_tributaria_id(
-    item: Dict[str, Any], identificacion_tributaria_id: int
-) -> bool:
-    for key in ("ID", "id"):
-        value = item.get(key)
-        if value == identificacion_tributaria_id:
-            return True
-    return False

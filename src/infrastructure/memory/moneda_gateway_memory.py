@@ -4,6 +4,7 @@ Path: src/infrastructure/memory/moneda_gateway_memory.py
 
 from typing import Any, Dict, List, Optional
 
+from ...shared.id_mapping import match_any_id
 from ...use_cases.ports.moneda_gateway import MonedaGateway
 
 
@@ -27,8 +28,6 @@ class InMemoryMonedaGateway(MonedaGateway):
 
     def get(self, moneda_id: int) -> Optional[Dict[str, Any]]:
         for item in self._items:
-            if item.get("ID") == moneda_id:
-                return dict(item)
-            if item.get("id") == moneda_id:
+            if match_any_id(item, moneda_id, ("ID", "id")):
                 return dict(item)
         return None

@@ -4,6 +4,7 @@ Path: src/infrastructure/memory/vendedor_gateway_memory.py
 
 from typing import Any, Dict, List, Optional
 
+from ...shared.id_mapping import match_any_id
 from ...use_cases.ports.vendedor_gateway import VendedorGateway
 
 
@@ -29,10 +30,6 @@ class InMemoryVendedorGateway(VendedorGateway):
 
     def get(self, vendedor_id: int) -> Optional[Dict[str, Any]]:
         for item in self._items:
-            if item.get("vendedorId") == vendedor_id:
-                return dict(item)
-            if item.get("ID") == vendedor_id:
-                return dict(item)
-            if item.get("id") == vendedor_id:
+            if match_any_id(item, vendedor_id, ("vendedorId", "ID", "id")):
                 return dict(item)
         return None

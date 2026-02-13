@@ -4,6 +4,7 @@ Path: src/infrastructure/httpx/vendedor_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.vendedor_gateway import VendedorGateway
 from .xubio_cache_helpers import (
@@ -17,6 +18,7 @@ from .xubio_crud_helpers import list_items
 logger = get_logger(__name__)
 
 VENDEDOR_PATH = "/API/1.1/vendedorBean"
+VENDEDOR_ID_KEYS = ("vendedorId", "ID", "id")
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
@@ -55,7 +57,7 @@ class XubioVendedorGateway(VendedorGateway):
     def get(self, vendedor_id: int) -> Optional[Dict[str, Any]]:
         items = self.list()
         for item in items:
-            if _match_vendedor_id(item, vendedor_id):
+            if match_any_id(item, vendedor_id, VENDEDOR_ID_KEYS):
                 return item
         return None
 
@@ -68,10 +70,3 @@ class XubioVendedorGateway(VendedorGateway):
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
         cache_set(_GLOBAL_LIST_CACHE, VENDEDOR_PATH, items, ttl=self._list_cache_ttl)
 
-
-def _match_vendedor_id(item: Dict[str, Any], vendedor_id: int) -> bool:
-    for key in ("vendedorId", "ID", "id"):
-        value = item.get(key)
-        if value == vendedor_id:
-            return True
-    return False

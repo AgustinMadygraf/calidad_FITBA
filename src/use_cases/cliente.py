@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from ..entities.cliente import Cliente
 from ..entities.common import SimpleItem
+from ..shared.id_mapping import first_non_none
 from ..use_cases.ports.cliente_gateway import ClienteGateway
 from ..use_cases.ports.lista_precio_gateway import ListaPrecioGateway
 
@@ -70,7 +71,4 @@ def _ensure_lista_precio_exists(
 
 
 def _extract_lista_precio_id(lista_precio: SimpleItem) -> Optional[int]:
-    for value in (lista_precio.ID, lista_precio.id):
-        if value is not None:
-            return value
-    return None
+    return first_non_none(lista_precio.ID, lista_precio.id)

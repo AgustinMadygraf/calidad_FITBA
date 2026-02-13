@@ -4,6 +4,7 @@ Path: src/infrastructure/httpx/moneda_gateway_xubio.py
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.moneda_gateway import MonedaGateway
 from .xubio_cache_helpers import (
@@ -17,6 +18,7 @@ from .xubio_crud_helpers import list_items
 logger = get_logger(__name__)
 
 MONEDA_PATH = "/API/1.1/monedaBean"
+MONEDA_ID_KEYS = ("ID", "id")
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
@@ -55,7 +57,7 @@ class XubioMonedaGateway(MonedaGateway):
     def get(self, moneda_id: int) -> Optional[Dict[str, Any]]:
         items = self.list()
         for item in items:
-            if _match_moneda_id(item, moneda_id):
+            if match_any_id(item, moneda_id, MONEDA_ID_KEYS):
                 return item
         return None
 
@@ -68,10 +70,3 @@ class XubioMonedaGateway(MonedaGateway):
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
         cache_set(_GLOBAL_LIST_CACHE, MONEDA_PATH, items, ttl=self._list_cache_ttl)
 
-
-def _match_moneda_id(item: Dict[str, Any], moneda_id: int) -> bool:
-    for key in ("ID", "id"):
-        value = item.get(key)
-        if value == moneda_id:
-            return True
-    return False

@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import httpx
 
 from ...use_cases.ports.producto_gateway import ProductoGateway
+from ...shared.id_mapping import extract_int_id, match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .token_client import request_with_token
@@ -24,6 +25,7 @@ logger = get_logger(__name__)
 
 DEFAULT_PRIMARY_BEAN = "ProductoVentaBean"
 DEFAULT_FALLBACK_BEAN = "ProductoCompraBean"
+PRODUCTO_ID_KEYS = ("productoid", "productoId", "ID", "id")
 
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 _GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
@@ -89,7 +91,7 @@ class XubioProductoGateway(ProductoGateway):
         cached = self._get_cached_list(self._primary_bean)
         if cached is not None:
             for item in cached:
-                if _match_producto_id(item, producto_id):
+                if match_any_id(item, producto_id, PRODUCTO_ID_KEYS):
                     self._store_item_cache(self._primary_bean, producto_id, item)
                     return item
         status, item = self._get_from_bean(self._primary_bean, producto_id)
@@ -179,7 +181,7 @@ class XubioProductoGateway(ProductoGateway):
     def _store_cache(self, bean: str, items: List[Dict[str, Any]]) -> None:
         cache_set(_GLOBAL_LIST_CACHE, bean, items, ttl=self._list_cache_ttl)
         for item in items:
-            producto_id = _extract_producto_id(item)
+            producto_id = extract_int_id(item, PRODUCTO_ID_KEYS)
             if producto_id is not None:
                 self._store_item_cache(bean, producto_id, item)
 
@@ -209,7 +211,7 @@ class XubioProductoGateway(ProductoGateway):
     ) -> Optional[Dict[str, Any]]:
         items = self._list_with_fallback(bean, fallback_bean)
         for item in items:
-            if _match_producto_id(item, producto_id):
+            if match_any_id(item, producto_id, PRODUCTO_ID_KEYS):
                 return item
         return None
 
@@ -244,22 +246,6 @@ class XubioProductoGateway(ProductoGateway):
         keys = [key for key in _GLOBAL_ITEM_CACHE if key.startswith(f"/API/1.1/{bean}/")]
         for key in keys:
             _GLOBAL_ITEM_CACHE.pop(key, None)
-
-
-def _match_producto_id(item: Dict[str, Any], producto_id: int) -> bool:
-    for key in ("productoid", "productoId", "ID", "id"):
-        value = item.get(key)
-        if value == producto_id:
-            return True
-    return False
-
-
-def _extract_producto_id(item: Dict[str, Any]) -> Optional[int]:
-    for key in ("productoid", "productoId", "ID", "id"):
-        value = item.get(key)
-        if isinstance(value, int):
-            return value
-    return None
 
 
 def _producto_item_cache_key(bean: str, producto_id: int) -> str:

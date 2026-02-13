@@ -5,6 +5,7 @@ Path: src/infrastructure/httpx/deposito_gateway_xubio.py
 from typing import Any, Dict, List, Optional, Tuple
 
 from ...use_cases.ports.deposito_gateway import DepositoGateway
+from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from .xubio_cache_helpers import (
     cache_get,
@@ -17,6 +18,7 @@ from .xubio_crud_helpers import list_items
 logger = get_logger(__name__)
 
 DEPOSITO_PATH = "/API/1.1/depositos"
+DEPOSITO_ID_KEYS = ("ID", "id", "depositoId")
 _GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 
@@ -55,7 +57,7 @@ class XubioDepositoGateway(DepositoGateway):
     def get(self, deposito_id: int) -> Optional[Dict[str, Any]]:
         items = self.list()
         for item in items:
-            if _match_deposito_id(item, deposito_id):
+            if match_any_id(item, deposito_id, DEPOSITO_ID_KEYS):
                 return item
         return None
 
@@ -68,10 +70,3 @@ class XubioDepositoGateway(DepositoGateway):
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
         cache_set(_GLOBAL_LIST_CACHE, DEPOSITO_PATH, items, ttl=self._list_cache_ttl)
 
-
-def _match_deposito_id(item: Dict[str, Any], deposito_id: int) -> bool:
-    for key in ("ID", "id", "depositoId"):
-        value = item.get(key)
-        if value == deposito_id:
-            return True
-    return False

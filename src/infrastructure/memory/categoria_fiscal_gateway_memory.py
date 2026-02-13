@@ -4,6 +4,7 @@ Path: src/infrastructure/memory/categoria_fiscal_gateway_memory.py
 
 from typing import Any, Dict, List, Optional
 
+from ...shared.id_mapping import match_any_id
 from ...use_cases.ports.categoria_fiscal_gateway import CategoriaFiscalGateway
 
 
@@ -27,8 +28,6 @@ class InMemoryCategoriaFiscalGateway(CategoriaFiscalGateway):
 
     def get(self, categoria_fiscal_id: int) -> Optional[Dict[str, Any]]:
         for item in self._items:
-            if item.get("ID") == categoria_fiscal_id:
-                return dict(item)
-            if item.get("id") == categoria_fiscal_id:
+            if match_any_id(item, categoria_fiscal_id, ("ID", "id")):
                 return dict(item)
         return None

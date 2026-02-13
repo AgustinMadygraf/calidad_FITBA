@@ -4,6 +4,7 @@ Path: src/infrastructure/memory/identificacion_tributaria_gateway_memory.py
 
 from typing import Any, Dict, List, Optional
 
+from ...shared.id_mapping import match_any_id
 from ...use_cases.ports.identificacion_tributaria_gateway import (
     IdentificacionTributariaGateway,
 )
@@ -91,8 +92,6 @@ class InMemoryIdentificacionTributariaGateway(IdentificacionTributariaGateway):
 
     def get(self, identificacion_tributaria_id: int) -> Optional[Dict[str, Any]]:
         for item in self._items:
-            if item.get("ID") == identificacion_tributaria_id:
-                return dict(item)
-            if item.get("id") == identificacion_tributaria_id:
+            if match_any_id(item, identificacion_tributaria_id, ("ID", "id")):
                 return dict(item)
         return None

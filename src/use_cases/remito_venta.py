@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from ..entities.remito_venta import RemitoVenta, TransaccionProductoItem
+from ..shared.id_mapping import first_non_none
 from ..use_cases.ports.cliente_gateway import ClienteGateway
 from ..use_cases.ports.producto_gateway import ProductoGateway
 from ..use_cases.ports.deposito_gateway import DepositoGateway
@@ -104,17 +105,13 @@ def _ensure_productos_exist(
 
 def _extract_producto_id(item: TransaccionProductoItem) -> Optional[int]:
     producto = item.producto_ref.producto
-    candidates = [
+    return first_non_none(
         item.producto_ref.productoid,
         item.producto_ref.productoId,
         producto.productoid if producto else None,
         producto.ID if producto else None,
         producto.id if producto else None,
-    ]
-    for value in candidates:
-        if value is not None:
-            return value
-    return None
+    )
 
 
 def _ensure_deposito_exists(
@@ -142,7 +139,4 @@ def _ensure_item_depositos_exist(
 def _extract_deposito_id(item: TransaccionProductoItem) -> Optional[int]:
     if item.refs.deposito is None:
         return None
-    for value in (item.refs.deposito.ID, item.refs.deposito.id):
-        if value is not None:
-            return value
-    return None
+    return first_non_none(item.refs.deposito.ID, item.refs.deposito.id)
