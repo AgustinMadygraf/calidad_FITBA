@@ -2,16 +2,15 @@
 Path: src/infrastructure/httpx/identificacion_tributaria_gateway_xubio.py
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.identificacion_tributaria_gateway import (
     IdentificacionTributariaGateway,
 )
+from .cache_provider import providers_for_module
 from .xubio_cache_helpers import (
-    cache_get,
-    cache_set,
     default_get_cache_enabled,
     read_cache_ttl,
 )
@@ -21,7 +20,11 @@ logger = get_logger(__name__)
 
 IDENTIFICACION_TRIBUTARIA_PATH = "/API/1.1/identificacionTributaria"
 IDENTIFICACION_TRIBUTARIA_ID_KEYS = ("ID", "id")
-_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
+_LIST_CACHE_PROVIDER, _ = providers_for_module(
+    namespace="identificacion_tributaria", with_item_cache=False
+)
+# Compatibility alias for tests and debug tooling.
+_GLOBAL_LIST_CACHE = _LIST_CACHE_PROVIDER.store
 
 
 class XubioIdentificacionTributariaGateway(IdentificacionTributariaGateway):
@@ -71,8 +74,7 @@ class XubioIdentificacionTributariaGateway(IdentificacionTributariaGateway):
         return None
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached = cache_get(
-            _GLOBAL_LIST_CACHE,
+        cached = _LIST_CACHE_PROVIDER.get(
             IDENTIFICACION_TRIBUTARIA_PATH,
             ttl=self._list_cache_ttl,
         )
@@ -84,10 +86,8 @@ class XubioIdentificacionTributariaGateway(IdentificacionTributariaGateway):
         return cached
 
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        cache_set(
-            _GLOBAL_LIST_CACHE,
+        _LIST_CACHE_PROVIDER.set(
             IDENTIFICACION_TRIBUTARIA_PATH,
             items,
             ttl=self._list_cache_ttl,
         )
-

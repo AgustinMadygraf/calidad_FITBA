@@ -2,14 +2,13 @@
 Path: src/infrastructure/httpx/moneda_gateway_xubio.py
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.moneda_gateway import MonedaGateway
+from .cache_provider import providers_for_module
 from .xubio_cache_helpers import (
-    cache_get,
-    cache_set,
     default_get_cache_enabled,
     read_cache_ttl,
 )
@@ -19,7 +18,9 @@ logger = get_logger(__name__)
 
 MONEDA_PATH = "/API/1.1/monedaBean"
 MONEDA_ID_KEYS = ("ID", "id")
-_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
+_LIST_CACHE_PROVIDER, _ = providers_for_module(namespace="moneda", with_item_cache=False)
+# Compatibility alias for tests and debug tooling.
+_GLOBAL_LIST_CACHE = _LIST_CACHE_PROVIDER.store
 
 
 class XubioMonedaGateway(MonedaGateway):
@@ -62,11 +63,10 @@ class XubioMonedaGateway(MonedaGateway):
         return None
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached = cache_get(_GLOBAL_LIST_CACHE, MONEDA_PATH, ttl=self._list_cache_ttl)
+        cached = _LIST_CACHE_PROVIDER.get(MONEDA_PATH, ttl=self._list_cache_ttl)
         if cached is not None:
             logger.info("Xubio lista monedas: cache hit (%d items)", len(cached))
         return cached
 
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        cache_set(_GLOBAL_LIST_CACHE, MONEDA_PATH, items, ttl=self._list_cache_ttl)
-
+        _LIST_CACHE_PROVIDER.set(MONEDA_PATH, items, ttl=self._list_cache_ttl)

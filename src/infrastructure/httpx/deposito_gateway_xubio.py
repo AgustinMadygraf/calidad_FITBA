@@ -2,14 +2,13 @@
 Path: src/infrastructure/httpx/deposito_gateway_xubio.py
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ...use_cases.ports.deposito_gateway import DepositoGateway
 from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
+from .cache_provider import providers_for_module
 from .xubio_cache_helpers import (
-    cache_get,
-    cache_set,
     default_get_cache_enabled,
     read_cache_ttl,
 )
@@ -19,7 +18,9 @@ logger = get_logger(__name__)
 
 DEPOSITO_PATH = "/API/1.1/depositos"
 DEPOSITO_ID_KEYS = ("ID", "id", "depositoId")
-_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
+_LIST_CACHE_PROVIDER, _ = providers_for_module(namespace="deposito", with_item_cache=False)
+# Compatibility alias for tests and debug tooling.
+_GLOBAL_LIST_CACHE = _LIST_CACHE_PROVIDER.store
 
 
 class XubioDepositoGateway(DepositoGateway):
@@ -62,11 +63,10 @@ class XubioDepositoGateway(DepositoGateway):
         return None
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached = cache_get(_GLOBAL_LIST_CACHE, DEPOSITO_PATH, ttl=self._list_cache_ttl)
+        cached = _LIST_CACHE_PROVIDER.get(DEPOSITO_PATH, ttl=self._list_cache_ttl)
         if cached is not None:
             logger.info("Xubio lista depositos: cache hit (%d items)", len(cached))
         return cached
 
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        cache_set(_GLOBAL_LIST_CACHE, DEPOSITO_PATH, items, ttl=self._list_cache_ttl)
-
+        _LIST_CACHE_PROVIDER.set(DEPOSITO_PATH, items, ttl=self._list_cache_ttl)

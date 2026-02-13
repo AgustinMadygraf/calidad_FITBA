@@ -2,14 +2,13 @@
 Path: src/infrastructure/httpx/categoria_fiscal_gateway_xubio.py
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.categoria_fiscal_gateway import CategoriaFiscalGateway
+from .cache_provider import providers_for_module
 from .xubio_cache_helpers import (
-    cache_get,
-    cache_set,
     default_get_cache_enabled,
     read_cache_ttl,
 )
@@ -19,7 +18,11 @@ logger = get_logger(__name__)
 
 CATEGORIA_FISCAL_PATH = "/API/1.1/categoriaFiscal"
 CATEGORIA_FISCAL_ID_KEYS = ("ID", "id")
-_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
+_LIST_CACHE_PROVIDER, _ = providers_for_module(
+    namespace="categoria_fiscal", with_item_cache=False
+)
+# Compatibility alias for tests and debug tooling.
+_GLOBAL_LIST_CACHE = _LIST_CACHE_PROVIDER.store
 
 
 class XubioCategoriaFiscalGateway(CategoriaFiscalGateway):
@@ -65,8 +68,8 @@ class XubioCategoriaFiscalGateway(CategoriaFiscalGateway):
         return None
 
     def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached = cache_get(
-            _GLOBAL_LIST_CACHE, CATEGORIA_FISCAL_PATH, ttl=self._list_cache_ttl
+        cached = _LIST_CACHE_PROVIDER.get(
+            CATEGORIA_FISCAL_PATH, ttl=self._list_cache_ttl
         )
         if cached is not None:
             logger.info(
@@ -76,10 +79,8 @@ class XubioCategoriaFiscalGateway(CategoriaFiscalGateway):
         return cached
 
     def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        cache_set(
-            _GLOBAL_LIST_CACHE,
+        _LIST_CACHE_PROVIDER.set(
             CATEGORIA_FISCAL_PATH,
             items,
             ttl=self._list_cache_ttl,
         )
-

@@ -1,28 +1,33 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import httpx
 
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from ...use_cases.ports.remito_gateway import RemitoGateway
+from .cache_provider import providers_for_module
 from .xubio_cache_helpers import (
-    cache_get,
-    cache_set,
     default_get_cache_enabled,
     read_cache_ttl,
 )
 from .token_client import request_with_token
 from .xubio_crud_helpers import create_item, delete_item, list_items, update_item
+from .xubio_cached_crud_gateway_base import XubioCachedCrudGatewayBase
 from .xubio_httpx_helpers import raise_for_status
 
 logger = get_logger(__name__)
 
 REMITO_PATH = "/API/1.1/remitoVentaBean"
-_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
-_GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+REMITO_ID_KEYS = ("transaccionId",)
+_LIST_CACHE_PROVIDER, _ITEM_CACHE_PROVIDER = providers_for_module(
+    namespace="remito", with_item_cache=True
+)
+# Compatibility aliases for tests and debug tooling.
+_GLOBAL_LIST_CACHE = _LIST_CACHE_PROVIDER.store
+_GLOBAL_ITEM_CACHE = _ITEM_CACHE_PROVIDER.store
 
 
-class XubioRemitoGateway(RemitoGateway):
+class XubioRemitoGateway(XubioCachedCrudGatewayBase, RemitoGateway):
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -30,42 +35,36 @@ class XubioRemitoGateway(RemitoGateway):
         list_cache_ttl: Optional[float] = None,
         enable_get_cache: Optional[bool] = None,
     ) -> None:
-        self._base_url = (base_url or "https://xubio.com").rstrip("/")
-        self._timeout = timeout
         if list_cache_ttl is None:
             list_cache_ttl = read_cache_ttl("XUBIO_REMITO_LIST_TTL", default=15.0)
         if enable_get_cache is None:
             enable_get_cache = default_get_cache_enabled()
         if not enable_get_cache:
             list_cache_ttl = 0.0
-        self._list_cache_ttl = max(0.0, float(list_cache_ttl))
-
-    def _url(self, path: str) -> str:
-        return f"{self._base_url}{path}"
-
-    def list(self) -> List[Dict[str, Any]]:
-        cached = self._get_cached_list()
-        if cached is not None:
-            return cached
-        url = self._url(REMITO_PATH)
-        items = list_items(
-            url=url, timeout=self._timeout, label="remitos", logger=logger
+        super().__init__(
+            base_url=base_url or "https://xubio.com",
+            timeout=float(timeout or 10.0),
+            list_cache_ttl=float(list_cache_ttl),
+            path=REMITO_PATH,
+            list_label="remitos",
+            detail_label="remito",
+            id_keys=REMITO_ID_KEYS,
+            logger=logger,
+            list_cache_provider=_LIST_CACHE_PROVIDER,
+            item_cache_provider=_ITEM_CACHE_PROVIDER,
+            prefer_list_lookup_before_detail=True,
         )
-        self._store_cache(items)
-        return items
 
-    def get(self, transaccion_id: int) -> Optional[Dict[str, Any]]:
-        cached_item = self._get_cached_item(transaccion_id)
-        if cached_item is not None:
-            logger.info("Xubio remito detalle: cache hit (%s)", transaccion_id)
-            return cached_item
-        cached = self._get_cached_list()
-        if cached is not None:
-            for item in cached:
-                if item.get("transaccionId") == transaccion_id:
-                    self._store_item_cache(transaccion_id, item)
-                    return item
-        url = self._url(f"{REMITO_PATH}/{transaccion_id}")
+    def _fetch_list_remote(self) -> List[Dict[str, Any]]:
+        return list_items(
+            url=self._url(REMITO_PATH),
+            timeout=self._timeout,
+            label="remitos",
+            logger=logger,
+        )
+
+    def _fetch_detail_remote(self, resource_id: int) -> Optional[Dict[str, Any]]:
+        url = self._url(f"{REMITO_PATH}/{resource_id}")
         try:
             resp = request_with_token("GET", url, timeout=self._timeout)
             logger.info("Xubio GET %s -> %s", url, resp.status_code)
@@ -77,88 +76,38 @@ class XubioRemitoGateway(RemitoGateway):
                     url,
                     resp.status_code,
                 )
-                item = self._fallback_get_from_list(transaccion_id)
-                if item is not None:
-                    self._store_item_cache(transaccion_id, item)
-                return item
+                return self._fallback_get_from_list(resource_id)
             raise_for_status(resp)
-            item = resp.json()
-            self._store_item_cache(transaccion_id, item)
-            return item
+            return resp.json()
         except httpx.HTTPError as exc:
             raise ExternalServiceError(str(exc)) from exc
 
-    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        url = self._url(REMITO_PATH)
-        created = create_item(url=url, timeout=self._timeout, data=data, logger=logger)
-        self._clear_list_cache()
-        self._clear_item_cache()
-        return created
+    def _create_remote(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return create_item(
+            url=self._url(REMITO_PATH),
+            timeout=self._timeout,
+            data=data,
+            logger=logger,
+        )
 
-    def update(
-        self, transaccion_id: int, data: Dict[str, Any]
+    def _update_remote(
+        self, resource_id: int, data: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        url = self._url(REMITO_PATH)
         payload = dict(data)
-        payload["transaccionId"] = transaccion_id
-        updated = update_item(
-            url=url, timeout=self._timeout, data=payload, logger=logger
-        )
-        self._clear_list_cache()
-        self._clear_item_cache(transaccion_id)
-        return updated
-
-    def delete(self, transaccion_id: int) -> bool:
-        url = self._url(f"{REMITO_PATH}/{transaccion_id}")
-        deleted = delete_item(url=url, timeout=self._timeout, logger=logger)
-        if deleted:
-            self._clear_list_cache()
-            self._clear_item_cache(transaccion_id)
-        return deleted
-
-    def _fallback_get_from_list(self, transaccion_id: int) -> Optional[Dict[str, Any]]:
-        items = self.list()
-        for item in items:
-            if item.get("transaccionId") == transaccion_id:
-                return item
-        return None
-
-    def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached = cache_get(_GLOBAL_LIST_CACHE, REMITO_PATH, ttl=self._list_cache_ttl)
-        if cached is not None:
-            logger.info("Xubio lista remitos: cache hit (%d items)", len(cached))
-        return cached
-
-    def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        cache_set(_GLOBAL_LIST_CACHE, REMITO_PATH, items, ttl=self._list_cache_ttl)
-        for item in items:
-            transaccion_id = item.get("transaccionId")
-            if isinstance(transaccion_id, int):
-                self._store_item_cache(transaccion_id, item)
-
-    def _clear_list_cache(self) -> None:
-        _GLOBAL_LIST_CACHE.pop(REMITO_PATH, None)
-
-    def _get_cached_item(self, transaccion_id: int) -> Optional[Dict[str, Any]]:
-        return cache_get(
-            _GLOBAL_ITEM_CACHE,
-            _remito_item_cache_key(transaccion_id),
-            ttl=self._list_cache_ttl,
+        payload["transaccionId"] = resource_id
+        return update_item(
+            url=self._url(REMITO_PATH),
+            timeout=self._timeout,
+            data=payload,
+            logger=logger,
         )
 
-    def _store_item_cache(self, transaccion_id: int, item: Dict[str, Any]) -> None:
-        cache_set(
-            _GLOBAL_ITEM_CACHE,
-            _remito_item_cache_key(transaccion_id),
-            item,
-            ttl=self._list_cache_ttl,
+    def _delete_remote(self, resource_id: int) -> bool:
+        return delete_item(
+            url=self._url(f"{REMITO_PATH}/{resource_id}"),
+            timeout=self._timeout,
+            logger=logger,
         )
-
-    def _clear_item_cache(self, transaccion_id: Optional[int] = None) -> None:
-        if transaccion_id is not None:
-            _GLOBAL_ITEM_CACHE.pop(_remito_item_cache_key(transaccion_id), None)
-            return
-        _GLOBAL_ITEM_CACHE.clear()
 
 
 def _remito_item_cache_key(transaccion_id: int) -> str:

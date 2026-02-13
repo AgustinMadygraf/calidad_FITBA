@@ -16,7 +16,7 @@ Documento de trabajo para ejecutar mejoras de arquitectura y testing.
   Complejidad: Media.
   Dependencias: ninguna.
 
-- [ ] T0.1b Confirmar matriz en venv Ubuntu (otra PC).
+- [x] T0.1b Confirmar matriz en venv Ubuntu (otra PC).
   Descripcion: repetir la captura de versiones y smoke test en el entorno Ubuntu.
   Entregable: fila adicional en el Anexo de matriz de compatibilidad.
   Criterio de aceptacion: misma prueba `pytest -q tests/test_api_http_smoke.py` pasa.
@@ -90,7 +90,7 @@ Documento de trabajo para ejecutar mejoras de arquitectura y testing.
   Complejidad: Media.
   Dependencias: T1.1.
 
-- [ ] T2.4 Endurecer validaciones de payload sin romper compatibilidad externa.
+- [x] T2.4 Endurecer validaciones de payload sin romper compatibilidad externa.
   Descripcion: introducir validaciones internas tipadas manteniendo input/output original de Xubio.
   Entregable: validadores internos y tests de no-regresion de payload.
   Criterio de aceptacion: mismas respuestas externas, menos errores silenciosos internos.
@@ -99,21 +99,21 @@ Documento de trabajo para ejecutar mejoras de arquitectura y testing.
 
 ## Fase 3 - Refactor de gateways y cache (single-instance hoy, escalable manana)
 
-- [ ] T3.1 Crear base comun para gateways HTTPX CRUD.
+- [x] T3.1 Crear base comun para gateways HTTPX CRUD.
   Descripcion: extraer comportamiento repetido de list/get/create/update/delete con cache y fallback.
   Entregable: clase/base helper reutilizable por recurso.
   Criterio de aceptacion: menor LOC total y semantica intacta.
   Complejidad: Alta.
   Dependencias: T1.1.
 
-- [ ] T3.2 Encapsular cache en interfaz.
+- [x] T3.2 Encapsular cache en interfaz.
   Descripcion: mantener in-memory por defecto pero ocultar detalles de store global.
   Entregable: contrato `CacheProvider` + implementacion in-memory.
   Criterio de aceptacion: gateways dependen de la interfaz, no de diccionarios globales.
   Complejidad: Media.
   Dependencias: T3.1.
 
-- [ ] T3.3 Preparar adaptador opcional Redis (sin activar por defecto).
+- [x] T3.3 Preparar adaptador opcional Redis (sin activar por defecto).
   Descripcion: dejar extension preparada para escenario multi-instancia futuro.
   Entregable: implementacion opcional y documentada.
   Criterio de aceptacion: feature flag para seleccionar provider, default in-memory.
@@ -122,14 +122,14 @@ Documento de trabajo para ejecutar mejoras de arquitectura y testing.
 
 ## Fase 5 - Cobertura y calidad continua
 
-- [ ] T5.1 Incorporar cobertura minima por suite.
+- [x] T5.1 Incorporar cobertura minima por suite.
   Descripcion: definir umbral por tipo de test (unit/integration/contract/api_http).
   Entregable: configuracion de `pytest-cov` por suite.
   Criterio de aceptacion: falla automatica cuando cobertura cae bajo umbral acordado.
   Complejidad: Baja.
   Dependencias: T0.3.
 
-- [ ] T5.3 Checklist de release tecnico.
+- [x] T5.3 Checklist de release tecnico.
   Descripcion: validar contrato, tests, logs y politicas de runtime antes de merge.
   Entregable: checklist en docs y script de verificacion local.
   Criterio de aceptacion: proceso repetible previo a cada entrega.
@@ -149,3 +149,4 @@ Documento de trabajo para ejecutar mejoras de arquitectura y testing.
 | Entorno | Python | fastapi | starlette | httpx | anyio | pytest | pytest-cov | Verificacion |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Windows venv (C:\\proyectos_software\\madypack-dev\\calidad_FITBA\\venv) | 3.10.11 | 0.128.1 | 0.50.0 | 0.28.1 | 4.12.1 | 9.0.2 | 7.0.0 | `pytest -q tests/test_api_http_smoke.py` |
+| Ubuntu venv (/home/agustin/proyectos_software/calidad_FITBA/venv) | 3.12.3 | 0.128.6 | 0.52.1 | 0.28.1 | 4.12.1 | 9.0.2 | 7.0.0 | `pytest -q tests/test_api_http_smoke.py` |

@@ -2,14 +2,12 @@
 Path: src/infrastructure/httpx/lista_precio_gateway_xubio.py
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from ...shared.id_mapping import match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.ports.lista_precio_gateway import ListaPrecioGateway
+from .cache_provider import providers_for_module
 from .xubio_cache_helpers import (
-    cache_get,
-    cache_set,
     default_get_cache_enabled,
     read_cache_ttl,
 )
@@ -21,16 +19,21 @@ from .xubio_crud_helpers import (
     patch_item,
     update_item,
 )
+from .xubio_cached_crud_gateway_base import XubioCachedCrudGatewayBase
 
 logger = get_logger(__name__)
 
 LISTA_PRECIO_PATH = "/API/1.1/listaPrecioBean"
 LISTA_PRECIO_ID_KEYS = ("listaPrecioID", "listaPrecioId", "ID", "id")
-_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
-_GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_LIST_CACHE_PROVIDER, _ITEM_CACHE_PROVIDER = providers_for_module(
+    namespace="lista_precio", with_item_cache=True
+)
+# Compatibility aliases for tests and debug tooling.
+_GLOBAL_LIST_CACHE = _LIST_CACHE_PROVIDER.store
+_GLOBAL_ITEM_CACHE = _ITEM_CACHE_PROVIDER.store
 
 
-class XubioListaPrecioGateway(ListaPrecioGateway):
+class XubioListaPrecioGateway(XubioCachedCrudGatewayBase, ListaPrecioGateway):
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -38,129 +41,75 @@ class XubioListaPrecioGateway(ListaPrecioGateway):
         list_cache_ttl: Optional[float] = None,
         enable_get_cache: Optional[bool] = None,
     ) -> None:
-        self._base_url = (base_url or "https://xubio.com").rstrip("/")
-        self._timeout = timeout
         if list_cache_ttl is None:
             list_cache_ttl = read_cache_ttl("XUBIO_LISTA_PRECIO_LIST_TTL")
         if enable_get_cache is None:
             enable_get_cache = default_get_cache_enabled()
         if not enable_get_cache:
             list_cache_ttl = 0.0
-        self._list_cache_ttl = max(0.0, float(list_cache_ttl))
-
-    def _url(self, path: str) -> str:
-        return f"{self._base_url}{path}"
-
-    def list(self) -> List[Dict[str, Any]]:
-        cached = self._get_cached_list()
-        if cached is not None:
-            return cached
-        url = self._url(LISTA_PRECIO_PATH)
-        items = list_items(
-            url=url, timeout=self._timeout, label="listas_precio", logger=logger
+        super().__init__(
+            base_url=base_url or "https://xubio.com",
+            timeout=float(timeout or 10.0),
+            list_cache_ttl=float(list_cache_ttl),
+            path=LISTA_PRECIO_PATH,
+            list_label="listas_precio",
+            detail_label="listaPrecio",
+            id_keys=LISTA_PRECIO_ID_KEYS,
+            logger=logger,
+            list_cache_provider=_LIST_CACHE_PROVIDER,
+            item_cache_provider=_ITEM_CACHE_PROVIDER,
         )
-        self._store_cache(items)
-        return items
 
-    def get(self, lista_precio_id: int) -> Optional[Dict[str, Any]]:
-        cached_item = self._get_cached_item(lista_precio_id)
-        if cached_item is not None:
-            logger.info("Xubio listaPrecio detalle: cache hit (%s)", lista_precio_id)
-            return cached_item
+    def _fetch_list_remote(self) -> List[Dict[str, Any]]:
+        return list_items(
+            url=self._url(LISTA_PRECIO_PATH),
+            timeout=self._timeout,
+            label="listas_precio",
+            logger=logger,
+        )
 
-        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
-        item = get_item_with_fallback(
-            url=url,
+    def _fetch_detail_remote(self, resource_id: int) -> Optional[Dict[str, Any]]:
+        return get_item_with_fallback(
+            url=self._url(f"{LISTA_PRECIO_PATH}/{resource_id}"),
             timeout=self._timeout,
             logger=logger,
-            fallback=lambda: self._fallback_get_from_list(lista_precio_id),
+            fallback=lambda: self._fallback_get_from_list(resource_id),
         )
-        if item is not None:
-            self._store_item_cache(lista_precio_id, item)
-        return item
 
-    def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        url = self._url(LISTA_PRECIO_PATH)
-        created = create_item(url=url, timeout=self._timeout, data=data, logger=logger)
-        self._clear_list_cache()
-        self._clear_item_cache()
-        return created
+    def _create_remote(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return create_item(
+            url=self._url(LISTA_PRECIO_PATH),
+            timeout=self._timeout,
+            data=data,
+            logger=logger,
+        )
 
-    def update(
-        self, lista_precio_id: int, data: Dict[str, Any]
+    def _update_remote(
+        self, resource_id: int, data: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
-        updated = update_item(url=url, timeout=self._timeout, data=data, logger=logger)
-        self._clear_list_cache()
-        self._clear_item_cache(lista_precio_id)
-        return updated
+        return update_item(
+            url=self._url(f"{LISTA_PRECIO_PATH}/{resource_id}"),
+            timeout=self._timeout,
+            data=data,
+            logger=logger,
+        )
 
-    def patch(
-        self, lista_precio_id: int, data: Dict[str, Any]
+    def _patch_remote(
+        self, resource_id: int, data: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
-        patched = patch_item(url=url, timeout=self._timeout, data=data, logger=logger)
-        self._clear_list_cache()
-        self._clear_item_cache(lista_precio_id)
-        return patched
-
-    def delete(self, lista_precio_id: int) -> bool:
-        url = self._url(f"{LISTA_PRECIO_PATH}/{lista_precio_id}")
-        deleted = delete_item(url=url, timeout=self._timeout, logger=logger)
-        if deleted:
-            self._clear_list_cache()
-            self._clear_item_cache(lista_precio_id)
-        return deleted
-
-    def _fallback_get_from_list(self, lista_precio_id: int) -> Optional[Dict[str, Any]]:
-        items = self.list()
-        for item in items:
-            if match_any_id(item, lista_precio_id, LISTA_PRECIO_ID_KEYS):
-                return item
-        return None
-
-    def _get_cached_list(self) -> Optional[List[Dict[str, Any]]]:
-        cached = cache_get(
-            _GLOBAL_LIST_CACHE, LISTA_PRECIO_PATH, ttl=self._list_cache_ttl
-        )
-        if cached is not None:
-            logger.info(
-                "Xubio lista listas_precio: cache hit (%d items)",
-                len(cached),
-            )
-        return cached
-
-    def _store_cache(self, items: List[Dict[str, Any]]) -> None:
-        cache_set(
-            _GLOBAL_LIST_CACHE,
-            LISTA_PRECIO_PATH,
-            items,
-            ttl=self._list_cache_ttl,
+        return patch_item(
+            url=self._url(f"{LISTA_PRECIO_PATH}/{resource_id}"),
+            timeout=self._timeout,
+            data=data,
+            logger=logger,
         )
 
-    def _clear_list_cache(self) -> None:
-        _GLOBAL_LIST_CACHE.pop(LISTA_PRECIO_PATH, None)
-
-    def _get_cached_item(self, lista_precio_id: int) -> Optional[Dict[str, Any]]:
-        return cache_get(
-            _GLOBAL_ITEM_CACHE,
-            _lista_precio_item_cache_key(lista_precio_id),
-            ttl=self._list_cache_ttl,
+    def _delete_remote(self, resource_id: int) -> bool:
+        return delete_item(
+            url=self._url(f"{LISTA_PRECIO_PATH}/{resource_id}"),
+            timeout=self._timeout,
+            logger=logger,
         )
-
-    def _store_item_cache(self, lista_precio_id: int, item: Dict[str, Any]) -> None:
-        cache_set(
-            _GLOBAL_ITEM_CACHE,
-            _lista_precio_item_cache_key(lista_precio_id),
-            item,
-            ttl=self._list_cache_ttl,
-        )
-
-    def _clear_item_cache(self, lista_precio_id: Optional[int] = None) -> None:
-        if lista_precio_id is not None:
-            _GLOBAL_ITEM_CACHE.pop(_lista_precio_item_cache_key(lista_precio_id), None)
-            return
-        _GLOBAL_ITEM_CACHE.clear()
 
 
 def _lista_precio_item_cache_key(lista_precio_id: int) -> str:

@@ -11,11 +11,10 @@ from ...use_cases.ports.producto_gateway import ProductoGateway
 from ...shared.id_mapping import extract_int_id, match_any_id
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
+from .cache_provider import providers_for_module
 from .token_client import request_with_token
 from .xubio_crud_helpers import create_item, delete_item, update_item
 from .xubio_cache_helpers import (
-    cache_get,
-    cache_set,
     default_get_cache_enabled,
     read_cache_ttl,
 )
@@ -27,8 +26,12 @@ DEFAULT_PRIMARY_BEAN = "ProductoVentaBean"
 DEFAULT_FALLBACK_BEAN = "ProductoCompraBean"
 PRODUCTO_ID_KEYS = ("productoid", "productoId", "ID", "id")
 
-_GLOBAL_LIST_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
-_GLOBAL_ITEM_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_LIST_CACHE_PROVIDER, _ITEM_CACHE_PROVIDER = providers_for_module(
+    namespace="producto", with_item_cache=True
+)
+# Compatibility aliases for tests and debug tooling.
+_GLOBAL_LIST_CACHE = _LIST_CACHE_PROVIDER.store
+_GLOBAL_ITEM_CACHE = _ITEM_CACHE_PROVIDER.store
 
 
 @dataclass(frozen=True)
@@ -173,13 +176,13 @@ class XubioProductoGateway(ProductoGateway):
             raise ExternalServiceError(str(exc)) from exc
 
     def _get_cached_list(self, bean: str) -> Optional[List[Dict[str, Any]]]:
-        cached = cache_get(_GLOBAL_LIST_CACHE, bean, ttl=self._list_cache_ttl)
+        cached = _LIST_CACHE_PROVIDER.get(bean, ttl=self._list_cache_ttl)
         if cached is not None:
             logger.info("Xubio lista productos: cache hit (%d items)", len(cached))
         return cached
 
     def _store_cache(self, bean: str, items: List[Dict[str, Any]]) -> None:
-        cache_set(_GLOBAL_LIST_CACHE, bean, items, ttl=self._list_cache_ttl)
+        _LIST_CACHE_PROVIDER.set(bean, items, ttl=self._list_cache_ttl)
         for item in items:
             producto_id = extract_int_id(item, PRODUCTO_ID_KEYS)
             if producto_id is not None:
@@ -218,8 +221,7 @@ class XubioProductoGateway(ProductoGateway):
     def _get_cached_item(
         self, bean: str, producto_id: int
     ) -> Optional[Dict[str, Any]]:
-        return cache_get(
-            _GLOBAL_ITEM_CACHE,
+        return _ITEM_CACHE_PROVIDER.get(
             _producto_item_cache_key(bean, producto_id),
             ttl=self._list_cache_ttl,
         )
@@ -229,23 +231,22 @@ class XubioProductoGateway(ProductoGateway):
     ) -> None:
         if item is None:
             return
-        cache_set(
-            _GLOBAL_ITEM_CACHE,
+        _ITEM_CACHE_PROVIDER.set(
             _producto_item_cache_key(bean, producto_id),
             item,
             ttl=self._list_cache_ttl,
         )
 
     def _clear_list_cache(self, bean: str) -> None:
-        _GLOBAL_LIST_CACHE.pop(bean, None)
+        _LIST_CACHE_PROVIDER.delete(bean)
 
     def _clear_item_cache(self, bean: str, producto_id: Optional[int] = None) -> None:
         if producto_id is not None:
-            _GLOBAL_ITEM_CACHE.pop(_producto_item_cache_key(bean, producto_id), None)
+            _ITEM_CACHE_PROVIDER.delete(_producto_item_cache_key(bean, producto_id))
             return
         keys = [key for key in _GLOBAL_ITEM_CACHE if key.startswith(f"/API/1.1/{bean}/")]
         for key in keys:
-            _GLOBAL_ITEM_CACHE.pop(key, None)
+            _ITEM_CACHE_PROVIDER.delete(key)
 
 
 def _producto_item_cache_key(bean: str, producto_id: int) -> str:

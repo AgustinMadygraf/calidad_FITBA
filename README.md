@@ -77,6 +77,7 @@ Referencia rapida en `docs/xubio.md`.
 Documentacion adicional:
 - `docs/api_local.md`
 - `docs/arquitectura.md`
+- `docs/release_checklist.md`
 
 ## Requisitos
 - Python 3.10+
@@ -126,6 +127,11 @@ Cache de lectura Xubio (TTL en segundos, aplica cuando `IS_PROD=false`):
 - `GET /API/1.1/comprobanteVentaBean/{id}` consulta primero el detalle oficial
   y cae al listado solo ante respuestas `5xx`.
 - `XUBIO_GET_CACHE_ENABLED` permite override explicito de cache de lectura.
+
+Provider de cache (feature flag, default in-memory):
+- `XUBIO_CACHE_PROVIDER=memory|redis` (default `memory`).
+- `XUBIO_REDIS_URL=redis://127.0.0.1:6379/0` (solo si `XUBIO_CACHE_PROVIDER=redis`).
+- `XUBIO_REDIS_PREFIX=xubio-cache` (prefijo de claves Redis).
 
 ## Ejecutar servidor
 
@@ -211,6 +217,26 @@ pytest -m unit
 pytest -m integration
 pytest -m api_http
 pytest -m contract
+```
+
+Cobertura minima por suite (falla automaticamente bajo umbral):
+- `unit`: 70%
+- `integration`: 60%
+- `api_http`: 65%
+- `contract`: 45%
+
+```bash
+python scripts/run_coverage_suite.py unit
+python scripts/run_coverage_suite.py integration
+python scripts/run_coverage_suite.py api_http
+python scripts/run_coverage_suite.py contract
+python scripts/run_coverage_suite.py all
+```
+
+Checklist de release tecnico:
+
+```bash
+python scripts/release_check.py
 ```
 
 ## Notas

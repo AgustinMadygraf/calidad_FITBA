@@ -3,6 +3,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 
 from ....interface_adapter.controllers import handlers
+from ....interface_adapter.payload_validation import validate_producto_payload
 from ..gateway_provider import gateway_provider
 from ..runtime_policy import ensure_write_allowed
 
@@ -45,7 +46,8 @@ def producto_get(producto_id: int) -> Dict[str, Any]:
 @router.post(LEGACY_PRODUCTO_BASE_SLASH, include_in_schema=False)
 def producto_create(body: Dict[str, Any]) -> Dict[str, Any]:
     ensure_write_allowed()
-    return handlers.create_producto(gateway_provider.producto_gateway, body)
+    validated_body = validate_producto_payload(body)
+    return handlers.create_producto(gateway_provider.producto_gateway, validated_body)
 
 
 @router.put(f"{PRODUCTO_BASE}/{{producto_id}}")
@@ -62,8 +64,11 @@ def producto_create(body: Dict[str, Any]) -> Dict[str, Any]:
 )
 def producto_update(producto_id: int, body: Dict[str, Any]) -> Dict[str, Any]:
     ensure_write_allowed()
+    validated_body = validate_producto_payload(
+        body, path_producto_id=producto_id
+    )
     item = handlers.update_producto(
-        gateway_provider.producto_gateway, producto_id, body
+        gateway_provider.producto_gateway, producto_id, validated_body
     )
     if item is None:
         raise HTTPException(status_code=404, detail="producto no encontrado")
