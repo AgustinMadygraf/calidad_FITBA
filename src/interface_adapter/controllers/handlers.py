@@ -51,18 +51,29 @@ def debug_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
 
 
 def list_remitos(gateway: RemitoGateway) -> Dict[str, Any]:
-    logger.debug("list_remitos() invocado - inicio de consulta")
-    items = remito_venta.list_remitos(gateway)
-    result = {"items": [x.to_dict(exclude_none=True) for x in items]}
-    logger.debug("list_remitos() completado - devolviendo JSON con %d items", len(items))
-    return result
+    logger.debug("list_remitos() - inicio de consulta")
+    try:
+        items = remito_venta.list_remitos(gateway)
+        result = {"items": [x.to_dict(exclude_none=True) for x in items]}
+        logger.info("list_remitos() - completado, devolviendo %d items", len(items))
+        return result
+    except Exception as e:
+        logger.error("❌ list_remitos() - error: %s", str(e)[:200], exc_info=True)
+        raise
 
 
 def get_remito(gateway: RemitoGateway, transaccion_id: int) -> Optional[Dict[str, Any]]:
-    entity = remito_venta.get_remito(gateway, transaccion_id)
-    if entity is None:
-        return None
-    return entity.to_dict(exclude_none=True)
+    logger.debug("get_remito(%d) - inicio", transaccion_id)
+    try:
+        entity = remito_venta.get_remito(gateway, transaccion_id)
+        if entity is None:
+            logger.debug("get_remito(%d) - no encontrado", transaccion_id)
+            return None
+        logger.debug("get_remito(%d) - encontrado", transaccion_id)
+        return entity.to_dict(exclude_none=True)
+    except Exception as e:
+        logger.error("❌ get_remito(%d) - error: %s", transaccion_id, str(e)[:200], exc_info=True)
+        raise
 
 
 def create_remito(
@@ -70,9 +81,16 @@ def create_remito(
     deps: remito_venta.RemitoDependencies,
     data: Dict[str, Any],
 ) -> Dict[str, Any]:
-    entity = RemitoVenta.from_dict(data)
-    created = remito_venta.create_remito(gateway, entity, deps)
-    return created.to_dict(exclude_none=True)
+    logger.info("create_remito() - creando nuevo remito")
+    try:
+        entity = RemitoVenta.from_dict(data)
+        logger.debug("create_remito() - entidad validada")
+        created = remito_venta.create_remito(gateway, entity, deps)
+        logger.info("create_remito() - remito creado exitosamente")
+        return created.to_dict(exclude_none=True)
+    except Exception as e:
+        logger.error("❌ create_remito() - error: %s", str(e)[:200], exc_info=True)
+        raise
 
 
 def update_remito(

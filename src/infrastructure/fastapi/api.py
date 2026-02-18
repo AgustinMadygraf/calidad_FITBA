@@ -36,20 +36,27 @@ FRONTEND_CORS_ORIGINS = [
     "https://xubio.madygraf.com",
 ]
 
+logger.debug("Inicializando FastAPI app...")
 load_env()
+logger.debug("Configuración de entorno cargada")
+
 token_gateway = get_token_gateway()
+logger.debug("Token gateway inicializado")
+
 STATIC_DIR = get_static_dir()
 FRONTEND_INDEX = STATIC_DIR / "index.html"
 
 logger.info("Directorio estatico configurado: %s", STATIC_DIR)
+logger.debug("CORS origins configurados: %s", FRONTEND_CORS_ORIGINS)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_methods=["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+    allow_headers=["*"],  # Permitir todos los headers (incluyendo ngrok-skip-browser-warning)
 )
+logger.debug("CORSMiddleware agregado con origins: %s", FRONTEND_CORS_ORIGINS)
 
 
 # Kept for tests
@@ -83,6 +90,7 @@ def favicon() -> Response:
 
 @app.get("/health")
 def health() -> Dict[str, str]:
+    logger.debug("GET /health invocado")
     return handlers.health()
 
 
@@ -97,10 +105,12 @@ def api_health(request: Request) -> Dict[str, Any]:
     
     Útil para detectar problemas de proxy/ngrok/caché.
     """
+    origin = request.headers.get("origin", "no-origin-header")
+    logger.debug("GET /API/health invocado desde origen: %s", origin)
     return {
         "status": "ok",
         "message": "API health check",
-        "origin": request.headers.get("origin", "no-origin-header"),
+        "origin": origin,
         "referer": request.headers.get("referer", "no-referer"),
         "host": request.headers.get("host", request.url.netloc),
         "content_type": "application/json",
@@ -126,13 +136,23 @@ def token_inspect() -> Dict[str, Any]:
 def external_service_error_handler(
     request: Request, exc: ExternalServiceError
 ) -> JSONResponse:
-    logger.error("Gateway error on %s %s: %s", request.method, request.url.path, exc)
+    logger.error(
+        "⚠️  Gateway error on %s %s (External service unavailable): %s",
+        request.method,
+        request.url.path,
+        str(exc)[:200],
+    )
     return JSONResponse(status_code=502, content={"detail": str(exc)})
 
 
 @app.exception_handler(ValueError)
 def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
-    logger.warning("Value error on %s %s: %s", request.method, request.url.path, exc)
+    logger.warning(
+        "⚠️  Value error on %s %s (Invalid request data): %s",
+        request.method,
+        request.url.path,
+        str(exc)[:200],
+    )
     return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
@@ -147,25 +167,34 @@ app.include_router(observability_router.router)
 
 
 if STATIC_DIR.exists():
+    logger.debug("StaticFiles directory encontrado: %s", STATIC_DIR)
     if not FRONTEND_INDEX.exists():
         logger.warning(
-            "Directorio estatico existe pero falta index.html: %s",
+            "⚠️  Directorio estatico existe pero falta index.html: %s",
             FRONTEND_INDEX,
         )
+    else:
+        logger.debug("index.html encontrado en: %s", FRONTEND_INDEX)
     # NOTA: html=False para evitar que StaticFiles sirva index.html como fallback
     # a requests no coincidentes (ej: /API/1.1/*). Los routers tienen prioridad.
+    logger.debug("Montando StaticFiles con html=False (sin fallback HTML)")
     app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=False), name="static")
 else:
-    logger.warning("Directorio estatico no encontrado: %s", STATIC_DIR)
+    logger.error("❌ CRÍTICO: Directorio estatico no encontrado: %s", STATIC_DIR)
 
 
 def run() -> None:
     host = get_host()
     port = get_port()
     logger.info("Iniciando FastAPI en %s:%d", host, port)
-    uvicorn.run(
-        "src.infrastructure.fastapi.api:app", host=host, port=port, reload=True
-    )
+    logger.debug("Uvicorn configured: host=%s, port=%d, reload=True", host, port)
+    try:
+        uvicorn.run(
+            "src.infrastructure.fastapi.api:app", host=host, port=port, reload=True
+        )
+    except Exception as e:
+        logger.error("❌ Error al iniciar servidor: %s", e, exc_info=True)
+        raise
 
 
 if __name__ == "__main__":
