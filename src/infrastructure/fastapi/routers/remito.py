@@ -4,11 +4,13 @@ from fastapi import APIRouter, HTTPException
 
 from ....interface_adapter.controllers import handlers
 from ....interface_adapter.schemas.remito_venta import RemitoVentaPayload
+from ....shared.logger import get_logger
 from ....use_cases import remito_venta
 from ..gateway_provider import gateway_provider
 from ..remito_utils import resolve_remito_transaccion_id
 from ..runtime_policy import ensure_write_allowed
 
+logger = get_logger(__name__)
 router = APIRouter()
 
 REMITO_BASE = "/API/1.1/remitoVentaBean"
@@ -27,7 +29,10 @@ def _build_remito_dependencies() -> remito_venta.RemitoDependencies:
 @router.get(REMITO_BASE)
 @router.get(REMITO_BASE_SLASH, include_in_schema=False)
 def remito_list() -> Dict[str, Any]:
-    return handlers.list_remitos(gateway_provider.remito_gateway)
+    logger.info("GET /API/1.1/remitoVentaBean invocado - inicio de consulta")
+    result = handlers.list_remitos(gateway_provider.remito_gateway)
+    logger.info("GET /API/1.1/remitoVentaBean completado - devolviendo JSON")
+    return result
 
 
 @router.post(REMITO_BASE)

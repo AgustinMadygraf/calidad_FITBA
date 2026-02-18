@@ -31,7 +31,10 @@ from .routers import (
 
 logger = get_logger(__name__)
 
-FRONTEND_CORS_ORIGINS = ["http://127.0.0.1:5173"]
+FRONTEND_CORS_ORIGINS = [
+    "http://127.0.0.1:5173",
+    "https://xubio.madygraf.com",
+]
 
 load_env()
 token_gateway = get_token_gateway()
@@ -44,7 +47,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
 
@@ -81,6 +84,27 @@ def favicon() -> Response:
 @app.get("/health")
 def health() -> Dict[str, str]:
     return handlers.health()
+
+
+@app.get("/API/health")
+def api_health(request: Request) -> Dict[str, Any]:
+    """Health check endpoint para validación rápida de API.
+    
+    Devuelve información de diagnóstico:
+    - status: ok/error
+    - origin: origen HTTP del request
+    - content_type: application/json esperado
+    
+    Útil para detectar problemas de proxy/ngrok/caché.
+    """
+    return {
+        "status": "ok",
+        "message": "API health check",
+        "origin": request.headers.get("origin", "no-origin-header"),
+        "referer": request.headers.get("referer", "no-referer"),
+        "host": request.headers.get("host", request.url.netloc),
+        "content_type": "application/json",
+    }
 
 
 app.middleware("http")(block_mutations_when_read_only)
@@ -128,7 +152,9 @@ if STATIC_DIR.exists():
             "Directorio estatico existe pero falta index.html: %s",
             FRONTEND_INDEX,
         )
-    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
+    # NOTA: html=False para evitar que StaticFiles sirva index.html como fallback
+    # a requests no coincidentes (ej: /API/1.1/*). Los routers tienen prioridad.
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=False), name="static")
 else:
     logger.warning("Directorio estatico no encontrado: %s", STATIC_DIR)
 

@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 
 from ...entities.cliente import Cliente
 from ...entities.remito_venta import RemitoVenta
+from ...shared.logger import get_logger
 from ...use_cases.ports.categoria_fiscal_gateway import CategoriaFiscalGateway
 from ...use_cases.ports.token_gateway import TokenGateway
 from ...use_cases.ports.remito_gateway import RemitoGateway
@@ -21,6 +22,8 @@ from ...use_cases.ports.vendedor_gateway import VendedorGateway
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, remito_venta, token_inspect
 from ...use_cases.ports.cliente_gateway import ClienteGateway
+
+logger = get_logger(__name__)
 
 
 def root() -> Dict[str, str]:
@@ -48,8 +51,11 @@ def debug_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
 
 
 def list_remitos(gateway: RemitoGateway) -> Dict[str, Any]:
+    logger.debug("list_remitos() invocado - inicio de consulta")
     items = remito_venta.list_remitos(gateway)
-    return {"items": [x.to_dict(exclude_none=True) for x in items]}
+    result = {"items": [x.to_dict(exclude_none=True) for x in items]}
+    logger.debug("list_remitos() completado - devolviendo JSON con %d items", len(items))
+    return result
 
 
 def get_remito(gateway: RemitoGateway, transaccion_id: int) -> Optional[Dict[str, Any]]:
