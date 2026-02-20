@@ -180,3 +180,22 @@ def test_observability_cors_preflight_rejects_other_origin():
 
     assert response.status_code == 400
     assert response.headers.get("access-control-allow-origin") is None
+
+
+def test_observability_cors_preflight_allows_localhost_origin():
+    client = TestClient(app)
+    response = client.options(
+        "/observability/events",
+        headers={
+            "Origin": "http://localhost",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "ngrok-skip-browser-warning",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://localhost"
+    assert "GET" in response.headers.get("access-control-allow-methods", "")
+    assert "ngrok-skip-browser-warning" in response.headers.get(
+        "access-control-allow-headers", ""
+    ).lower()

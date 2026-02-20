@@ -11,7 +11,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from ...interface_adapter.controllers import handlers
-from ...shared.config import get_host, get_port, get_static_dir, load_env
+from ...shared.config import (
+    get_frontend_cors_origins,
+    get_host,
+    get_port,
+    get_static_dir,
+    load_env,
+)
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .app import app
@@ -31,14 +37,10 @@ from .routers import (
 
 logger = get_logger(__name__)
 
-FRONTEND_CORS_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "https://xubio.madygraf.com",
-]
-
 logger.debug("Inicializando FastAPI app...")
 load_env()
 logger.debug("Configuración de entorno cargada")
+FRONTEND_CORS_ORIGINS = get_frontend_cors_origins()
 
 token_gateway = get_token_gateway()
 logger.debug("Token gateway inicializado")

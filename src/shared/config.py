@@ -44,6 +44,14 @@ XUBIO_LIST_TTL_SECONDS = {
     "XUBIO_COMPROBANTE_VENTA_LIST_TTL": 60.0,
 }
 
+# CORS defaults for browser frontends in local/prod environments.
+FRONTEND_CORS_ORIGINS_DEFAULT = [
+    "http://localhost",
+    "http://127.0.0.1",
+    "http://127.0.0.1:5173",
+    "https://xubio.madygraf.com",
+]
+
 # ---------------------------------------------------------------------------
 # INTERNALS (avoid edits unless changing config behavior itself)
 # ---------------------------------------------------------------------------
@@ -119,6 +127,16 @@ def get_static_dir() -> Path:
 
 def get_xubio_token_endpoint() -> str:
     return XUBIO_TOKEN_ENDPOINT
+
+
+def get_frontend_cors_origins() -> list[str]:
+    raw = os.getenv("FRONTEND_CORS_ORIGINS", "").strip()
+    if not raw:
+        return FRONTEND_CORS_ORIGINS_DEFAULT.copy()
+    origins = [item.strip() for item in raw.split(",") if item.strip()]
+    if not origins:
+        return FRONTEND_CORS_ORIGINS_DEFAULT.copy()
+    return origins
 
 
 def get_cache_ttl(config_key: str, *, default: float = 60.0) -> float:
