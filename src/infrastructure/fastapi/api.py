@@ -12,10 +12,13 @@ from fastapi.staticfiles import StaticFiles
 
 from ...interface_adapter.controllers import handlers
 from ...shared.config import (
+    get_frontend_dev_proxy_url,
     get_frontend_cors_origins,
     get_host,
     get_port,
     get_static_dir,
+    is_frontend_dev_proxy_enabled,
+    is_frontend_dev_proxy_ws_enabled,
     load_env,
 )
 from ...shared.logger import get_logger
@@ -23,6 +26,8 @@ from ...use_cases.errors import ExternalServiceError
 from .app import app
 from .deps import get_token_gateway
 from .middleware import block_mutations_when_read_only
+from .frontend_proxy import build_frontend_proxy_middleware
+from .frontend_proxy_ws import build_frontend_ws_proxy_handler
 from .remito_utils import resolve_remito_transaccion_id
 from .routers import (
     catalogos,
@@ -41,6 +46,9 @@ logger.debug("Inicializando FastAPI app...")
 load_env()
 logger.debug("Configuración de entorno cargada")
 FRONTEND_CORS_ORIGINS = get_frontend_cors_origins()
+FRONTEND_DEV_PROXY_ENABLED = is_frontend_dev_proxy_enabled()
+FRONTEND_DEV_PROXY_URL = get_frontend_dev_proxy_url()
+FRONTEND_DEV_PROXY_WS_ENABLED = is_frontend_dev_proxy_ws_enabled()
 
 token_gateway = get_token_gateway()
 logger.debug("Token gateway inicializado")
@@ -49,6 +57,12 @@ STATIC_DIR = get_static_dir()
 FRONTEND_INDEX = STATIC_DIR / "index.html"
 
 logger.info("Directorio estatico configurado: %s", STATIC_DIR)
+logger.info(
+    "Frontend dev proxy: enabled=%s url=%s",
+    FRONTEND_DEV_PROXY_ENABLED,
+    FRONTEND_DEV_PROXY_URL,
+)
+logger.info("Frontend dev proxy WS: enabled=%s", FRONTEND_DEV_PROXY_WS_ENABLED)
 logger.debug("CORS origins configurados: %s", FRONTEND_CORS_ORIGINS)
 
 app.add_middleware(
@@ -120,6 +134,14 @@ def api_health(request: Request) -> Dict[str, Any]:
 
 
 app.middleware("http")(block_mutations_when_read_only)
+if FRONTEND_DEV_PROXY_ENABLED:
+    app.middleware("http")(build_frontend_proxy_middleware(FRONTEND_DEV_PROXY_URL))
+if FRONTEND_DEV_PROXY_ENABLED and FRONTEND_DEV_PROXY_WS_ENABLED:
+    app.add_api_websocket_route(
+        "/{full_path:path}",
+        build_frontend_ws_proxy_handler(FRONTEND_DEV_PROXY_URL),
+        name="frontend_ws_proxy",
+    )
 
 
 @app.get("/token/inspect")

@@ -105,6 +105,13 @@ El resto de configuraciones vive en `src/shared/config.py`:
 - cache-aside (`XUBIO_GET_CACHE_ENABLED` y `XUBIO_LIST_TTL_SECONDS`)
 - editar el bloque `TEAM-EDITABLE CONFIGURATION`
 
+Frontend dev proxy (origen unico en `:8000`, opcional):
+- `FRONTEND_DEV_PROXY_ENABLED=true|false`
+- `FRONTEND_DEV_PROXY_URL=http://127.0.0.1:5173`
+- `FRONTEND_DEV_PROXY_WS_ENABLED=true|false` (bridge WS para HMR)
+- Default: habilitado en `IS_PROD=false`, deshabilitado en `IS_PROD=true`.
+- Si el dev server no responde, backend hace fallback a `STATIC_DIR`/`APP_STATIC_DIR`.
+
 Nota: `IS_PROD` puede sobreescribirse por argumento al ejecutar `run.py`.
 
 Modo en servidor:

@@ -26,6 +26,8 @@ APP_HOST = "localhost"
 APP_PORT = 8000
 APP_IS_PROD = False
 APP_STATIC_DIR = r"/var/www/html/xubio-www"
+APP_FRONTEND_DEV_PROXY_URL = "http://127.0.0.1:5173"
+APP_FRONTEND_DEV_PROXY_WS_ENABLED = True
 
 # Xubio integration defaults
 XUBIO_TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
@@ -123,6 +125,26 @@ def get_static_dir() -> Path:
     if env_value:
         return _resolve_path(env_value)
     return _resolve_path(APP_STATIC_DIR)
+
+
+def get_frontend_dev_proxy_url() -> str:
+    return os.getenv("FRONTEND_DEV_PROXY_URL", APP_FRONTEND_DEV_PROXY_URL).strip()
+
+
+def is_frontend_dev_proxy_enabled() -> bool:
+    raw = os.getenv("FRONTEND_DEV_PROXY_ENABLED", "").strip()
+    parsed = _parse_bool(raw)
+    if parsed is None:
+        return not is_prod()
+    return parsed
+
+
+def is_frontend_dev_proxy_ws_enabled() -> bool:
+    raw = os.getenv("FRONTEND_DEV_PROXY_WS_ENABLED", "").strip()
+    parsed = _parse_bool(raw)
+    if parsed is None:
+        return APP_FRONTEND_DEV_PROXY_WS_ENABLED and (not is_prod())
+    return parsed
 
 
 def get_xubio_token_endpoint() -> str:

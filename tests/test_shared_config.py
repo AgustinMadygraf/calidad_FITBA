@@ -89,6 +89,23 @@ def test_getters_and_cache_helpers(monkeypatch):
     assert config.get_cache_enabled("OTHER_KEY", default=False) is False
 
 
+def test_frontend_dev_proxy_flags(monkeypatch):
+    monkeypatch.delenv("FRONTEND_DEV_PROXY_ENABLED", raising=False)
+    monkeypatch.delenv("FRONTEND_DEV_PROXY_WS_ENABLED", raising=False)
+    monkeypatch.setenv("IS_PROD", "false")
+    assert config.is_frontend_dev_proxy_enabled() is True
+    assert config.is_frontend_dev_proxy_ws_enabled() is True
+
+    monkeypatch.setenv("IS_PROD", "true")
+    assert config.is_frontend_dev_proxy_enabled() is False
+    assert config.is_frontend_dev_proxy_ws_enabled() is False
+
+    monkeypatch.setenv("FRONTEND_DEV_PROXY_ENABLED", "true")
+    monkeypatch.setenv("FRONTEND_DEV_PROXY_WS_ENABLED", "true")
+    assert config.is_frontend_dev_proxy_enabled() is True
+    assert config.is_frontend_dev_proxy_ws_enabled() is True
+
+
 @pytest.mark.parametrize(
     "raw, expected",
     [
@@ -102,4 +119,3 @@ def test_getters_and_cache_helpers(monkeypatch):
 )
 def test_parse_bool(raw, expected):
     assert config._parse_bool(raw) is expected
-
