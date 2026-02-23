@@ -87,6 +87,14 @@ cmd_stop() {
     else
         log_warning "FastAPI no está corriendo (no se encontró PID file)"
     fi
+
+    # Fallback: si no hay PID file o quedó un worker huérfano, detener por puerto
+    FASTAPI_PORT_PIDS=$(lsof -ti tcp:"$FASTAPI_PORT" -sTCP:LISTEN 2>/dev/null || true)
+    if [ -n "$FASTAPI_PORT_PIDS" ]; then
+        # shellcheck disable=SC2086
+        kill $FASTAPI_PORT_PIDS 2>/dev/null || true
+        log_success "FastAPI detenido por puerto $FASTAPI_PORT (PID(s): $FASTAPI_PORT_PIDS)"
+    fi
     
     # Detener ngrok
     if [ -f "$NGROK_PID_FILE" ]; then
@@ -362,7 +370,7 @@ if [ "$DAEMON_MODE" = "true" ]; then
     echo ""
     
     # Ejecutar FastAPI en background
-    nohup python run.py > "$FASTAPI_LOG_FILE" 2>&1 &
+    FASTAPI_RELOAD=false nohup python run.py > "$FASTAPI_LOG_FILE" 2>&1 &
     FASTAPI_PID=$!
     echo $FASTAPI_PID > "$FASTAPI_PID_FILE"
     

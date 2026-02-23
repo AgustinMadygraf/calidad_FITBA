@@ -1,3 +1,4 @@
+import os
 import sys
 
 import uvicorn
@@ -22,12 +23,13 @@ def main() -> int:
 
     host = get_host()
     port = get_port()
+    reload_enabled = os.getenv("FASTAPI_RELOAD", "true").lower() == "true"
     logger.info("Iniciando FastAPI en %s:%d", host, port)
     uvicorn.run(
         "src.infrastructure.fastapi.api:app",
         host=host,
         port=port,
-        reload=True,
+        reload=reload_enabled,
     )
     return 0
 
