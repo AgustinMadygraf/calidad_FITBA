@@ -25,7 +25,7 @@ FALSE_VALUES = {"0", "false", "no", "n", "off"}
 APP_HOST = "localhost"
 APP_PORT = 8000
 APP_IS_PROD = False
-APP_STATIC_DIR = r"/home/agustin/proyectos_software/xubio-www/dist"
+APP_STATIC_DIR = r"/var/www/html/xubio-www"
 
 # Xubio integration defaults
 XUBIO_TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
