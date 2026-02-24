@@ -120,11 +120,20 @@ Escenario observado:
 - Bind: `0.0.0.0:8000`
 - Acceso LAN detectado: `http://10.176.61.33:8000`
 - Frontend dev proxy no disponible (`127.0.0.1:5173`), backend sirve estáticos como fallback.
+- `./scripts/setup_modo_hibrido.sh red-interna` detecta `SERVER_IP=10.176.61.33` y CORS interno correcto.
+- `NETINFO` mostró:
+  - `CLI base_url=https://xubio.com`
+  - `Base URL esquema=HTTPS`, `puerto=443`
+  - `Puerto local 8000 abierto=si`
+  - `Puerto local 443 abierto=si`
+  - `IPs LAN detectadas=No detectada`
 
 Implicancias:
 - Si cambia la IP LAN del servidor, cambiará la URL por IP.
 - Para evitar depender de IP en frontend, usar hostname interno estable (DNS corporativo o `hosts`) y apuntar siempre a ese nombre.
 - HTTPS no implica obligatoriamente "mover FastAPI a 443"; normalmente se publica `443` en proxy y FastAPI sigue en `8000` interno.
+- Hay un servicio local escuchando en `443`; debe identificarse antes de montar TLS interno definitivo.
+- `NETINFO` necesita fallback adicional (`hostname -I`) para detectar mejor IPs LAN en algunos hostnames.
 
 Objetivo recomendado:
 ```text
@@ -158,3 +167,12 @@ Muestra automáticamente:
 - Esquema/host/puerto del `base_url` del CLI.
 - Estado local de puertos `8000` y `443`.
 - Recomendaciones para estabilidad (DNS, IP fija/reserva DHCP, TLS en reverse proxy).
+
+## Próximos pasos concretos
+1. Confirmar con IT si `10.176.61.33` es reserva DHCP o IP fija.
+2. Identificar proceso que usa `443`:
+```bash
+sudo lsof -i :443 -sTCP:LISTEN -P -n
+```
+3. Definir hostname interno objetivo (`api.<empresa>.local`) y apuntar frontend a ese nombre.
+4. Implementar TLS en reverse proxy `:443 -> 127.0.0.1:8000`.

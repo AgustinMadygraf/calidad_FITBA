@@ -84,9 +84,7 @@ Nota: Xubio es sensible a mayusculas en algunos endpoints. Ejemplo: `ProductoVen
   dentro de esta API local.
 
 ## Estado de relevamiento y pendientes
-- Relevamiento completo contra Swagger oficial (Xubio) en:
-  - `docs/relevamiento_endpoints_xubio.md`
-- Ese documento incluye:
-  - endpoints cubiertos vs pendientes,
-  - desvios de contrato detectados,
-  - To Do List priorizada para cierre de brecha.
+- Contrato local publicado en `docs/swagger.json`.
+- Para alcance operativo actual, usar:
+  - `docs/api_local.md`
+  - `docs/modo_hibrido_ngrok_red_interna.md`

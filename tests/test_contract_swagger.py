@@ -6,13 +6,18 @@ from typing import Dict, Iterable, Set
 from src.infrastructure.fastapi.api import app
 
 ALLOWED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
-DOCS_PATH = Path(__file__).resolve().parents[1] / "docs" / "relevamiento_endpoints_xubio.md"
 SWAGGER_PATH = Path(__file__).resolve().parents[1] / "docs" / "swagger.json"
 IGNORED_PATHS = {
     "/docs",
     "/docs/oauth2-redirect",
     "/redoc",
     "/openapi.json",
+}
+ALLOWED_EXTENSION_PATHS = {
+    "/API/1.1/productoCompraBean",
+    "/API/1.1/productoCompraBean/{param}",
+    "/API/1.1/productoVentaBean",
+    "/API/1.1/productoVentaBean/{param}",
 }
 
 
@@ -39,18 +44,7 @@ def _load_swagger_methods() -> Dict[str, Set[str]]:
 
 
 def _load_allowed_extensions() -> Set[str]:
-    if not DOCS_PATH.exists():
-        return set()
-    allowed: Set[str] = set()
-    for line in DOCS_PATH.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line.startswith("- `"):
-            continue
-        match = re.match(r"- `([^`]+)`", line)
-        if not match:
-            continue
-        allowed.add(_normalize_path(match.group(1)))
-    return allowed
+    return {_normalize_path(path) for path in ALLOWED_EXTENSION_PATHS}
 
 
 def _collect_local_routes() -> Dict[str, Set[str]]:
