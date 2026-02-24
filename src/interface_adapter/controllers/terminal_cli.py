@@ -166,6 +166,7 @@ def _handle_network_info_command(_args: list[str], context: CommandContext) -> b
     if audit is None:
         audit_summary = "sin registros"
         audit_db = "no disponible"
+        ip_change_status = "SIN HISTORIAL"
     else:
         audit_summary = (
             f"lan_ip={audit.current.lan_ip} "
@@ -174,6 +175,7 @@ def _handle_network_info_command(_args: list[str], context: CommandContext) -> b
             f"changed_gw={'si' if audit.changed_gw else 'no'}"
         )
         audit_db = audit.db_path
+        ip_change_status = "CAMBIO DETECTADO" if audit.changed_ip else "SIN CAMBIOS"
 
     lines = [
         "Diagnostico de red y HTTPS",
@@ -188,6 +190,7 @@ def _handle_network_info_command(_args: list[str], context: CommandContext) -> b
         f"- Puerto local 443 abierto: {'si' if _is_tcp_open('127.0.0.1', 443) else 'no'}",
         f"- SQLite network audit: {audit_summary}",
         f"- SQLite network audit db: {audit_db}",
+        f"- Estado IP (vs registro anterior): {ip_change_status}",
         "",
         "Sugerencias:",
         "- Publicar frontend contra un hostname estable (DNS interno), no contra IP hardcodeada.",

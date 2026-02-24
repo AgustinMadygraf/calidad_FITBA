@@ -111,9 +111,11 @@ def main() -> int:
     reload_enabled = os.getenv("FASTAPI_RELOAD", "true").lower() == "true"
     logger.info("Modo backend: %s", args.mode)
     logger.info("Iniciando FastAPI en %s:%d", host, port)
+    lan_access_url = None
     if host == "0.0.0.0":
         lan_ips = _detect_lan_ips()
         if lan_ips:
+            lan_access_url = f"http://{lan_ips[0]}:{port}"
             logger.info(
                 "Acceso LAN detectado (usar desde fábrica): %s",
                 ", ".join(f"http://{ip}:{port}" for ip in lan_ips),
@@ -137,14 +139,38 @@ def main() -> int:
                 SystemNetworkSnapshotProvider(),
                 SqliteNetworkAuditRepository(get_network_audit_db_path()),
             )
+            ip_status = "IP CAMBIO" if audit.changed_ip else "IP SIN CAMBIOS"
+            iface_status = "IFACE CAMBIO" if audit.changed_iface else "IFACE SIN CAMBIOS"
+            gw_status = "GW CAMBIO" if audit.changed_gw else "GW SIN CAMBIOS"
             logger.info(
-                "SQLite audit guardado: db=%s lan_ip=%s changed_ip=%s changed_iface=%s changed_gw=%s",
+                "SQLite audit guardado: db=%s lan_ip=%s | %s | %s | %s",
                 audit.db_path,
                 audit.current.lan_ip,
-                "si" if audit.changed_ip else "no",
-                "si" if audit.changed_iface else "no",
-                "si" if audit.changed_gw else "no",
+                ip_status,
+                iface_status,
+                gw_status,
             )
+            logger.info("============================================================")
+            logger.info("XUBIO BACKEND | Modo %s", args.mode)
+            logger.info("============================================================")
+            logger.info("Estado general: OK")
+            if lan_access_url is not None:
+                logger.info("URL interna:    %s", lan_access_url)
+            logger.info("Salud API:      LISTA")
+            logger.info("Red (auditoria):")
+            logger.info("- IP LAN actual: %s", audit.current.lan_ip)
+            logger.info("- Estado IP:     %s", "CAMBIO DETECTADO" if audit.changed_ip else "SIN CAMBIOS")
+            logger.info("- Interfaz:      %s", "CAMBIO DETECTADO" if audit.changed_iface else "SIN CAMBIOS")
+            logger.info("- Gateway:       %s", "CAMBIO DETECTADO" if audit.changed_gw else "SIN CAMBIOS")
+            logger.info("Recomendacion:")
+            logger.info("- Mantener reserva DHCP/IP fija para evitar cambios de URL.")
+            logger.info("- Para produccion usar HTTPS en 443 con reverse proxy.")
+            logger.info("DB auditoria:")
+            logger.info("- %s", audit.db_path)
+            logger.info("Servidor:")
+            logger.info("- FastAPI escuchando en %s:%d", host, port)
+            logger.info("- Startup completo")
+            logger.info("============================================================")
         except Exception as exc:
             logger.warning("No se pudo guardar network audit en SQLite: %s", exc)
     uvicorn.run(
