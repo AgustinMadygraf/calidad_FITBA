@@ -2,6 +2,7 @@ import argparse
 import os
 import socket
 from typing import List
+from urllib.parse import urlparse
 
 import uvicorn
 
@@ -79,6 +80,55 @@ def _detect_lan_ips() -> List[str]:
     return []
 
 
+def _normalize_origin(value: str) -> str:
+    raw = (value or "").strip().rstrip("/")
+    if not raw:
+        return ""
+    parsed = urlparse(raw)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return raw
+
+
+def _apply_runtime_cors_origins(mode: str, port: int, lan_ips: List[str]) -> None:
+    current = os.getenv("FRONTEND_CORS_ORIGINS", "").strip()
+    seen: set[str] = set()
+    merged: list[str] = []
+
+    def _add(origin: str) -> None:
+        normalized = _normalize_origin(origin)
+        if not normalized or normalized in seen:
+            return
+        seen.add(normalized)
+        merged.append(normalized)
+
+    if current:
+        for item in current.split(","):
+            _add(item)
+
+    # Localhost variants commonly used by frontend dev/prod internal testing.
+    _add("http://localhost")
+    _add("http://localhost:5173")
+    _add("http://127.0.0.1")
+    _add("http://127.0.0.1:5173")
+    _add(f"http://127.0.0.1:{port}")
+    _add(f"http://localhost:{port}")
+
+    if mode in {"red-interna", "full"}:
+        for ip in lan_ips:
+            _add(f"http://{ip}:{port}")
+
+    if mode in {"ngrok", "full"}:
+        ngrok_domain = os.getenv("NGROK_DOMAIN", "").strip()
+        if ngrok_domain:
+            if "://" not in ngrok_domain:
+                ngrok_domain = f"https://{ngrok_domain}"
+            _add(ngrok_domain)
+
+    if merged:
+        os.environ["FRONTEND_CORS_ORIGINS"] = ",".join(merged)
+
+
 def main() -> int:
     logger = get_logger(__name__)
     parser = _build_parser()
@@ -112,6 +162,7 @@ def main() -> int:
     logger.info("Modo backend: %s", args.mode)
     logger.info("Iniciando FastAPI en %s:%d", host, port)
     lan_access_url = None
+    lan_ips: List[str] = []
     if host == "0.0.0.0":
         lan_ips = _detect_lan_ips()
         if lan_ips:
@@ -133,6 +184,10 @@ def main() -> int:
             "Nota: run_server.py no inicia ngrok. Para túnel automático usar ./run.sh --mode %s",
             args.mode,
         )
+
+    _apply_runtime_cors_origins(args.mode, port, lan_ips)
+    logger.info("CORS runtime origins efectivos: %s", os.getenv("FRONTEND_CORS_ORIGINS", ""))
+
     if args.mode in {"red-interna", "full"}:
         try:
             audit = record_network_audit(

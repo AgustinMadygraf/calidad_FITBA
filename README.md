@@ -50,5 +50,7 @@ pytest -q
 - `docs/api_local.md`
 - `docs/arquitectura.md`
 - `docs/modo_hibrido_ngrok_red_interna.md`
+- `docs/informe_cors_backend_frontend.md`
+- `docs/informe_backend_a_frontend_cors_ngrok.md`
 - `docs/release_checklist.md`
 - `docs/swagger.json`

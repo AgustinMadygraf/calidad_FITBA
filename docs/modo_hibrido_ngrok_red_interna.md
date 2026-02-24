@@ -177,6 +177,67 @@ sudo lsof -i :443 -sTCP:LISTEN -P -n
 3. Definir hostname interno objetivo (`api.<empresa>.local`) y apuntar frontend a ese nombre.
 4. Implementar TLS en reverse proxy `:443 -> 127.0.0.1:8000`.
 
+## HTTPS interno (avance operativo)
+Scripts nuevos:
+```bash
+./scripts/check_https_readiness.sh
+./scripts/generate_nginx_https_conf.sh
+./scripts/detect_443_owner.sh
+./scripts/generate_local_tls_cert.sh
+./scripts/setup_nginx_https_local.sh
+```
+
+Uso recomendado:
+```bash
+# 1) Chequeo de precondiciones
+./scripts/check_https_readiness.sh
+
+# 2) Generar conf base de Nginx (sin aplicar cambios al sistema)
+DOMAIN=api.empresa.local \
+TLS_CERT_PATH=/etc/ssl/certs/api.empresa.local.crt \
+TLS_KEY_PATH=/etc/ssl/private/api.empresa.local.key \
+OUT_FILE=/tmp/nginx_api_empresa_local.conf \
+./scripts/generate_nginx_https_conf.sh
+```
+
+Notas:
+- En este host, `443` ya está en uso y `nginx` no está instalado.
+- Antes de activar HTTPS en este servidor hay que identificar el dueño actual de `443`.
+
+## Plan acordado (implementación local)
+Parámetros confirmados:
+- reverse proxy: `nginx`
+- dominio: `api.madygraf.local`
+- certificado: emitido localmente en este repo
+- despliegue HTTPS: en esta misma máquina
+
+Flujo recomendado:
+```bash
+# 1) Identificar dueño de 443
+./scripts/detect_443_owner.sh
+
+# 2) Generar cert local (repo)
+DOMAIN=api.madygraf.local ./scripts/generate_local_tls_cert.sh
+
+# 3) Generar conf nginx apuntando a FastAPI :8000
+DOMAIN=api.madygraf.local ./scripts/setup_nginx_https_local.sh
+```
+
+Artefactos generados:
+- cert: `.runtime/tls/api.madygraf.local.crt`
+- key: `.runtime/tls/api.madygraf.local.key`
+- nginx conf: `.runtime/nginx/api.madygraf.local.conf`
+
+Aplicación manual (requiere root):
+1. Instalar `nginx` si no está instalado.
+2. Copiar `.runtime/nginx/api.madygraf.local.conf` a `/etc/nginx/sites-available/api.madygraf.local.conf`.
+3. Habilitar site y ajustar el site default si corresponde.
+4. Validar y recargar:
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
 ## Evidencia automática para IT (IP estable)
 Script:
 ```bash
