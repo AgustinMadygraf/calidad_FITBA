@@ -223,6 +223,19 @@ DOMAIN=api.madygraf.local ./scripts/generate_local_tls_cert.sh
 DOMAIN=api.madygraf.local ./scripts/setup_nginx_https_local.sh
 ```
 
+Automatización parcial al iniciar backend (`run.py --mode red-interna|full`):
+- Siempre muestra `HTTPS readiness` (nginx instalado, 443 en uso, cert/key/conf presentes).
+- Si `AUTO_PREPARE_HTTPS=true`, genera automáticamente:
+  - cert/key local en `.runtime/tls/`
+  - conf nginx en `.runtime/nginx/`
+
+Ejemplo:
+```bash
+export HTTPS_DOMAIN=api.madygraf.local
+export AUTO_PREPARE_HTTPS=true
+python run.py --mode red-interna
+```
+
 Artefactos generados:
 - cert: `.runtime/tls/api.madygraf.local.crt`
 - key: `.runtime/tls/api.madygraf.local.key`
