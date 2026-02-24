@@ -76,6 +76,21 @@ class XubioListaPrecioGateway(XubioCachedCrudGatewayBase, ListaPrecioGateway):
             fallback=lambda: self._fallback_get_from_list(resource_id),
         )
 
+    def get(self, resource_id: int) -> Optional[Dict[str, Any]]:
+        # Para lista de precio, el detalle del endpoint /{id} contiene más campos
+        # que el listado; por eso no usamos item-cache poblado desde list().
+        item = self._fetch_detail_remote(resource_id)
+        if item is not None:
+            self._store_item_cache(resource_id, item)
+            return item
+        cached_item = self._get_cached_item(resource_id)
+        if cached_item is not None:
+            logger.info(
+                "Xubio listaPrecio detalle: cache hit fallback (%s)", resource_id
+            )
+            return cached_item
+        return None
+
     def _create_remote(self, data: Dict[str, Any]) -> Dict[str, Any]:
         return create_item(
             url=self._url(LISTA_PRECIO_PATH),
