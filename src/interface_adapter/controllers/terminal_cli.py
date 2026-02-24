@@ -2,23 +2,17 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import json
 import os
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional, Sequence, TypeAlias
 
-from ...infrastructure.httpx import terminal_cli_gateway_xubio as cli_gateway
 from ...shared.config import load_env
 from ...use_cases import terminal_cli as cli_use_case
-from ...use_cases import terminal_cli_product as cli_product_use_case
 from ..presenter import terminal_cli_presenter as cli_presenter
 
 DEFAULT_BASE_URL = os.getenv("CLI_BASE_URL", "https://xubio.com")
 DEFAULT_TIMEOUT_SECONDS = 10.0
-PRODUCT_CREATE_PATH = cli_gateway.PRODUCT_CREATE_PATH
-PRODUCT_ENTITY = cli_use_case.PRODUCT_ENTITY
 SCREEN_WIDTH = cli_presenter.SCREEN_WIDTH
-EMPTY_PRODUCT_PAYLOAD_MESSAGE = cli_use_case.EMPTY_PRODUCT_PAYLOAD_MESSAGE
 OFFICIAL_ENTITIES = cli_use_case.OFFICIAL_ENTITIES
 ENTITY_ALIASES = cli_use_case.ENTITY_ALIASES
 ENTITY_HELP = cli_use_case.ENTITY_HELP
@@ -46,12 +40,6 @@ _read_entity_for_numeric_action = cli_use_case.read_entity_for_numeric_action
 _expand_numeric_selection = cli_use_case.expand_numeric_selection
 _resolve_alias_command = cli_use_case.resolve_alias_command
 
-build_url = cli_gateway.build_url
-_safe_json = cli_gateway.safe_json
-_extract_error_detail = cli_gateway.extract_error_detail
-
-CollectPayloadFn: TypeAlias = Callable[[InputReader, OutputWriter], Optional[Dict[str, Any]]]
-PostProductFn: TypeAlias = Callable[[str, Dict[str, Any], float], PostResult]
 ProcessCommandFn: TypeAlias = Callable[..., bool]
 
 
@@ -90,72 +78,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def collect_product_payload(
-    read_input: InputReader,
-    write_output: OutputWriter,
-) -> Optional[Dict[str, Any]]:
-    nombre = read_input("nombre (opcional): ").strip()
-    codigo = read_input("codigo (opcional): ").strip()
-    usrcode = read_input("usrcode (opcional): ").strip()
-    extra_json = read_input(
-        "payload_json objeto (opcional, merge con campos cargados): "
-    ).strip()
-    result = cli_use_case.build_product_payload(
-        nombre=nombre,
-        codigo=codigo,
-        usrcode=usrcode,
-        extra_json=extra_json,
-    )
-    if result.error_message is not None:
-        write_output(result.error_message)
-        return None
-    return result.payload
-
-
-def post_product(
-    base_url: str,
-    payload: Dict[str, Any],
-    timeout: float,
-    request_executor: Optional[Callable[..., Any]] = None,
-) -> PostResult:
-    gateway = cli_gateway.XubioTerminalCliProductGateway(
-        request_executor=request_executor,
-    )
-    return cli_product_use_case.create_product(
-        gateway,
-        base_url=base_url,
-        payload=payload,
-        timeout=timeout,
-    )
-
-
 def _handle_enter(args: list[str], state: CLIState, write_output: OutputWriter) -> None:
     result = cli_use_case.enter_entity(args, state)
     write_output(result.message)
-
-
-def _handle_create_product(
-    base_url: str,
-    timeout: float,
-    read_input: InputReader,
-    write_output: OutputWriter,
-    collect_payload_fn: CollectPayloadFn = collect_product_payload,
-    post_product_fn: PostProductFn = post_product,
-) -> None:
-    payload = collect_payload_fn(read_input, write_output)
-    if payload is None:
-        return
-    if not payload:
-        write_output(EMPTY_PRODUCT_PAYLOAD_MESSAGE)
-        return
-    result = post_product_fn(base_url, payload, timeout)
-    write_output(result.message)
-    if result.payload is not None:
-        write_output(_render_json_payload(result.payload))
-
-
-def _render_json_payload(payload: Dict[str, Any]) -> str:
-    return json.dumps(payload, indent=2, sort_keys=True)
 
 
 def _handle_menu_command(_args: list[str], context: CommandContext) -> bool:
@@ -182,25 +107,11 @@ def _handle_entity_action(
     command: str,
     args: list[str],
     context: CommandContext,
-    *,
-    collect_payload_fn: CollectPayloadFn = collect_product_payload,
-    post_product_fn: PostProductFn = post_product,
 ) -> bool:
     plan = cli_use_case.plan_entity_action(command, args, context.state)
     if not plan.ok:
         if plan.error_message is not None:
             context.write_output(plan.error_message)
-        return False
-
-    if plan.is_create_product:
-        _handle_create_product(
-            context.base_url,
-            context.timeout,
-            context.read_input,
-            context.write_output,
-            collect_payload_fn,
-            post_product_fn,
-        )
         return False
 
     context.write_output(f"MVP: {command} {plan.target_entity} esta en modo stub.")
@@ -209,57 +120,22 @@ def _handle_entity_action(
 
 def _make_entity_handler(
     command: str,
-    *,
-    collect_payload_fn: CollectPayloadFn = collect_product_payload,
-    post_product_fn: PostProductFn = post_product,
 ) -> CommandHandler:
     def _handler(args: list[str], context: CommandContext) -> bool:
-        return _handle_entity_action(
-            command,
-            args,
-            context,
-            collect_payload_fn=collect_payload_fn,
-            post_product_fn=post_product_fn,
-        )
+        return _handle_entity_action(command, args, context)
 
     return _handler
 
 
 def _build_command_handlers(
-    *,
-    collect_payload_fn: CollectPayloadFn = collect_product_payload,
-    post_product_fn: PostProductFn = post_product,
 ) -> Dict[str, CommandHandler]:
     return {
         "MENU": _handle_menu_command,
         "ENTER": _handle_enter_command,
         "BACK": _handle_back_command,
         "EXIT": _handle_exit_command,
-        "CREATE": _make_entity_handler(
-            "CREATE",
-            collect_payload_fn=collect_payload_fn,
-            post_product_fn=post_product_fn,
-        ),
-        "UPDATE": _make_entity_handler(
-            "UPDATE",
-            collect_payload_fn=collect_payload_fn,
-            post_product_fn=post_product_fn,
-        ),
-        "DELETE": _make_entity_handler(
-            "DELETE",
-            collect_payload_fn=collect_payload_fn,
-            post_product_fn=post_product_fn,
-        ),
-        "GET": _make_entity_handler(
-            "GET",
-            collect_payload_fn=collect_payload_fn,
-            post_product_fn=post_product_fn,
-        ),
-        "LIST": _make_entity_handler(
-            "LIST",
-            collect_payload_fn=collect_payload_fn,
-            post_product_fn=post_product_fn,
-        ),
+        "GET": _make_entity_handler("GET"),
+        "LIST": _make_entity_handler("LIST"),
     }
 
 
@@ -271,8 +147,6 @@ def process_command(
     *,
     read_input: InputReader = input,
     write_output: OutputWriter = print,
-    collect_payload_fn: CollectPayloadFn = collect_product_payload,
-    post_product_fn: PostProductFn = post_product,
 ) -> bool:
     expanded_line = _expand_numeric_selection(
         line,
@@ -293,10 +167,7 @@ def process_command(
         return False
 
     canonical_command, canonical_args = _resolve_alias_command(command, args, state)
-    handlers = _build_command_handlers(
-        collect_payload_fn=collect_payload_fn,
-        post_product_fn=post_product_fn,
-    )
+    handlers = _build_command_handlers()
     handler = handlers.get(canonical_command)
     if handler is None:
         suggestion = _suggest_command(command, handlers.keys())

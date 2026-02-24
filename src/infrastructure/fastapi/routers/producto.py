@@ -3,9 +3,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 
 from ....interface_adapter.controllers import handlers
-from ....interface_adapter.payload_validation import validate_producto_payload
 from ..gateway_provider import gateway_provider
-from ..runtime_policy import ensure_write_allowed
 
 router = APIRouter()
 
@@ -38,55 +36,6 @@ def producto_get(producto_id: int) -> Dict[str, Any]:
     if item is None:
         raise HTTPException(status_code=404, detail="producto no encontrado")
     return item
-
-
-@router.post(PRODUCTO_BASE)
-@router.post(PRODUCTO_BASE_SLASH, include_in_schema=False)
-@router.post(LEGACY_PRODUCTO_BASE, include_in_schema=False)
-@router.post(LEGACY_PRODUCTO_BASE_SLASH, include_in_schema=False)
-def producto_create(body: Dict[str, Any]) -> Dict[str, Any]:
-    ensure_write_allowed()
-    validated_body = validate_producto_payload(body)
-    return handlers.create_producto(gateway_provider.producto_gateway, validated_body)
-
-
-@router.put(f"{PRODUCTO_BASE}/{{producto_id}}")
-@router.put(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
-@router.patch(f"{PRODUCTO_BASE}/{{producto_id}}")
-@router.patch(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
-@router.put(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}", include_in_schema=False)
-@router.put(
-    f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False
-)
-@router.patch(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}", include_in_schema=False)
-@router.patch(
-    f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False
-)
-def producto_update(producto_id: int, body: Dict[str, Any]) -> Dict[str, Any]:
-    ensure_write_allowed()
-    validated_body = validate_producto_payload(
-        body, path_producto_id=producto_id
-    )
-    item = handlers.update_producto(
-        gateway_provider.producto_gateway, producto_id, validated_body
-    )
-    if item is None:
-        raise HTTPException(status_code=404, detail="producto no encontrado")
-    return item
-
-
-@router.delete(f"{PRODUCTO_BASE}/{{producto_id}}")
-@router.delete(f"{PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False)
-@router.delete(f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}", include_in_schema=False)
-@router.delete(
-    f"{LEGACY_PRODUCTO_BASE}/{{producto_id}}/", include_in_schema=False
-)
-def producto_delete(producto_id: int) -> Dict[str, Any]:
-    ensure_write_allowed()
-    ok = handlers.delete_producto(gateway_provider.producto_gateway, producto_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="producto no encontrado")
-    return {"status": "deleted", "productoid": producto_id}
 
 
 @router.get(PRODUCTO_COMPRA_BASE)

@@ -15,23 +15,19 @@ FALSE_VALUES = {"0", "false", "no", "n", "off"}
 # ---------------------------------------------------------------------------
 # TEAM-EDITABLE CONFIGURATION
 # Edit only this section to adjust runtime behavior across environments.
-# Precedence for IS_PROD:
-# 1) set_runtime_is_prod(...) at runtime (e.g. run.py --IS_PROD=...)
-# 2) optional IS_PROD from process env (backward compatibility)
-# 3) APP_IS_PROD default below
 # ---------------------------------------------------------------------------
 
 # App runtime defaults
 APP_HOST = "localhost"
 APP_PORT = 8000
-APP_IS_PROD = False
 APP_STATIC_DIR = r"/var/www/html/xubio-www"
 APP_FRONTEND_DEV_PROXY_URL = "http://127.0.0.1:5173"
+APP_FRONTEND_DEV_PROXY_ENABLED = True
 APP_FRONTEND_DEV_PROXY_WS_ENABLED = True
 
 # Xubio integration defaults
 XUBIO_TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
-# When None, falls back to `not is_prod()`
+# When None, falls back to `default`.
 XUBIO_GET_CACHE_ENABLED: Optional[bool] = None
 XUBIO_LIST_TTL_SECONDS = {
     "XUBIO_CLIENTE_LIST_TTL": 30.0,
@@ -53,13 +49,6 @@ FRONTEND_CORS_ORIGINS_DEFAULT = [
     "http://127.0.0.1:5173",
     "https://xubio.madygraf.com",
 ]
-
-# ---------------------------------------------------------------------------
-# INTERNALS (avoid edits unless changing config behavior itself)
-# ---------------------------------------------------------------------------
-
-_RUNTIME_IS_PROD: Optional[bool] = None
-
 
 def build_xubio_token() -> str:
     """
@@ -88,30 +77,6 @@ def load_env(env_path: Path | None = None) -> bool:
     return True
 
 
-def is_prod() -> bool:
-    if _RUNTIME_IS_PROD is not None:
-        return _RUNTIME_IS_PROD
-    value = os.getenv("IS_PROD", "")
-    parsed = _parse_bool(value)
-    if parsed is None:
-        return APP_IS_PROD
-    return parsed
-
-
-def set_runtime_is_prod(value: Optional[bool | str]) -> None:
-    global _RUNTIME_IS_PROD  # pylint: disable=global-statement
-    if value is None:
-        _RUNTIME_IS_PROD = None
-        return
-    if isinstance(value, bool):
-        _RUNTIME_IS_PROD = value
-        return
-    parsed = _parse_bool(value)
-    if parsed is None:
-        raise ValueError("IS_PROD debe ser booleano o string valido")
-    _RUNTIME_IS_PROD = parsed
-
-
 def get_host() -> str:
     return APP_HOST
 
@@ -135,7 +100,7 @@ def is_frontend_dev_proxy_enabled() -> bool:
     raw = os.getenv("FRONTEND_DEV_PROXY_ENABLED", "").strip()
     parsed = _parse_bool(raw)
     if parsed is None:
-        return not is_prod()
+        return APP_FRONTEND_DEV_PROXY_ENABLED
     return parsed
 
 
@@ -143,7 +108,7 @@ def is_frontend_dev_proxy_ws_enabled() -> bool:
     raw = os.getenv("FRONTEND_DEV_PROXY_WS_ENABLED", "").strip()
     parsed = _parse_bool(raw)
     if parsed is None:
-        return APP_FRONTEND_DEV_PROXY_WS_ENABLED and (not is_prod())
+        return APP_FRONTEND_DEV_PROXY_WS_ENABLED and APP_FRONTEND_DEV_PROXY_ENABLED
     return parsed
 
 

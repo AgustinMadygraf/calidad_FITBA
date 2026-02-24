@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import json
 import shlex
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional, Tuple
 
 PRODUCT_ENTITY = "ProductoVentaBean"
-EMPTY_PRODUCT_PAYLOAD_MESSAGE = (
-    "Debes ingresar al menos un campo para crear ProductoVentaBean."
-)
 OFFICIAL_ENTITIES = [
     "ProductoVentaBean",
     "clienteBean",
@@ -33,8 +29,6 @@ COMMAND_ALIASES = {
     "HELP": "MENU",
     "QUIT": "EXIT",
     "SALIR": "EXIT",
-    "CR": "CREATE",
-    "DLT": "DELETE",
     "DSP": "DSP",
 }
 
@@ -57,12 +51,6 @@ class PostResult:
 
 
 @dataclass
-class ProductPayloadBuildResult:
-    payload: Optional[Dict[str, Any]]
-    error_message: Optional[str] = None
-
-
-@dataclass
 class EnterCommandResult:
     ok: bool
     message: str
@@ -72,7 +60,6 @@ class EnterCommandResult:
 class EntityActionPlan:
     ok: bool
     target_entity: Optional[str] = None
-    is_create_product: bool = False
     error_message: Optional[str] = None
 
 
@@ -81,44 +68,6 @@ def parse_command(raw: str) -> Tuple[str, list[str]]:
     if not parts:
         return "", []
     return parts[0].upper(), parts[1:]
-
-
-def build_product_payload(
-    *,
-    nombre: str,
-    codigo: str,
-    usrcode: str,
-    extra_json: str,
-) -> ProductPayloadBuildResult:
-    payload: Dict[str, Any] = {}
-    if nombre:
-        payload["nombre"] = nombre
-    if codigo:
-        payload["codigo"] = codigo
-    if usrcode:
-        payload["usrcode"] = usrcode
-
-    if extra_json:
-        try:
-            extra = json.loads(extra_json)
-        except json.JSONDecodeError as exc:
-            return ProductPayloadBuildResult(
-                payload=None,
-                error_message=f"JSON invalido: {exc.msg}",
-            )
-        if not isinstance(extra, dict):
-            return ProductPayloadBuildResult(
-                payload=None,
-                error_message="payload_json debe ser un objeto JSON.",
-            )
-        payload.update(extra)
-
-    if not payload:
-        return ProductPayloadBuildResult(
-            payload=None,
-            error_message=EMPTY_PRODUCT_PAYLOAD_MESSAGE,
-        )
-    return ProductPayloadBuildResult(payload=payload)
 
 
 def enter_entity(args: list[str], state: CLIState) -> EnterCommandResult:
@@ -166,7 +115,6 @@ def plan_entity_action(command: str, args: list[str], state: CLIState) -> Entity
     return EntityActionPlan(
         ok=True,
         target_entity=target_entity,
-        is_create_product=(command == "CREATE" and target_entity == PRODUCT_ENTITY),
     )
 
 

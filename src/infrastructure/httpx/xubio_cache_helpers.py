@@ -6,7 +6,7 @@ import time
 from copy import deepcopy
 from typing import Any, Dict, Hashable, Optional, Tuple
 
-from ...shared.config import get_cache_enabled, get_cache_ttl, is_prod
+from ...shared.config import get_cache_enabled, get_cache_ttl
 
 CacheStore = Dict[Hashable, Tuple[float, Any]]
 
@@ -19,7 +19,7 @@ def read_cache_enabled(env_key: str, *, default: bool) -> bool:
 
 
 def default_get_cache_enabled() -> bool:
-    return read_cache_enabled("XUBIO_GET_CACHE_ENABLED", default=not is_prod())
+    return read_cache_enabled("XUBIO_GET_CACHE_ENABLED", default=True)
 
 
 def cache_get(store: CacheStore, key: Hashable, *, ttl: float) -> Optional[Any]:

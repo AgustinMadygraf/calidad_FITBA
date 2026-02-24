@@ -69,7 +69,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+    allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],  # Permitir todos los headers (incluyendo ngrok-skip-browser-warning)
 )
 logger.debug("CORSMiddleware agregado con origins: %s", FRONTEND_CORS_ORIGINS)

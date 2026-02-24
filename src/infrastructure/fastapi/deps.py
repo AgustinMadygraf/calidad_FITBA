@@ -22,7 +22,6 @@ from ...infrastructure.httpx.lista_precio_gateway_xubio import (
 from ...infrastructure.httpx.moneda_gateway_xubio import XubioMonedaGateway
 from ...infrastructure.httpx.vendedor_gateway_xubio import XubioVendedorGateway
 from ...infrastructure.httpx.token_gateway_httpx import HttpxTokenGateway
-from ...shared.config import is_prod
 from ...shared.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,7 +42,7 @@ class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
 
 
 def _get_read_cache_enabled() -> bool:
-    return not is_prod()
+    return True
 
 
 def get_cliente_gateway():
