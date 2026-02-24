@@ -30,6 +30,7 @@ COMMAND_ALIASES = {
     "QUIT": "EXIT",
     "SALIR": "EXIT",
     "DSP": "DSP",
+    "RED": "RED",
 }
 
 InputReader = Callable[[str], str]

@@ -68,5 +68,5 @@ Este documento describe la API local Xubio-like expuesta por el server FastAPI.
 - Archivo generado localmente: `docs/swagger.json`.
 
 ## Arranque del servidor
-- `run.py` usa `APP_HOST`/`APP_PORT` (default `127.0.0.1:8000`).
+- `run_server.py` usa `APP_HOST`/`APP_PORT` (default `127.0.0.1:8000`).
 - Si el puerto configurado esta ocupado, intenta automaticamente con el siguiente puerto libre.

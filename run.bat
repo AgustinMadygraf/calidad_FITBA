@@ -11,11 +11,11 @@ if not exist "venv\Scripts\activate.bat" (
 
 call "venv\Scripts\activate.bat"
 
-if not exist "run.py" (
-    echo [ERROR] No se encontro "run.py" en "%CD%".
+if not exist "run_server.py" (
+    echo [ERROR] No se encontro "run_server.py" en "%CD%".
     exit /b 1
 )
 
-python run.py %*
+python run_server.py %*
 set "EXIT_CODE=%ERRORLEVEL%"
 endlocal & exit /b %EXIT_CODE%

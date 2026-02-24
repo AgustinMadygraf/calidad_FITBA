@@ -67,7 +67,7 @@ echo "SERVER_IP:         $SERVER_IP"
 echo "FRONTEND_CORS_ORIGINS:"
 echo "  $CORS_ORIGINS"
 if [[ "$PORT_IN_USE" == true ]]; then
-  echo "WARNING: Puerto $PORT ocupado. run.py aplicará fallback automático."
+  echo "WARNING: Puerto $PORT ocupado. run_server.py aplicará fallback automático."
 fi
 echo
 
@@ -93,5 +93,5 @@ if [[ "$START_SERVER" == "true" ]]; then
   export APP_HOST="$EFFECTIVE_HOST"
   export APP_PORT="$PORT"
   export FRONTEND_CORS_ORIGINS="$CORS_ORIGINS"
-  python run.py --mode "$MODE"
+  python run_server.py --mode "$MODE"
 fi

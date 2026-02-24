@@ -59,15 +59,15 @@ uvicorn src.infrastructure.fastapi.api:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ```bash
-python run.py
+python run_server.py
 ```
 
-Si el puerto configurado esta ocupado, `run.py` busca automaticamente el siguiente puerto disponible.
-`run.py` también soporta modo:
+Si el puerto configurado esta ocupado, `run_server.py` busca automaticamente el siguiente puerto disponible.
+`run_server.py` también soporta modo:
 ```bash
-python run.py --mode ngrok
-python run.py --mode red-interna
-python run.py --mode full
+python run_server.py --mode ngrok
+python run_server.py --mode red-interna
+python run_server.py --mode full
 ```
 
 Entry point recomendado (`run.sh`) con selector de modo:
@@ -87,7 +87,7 @@ START_SERVER=true ./scripts/setup_modo_hibrido.sh full
 
 ## Ejecutar CLI
 ```bash
-python run_cli.py
+python -m src.interface_adapter.controllers.terminal_cli
 ```
 
 Comandos disponibles:

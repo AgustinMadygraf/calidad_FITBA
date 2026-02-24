@@ -20,7 +20,7 @@ Operar en modo complementario:
 8. El segmento `192.168.x.x` tiene restricciones y no llega a toda la fábrica.
 9. El segmento `10.176.61.x` sí tiene alcance desde toda la fábrica.
 10. `http://10.176.61.33:8000` es acceso por IP privada de red interna (RFC1918), no IP pública de Internet.
-11. Con el estado actual (`run.py --mode red-interna`) el backend expone HTTP en puerto `8000`; no hay TLS nativo en Uvicorn.
+11. Con el estado actual (`run_server.py --mode red-interna`) el backend expone HTTP en puerto `8000`; no hay TLS nativo en Uvicorn.
 12. Para HTTPS interno, el patrón recomendado es terminar TLS en un reverse proxy (Nginx/Caddy) en `443` y reenviar al backend en `127.0.0.1:8000`.
 
 ## Configuración base sugerida
@@ -58,7 +58,7 @@ export FRONTEND_NGROK_ORIGIN="$NGROK_DOMAIN"
 APP_HOST=0.0.0.0 \
 APP_PORT="$BACKEND_PORT" \
 FRONTEND_CORS_ORIGINS="http://127.0.0.1:${BACKEND_PORT},${FRONTEND_INTERNAL_ORIGIN},${FRONTEND_NGROK_ORIGIN}" \
-python run.py
+python run_server.py
 ```
 
 ### Arranque ngrok
@@ -116,7 +116,7 @@ curl -i "https://confined-unexcused-garland.ngrok-free.dev/health"
 
 ## Actualización operativa (2026-02-24)
 Escenario observado:
-- Arranque: `python run.py --mode red-interna`
+- Arranque: `python run_server.py --mode red-interna`
 - Bind: `0.0.0.0:8000`
 - Acceso LAN detectado: `http://10.176.61.33:8000`
 - Frontend dev proxy no disponible (`127.0.0.1:5173`), backend sirve estáticos como fallback.
@@ -148,3 +148,13 @@ Arranque automático con variables calculadas:
 ```bash
 START_SERVER=true ./scripts/setup_modo_hibrido.sh full
 ```
+
+## Diagnóstico automático en CLI
+Desde la CLI interactiva ahora existe:
+- `NETINFO` (alias `RED`)
+
+Muestra automáticamente:
+- IPs LAN detectadas y clasificación (privada/pública).
+- Esquema/host/puerto del `base_url` del CLI.
+- Estado local de puertos `8000` y `443`.
+- Recomendaciones para estabilidad (DNS, IP fija/reserva DHCP, TLS en reverse proxy).

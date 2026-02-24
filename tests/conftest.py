@@ -32,7 +32,6 @@ LEGACY_TEST_FILES = {
     "test_payload_validation_api.py",
     "test_remito_api.py",
     "test_remito_gateway_xubio.py",
-    "test_run_cli.py",
     "test_runtime_mode_policy.py",
     "test_runtime_policy_unit.py",
     "test_shared_config.py",

@@ -227,11 +227,11 @@ source "$VENV_PATH"
 log_success "Virtual environment activado"
 
 # =============================================================================
-# Verificar run.py
+# Verificar run_server.py
 # =============================================================================
 
-if [ ! -f "run.py" ]; then
-    log_error "No se encontró run.py en $SCRIPT_DIR"
+if [ ! -f "run_server.py" ]; then
+    log_error "No se encontró run_server.py en $SCRIPT_DIR"
     exit 1
 fi
 
@@ -436,7 +436,7 @@ if [ "$DAEMON_MODE" = "true" ]; then
     APP_HOST="$EFFECTIVE_APP_HOST" \
     APP_PORT="$FASTAPI_PORT" \
     FRONTEND_CORS_ORIGINS="$EFFECTIVE_CORS_ORIGINS" \
-    FASTAPI_RELOAD=false nohup python run.py > "$FASTAPI_LOG_FILE" 2>&1 &
+    FASTAPI_RELOAD=false nohup python run_server.py > "$FASTAPI_LOG_FILE" 2>&1 &
     FASTAPI_PID=$!
     echo $FASTAPI_PID > "$FASTAPI_PID_FILE"
     
@@ -453,7 +453,7 @@ else
     APP_HOST="$EFFECTIVE_APP_HOST" \
     APP_PORT="$FASTAPI_PORT" \
     FRONTEND_CORS_ORIGINS="$EFFECTIVE_CORS_ORIGINS" \
-    python run.py &
+    python run_server.py &
     FASTAPI_PID=$!
     
     # Esperar a que FastAPI termine (o Ctrl+C)

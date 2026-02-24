@@ -125,7 +125,7 @@ def main() -> int:
             )
     if args.mode in {"ngrok", "full"}:
         logger.info(
-            "Nota: run.py no inicia ngrok. Para túnel automático usar ./run.sh --mode %s",
+            "Nota: run_server.py no inicia ngrok. Para túnel automático usar ./run.sh --mode %s",
             args.mode,
         )
     uvicorn.run(

@@ -28,6 +28,7 @@ def render_menu(state: CLIState, base_url: str) -> str:
         "",
         "Comandos:",
         "  MENU | HELP",
+        "  NETINFO | RED",
         "  ENTER <entity_type>",
         "  GET <entity_type> <id>",
         "  LIST <entity_type>",

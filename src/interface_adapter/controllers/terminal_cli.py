@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import ipaddress
 import os
+import socket
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional, Sequence, TypeAlias
+from urllib.parse import urlparse
 
 from ...shared.config import load_env
 from ...use_cases import terminal_cli as cli_use_case
@@ -99,6 +102,75 @@ def _handle_back_command(_args: list[str], context: CommandContext) -> bool:
     return False
 
 
+def _detect_lan_ips() -> list[str]:
+    ips: set[str] = set()
+    try:
+        host_ips = socket.gethostbyname_ex(socket.gethostname())[2]
+        for ip in host_ips:
+            if not ip.startswith("127."):
+                ips.add(ip)
+    except OSError:
+        pass
+    return sorted(ips)
+
+
+def _is_tcp_open(host: str, port: int, timeout: float = 0.25) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def _classify_ip(ip: str) -> str:
+    try:
+        parsed = ipaddress.ip_address(ip)
+    except ValueError:
+        return "desconocida"
+    if parsed.is_private:
+        return "privada"
+    if parsed.is_loopback:
+        return "loopback"
+    if parsed.is_link_local:
+        return "link-local"
+    return "publica"
+
+
+def _handle_network_info_command(_args: list[str], context: CommandContext) -> bool:
+    parsed_url = urlparse(context.base_url)
+    scheme = (parsed_url.scheme or "http").lower()
+    host = parsed_url.hostname or "-"
+    resolved_port = parsed_url.port
+    if resolved_port is None:
+        resolved_port = 443 if scheme == "https" else 80
+
+    lan_ips = _detect_lan_ips()
+    if lan_ips:
+        lan_summary = ", ".join(f"{ip} ({_classify_ip(ip)})" for ip in lan_ips)
+    else:
+        lan_summary = "No detectada"
+
+    lines = [
+        "Diagnostico de red y HTTPS",
+        f"- Hostname: {socket.gethostname()}",
+        f"- FQDN: {socket.getfqdn()}",
+        f"- IPs LAN detectadas: {lan_summary}",
+        f"- CLI base_url: {context.base_url}",
+        f"- Base URL esquema: {scheme.upper()}",
+        f"- Base URL host: {host}",
+        f"- Base URL puerto: {resolved_port}",
+        f"- Puerto local 8000 abierto: {'si' if _is_tcp_open('127.0.0.1', 8000) else 'no'}",
+        f"- Puerto local 443 abierto: {'si' if _is_tcp_open('127.0.0.1', 443) else 'no'}",
+        "",
+        "Sugerencias:",
+        "- Publicar frontend contra un hostname estable (DNS interno), no contra IP hardcodeada.",
+        "- Si necesitas HTTPS en LAN, terminar TLS en :443 (Nginx/Caddy) y hacer proxy a FastAPI :8000.",
+        "- Pedir a IT reserva DHCP/IP fija para el servidor para evitar cambios de URL por red.",
+    ]
+    context.write_output("\n".join(lines))
+    return False
+
+
 def _handle_exit_command(_args: list[str], _context: CommandContext) -> bool:
     return True
 
@@ -131,6 +203,7 @@ def _build_command_handlers(
 ) -> Dict[str, CommandHandler]:
     return {
         "MENU": _handle_menu_command,
+        "NETINFO": _handle_network_info_command,
         "ENTER": _handle_enter_command,
         "BACK": _handle_back_command,
         "EXIT": _handle_exit_command,
@@ -167,6 +240,8 @@ def process_command(
         return False
 
     canonical_command, canonical_args = _resolve_alias_command(command, args, state)
+    if canonical_command == "RED":
+        canonical_command = "NETINFO"
     handlers = _build_command_handlers()
     handler = handlers.get(canonical_command)
     if handler is None:
@@ -221,7 +296,7 @@ def main(
         try:
             line = input(prompt_for(state))
         except (EOFError, KeyboardInterrupt):
-            print("\nSaliendo de run_cli.py")
+            print("\nSaliendo de CLI")
             break
 
         should_exit = command_runner(
@@ -232,7 +307,7 @@ def main(
             write_output=_status_write,
         )
         if should_exit:
-            print("Saliendo de run_cli.py")
+            print("Saliendo de CLI")
             break
 
     return 0
