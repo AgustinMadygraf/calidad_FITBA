@@ -11,8 +11,9 @@ def create_product(
     payload: Dict[str, Any],
     timeout: float,
 ) -> PostResult:
-    return gateway.create_product(
-        base_url=base_url,
-        payload=payload,
-        timeout=timeout,
+    return PostResult(
+        ok=False,
+        status_code=405,
+        message="Modo solo lectura: crear producto no esta permitido.",
+        payload=None,
     )

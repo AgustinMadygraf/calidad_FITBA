@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 import uvicorn
 from fastapi import HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -176,6 +177,27 @@ def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
         str(exc)[:200],
     )
     return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(RequestValidationError)
+def request_validation_error_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    details = exc.errors()
+    for item in details:
+        loc = item.get("loc", ())
+        if len(loc) >= 2 and loc[0] == "path":
+            param_name = str(loc[1])
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": (
+                        f"Parametro de ruta invalido: '{param_name}'. "
+                        "Debe ser entero. Ejemplo: /API/1.1/listaPrecioBean/1"
+                    )
+                },
+            )
+    return JSONResponse(status_code=422, content={"detail": details})
 
 
 app.include_router(cliente_router.router)

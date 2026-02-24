@@ -8,3 +8,5 @@ build/
 cliente_cli.spec
 dist/
 .coverage
+coverage.xml
+.coveragerc

@@ -67,50 +67,28 @@ def get_item_with_fallback(
 def create_item(
     *, url: str, timeout: float, data: Dict[str, Any], logger: Any
 ) -> Dict[str, Any]:
-    try:
-        resp = request_with_token("POST", url, timeout=timeout, json=data)
-        logger.info("Xubio POST %s -> %s", url, resp.status_code)
-        raise_for_status(resp)
-        return resp.json()
-    except httpx.HTTPError as exc:
-        raise ExternalServiceError(str(exc)) from exc
+    raise ExternalServiceError(
+        "Modo solo lectura: create_item no esta permitido."
+    )
 
 
 def update_item(
     *, url: str, timeout: float, data: Dict[str, Any], logger: Any
 ) -> Optional[Dict[str, Any]]:
-    try:
-        resp = request_with_token("PUT", url, timeout=timeout, json=data)
-        logger.info("Xubio PUT %s -> %s", url, resp.status_code)
-        if resp.status_code == 404:
-            return None
-        raise_for_status(resp)
-        return resp.json()
-    except httpx.HTTPError as exc:
-        raise ExternalServiceError(str(exc)) from exc
+    raise ExternalServiceError(
+        "Modo solo lectura: update_item no esta permitido."
+    )
 
 
 def patch_item(
     *, url: str, timeout: float, data: Dict[str, Any], logger: Any
 ) -> Optional[Dict[str, Any]]:
-    try:
-        resp = request_with_token("PATCH", url, timeout=timeout, json=data)
-        logger.info("Xubio PATCH %s -> %s", url, resp.status_code)
-        if resp.status_code == 404:
-            return None
-        raise_for_status(resp)
-        return resp.json()
-    except httpx.HTTPError as exc:
-        raise ExternalServiceError(str(exc)) from exc
+    raise ExternalServiceError(
+        "Modo solo lectura: patch_item no esta permitido."
+    )
 
 
 def delete_item(*, url: str, timeout: float, logger: Any) -> bool:
-    try:
-        resp = request_with_token("DELETE", url, timeout=timeout)
-        logger.info("Xubio DELETE %s -> %s", url, resp.status_code)
-        if resp.status_code == 404:
-            return False
-        raise_for_status(resp)
-        return True
-    except httpx.HTTPError as exc:
-        raise ExternalServiceError(str(exc)) from exc
+    raise ExternalServiceError(
+        "Modo solo lectura: delete_item no esta permitido."
+    )

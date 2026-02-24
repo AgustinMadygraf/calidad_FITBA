@@ -18,7 +18,7 @@ FALSE_VALUES = {"0", "false", "no", "n", "off"}
 # ---------------------------------------------------------------------------
 
 # App runtime defaults
-APP_HOST = "localhost"
+APP_HOST = "127.0.0.1"
 APP_PORT = 8000
 APP_STATIC_DIR = r"/var/www/html/xubio-www"
 APP_FRONTEND_DEV_PROXY_URL = "http://127.0.0.1:5173"
@@ -78,11 +78,23 @@ def load_env(env_path: Path | None = None) -> bool:
 
 
 def get_host() -> str:
+    env_value = os.getenv("APP_HOST", "").strip()
+    if env_value:
+        return env_value
     return APP_HOST
 
 
 def get_port() -> int:
-    return APP_PORT
+    raw_value = os.getenv("APP_PORT", "").strip()
+    if not raw_value:
+        return APP_PORT
+    try:
+        port = int(raw_value)
+    except ValueError as exc:
+        raise ValueError("APP_PORT debe ser un entero valido") from exc
+    if not (1 <= port <= 65535):
+        raise ValueError("APP_PORT debe estar entre 1 y 65535")
+    return port
 
 
 def get_static_dir() -> Path:
