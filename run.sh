@@ -68,6 +68,20 @@ log_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+merge_csv_unique() {
+    awk -v RS=',' '
+        {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0)
+            if ($0 != "" && !seen[$0]++) items[++n] = $0
+        }
+        END {
+            for (i = 1; i <= n; i++) {
+                printf "%s%s", items[i], (i < n ? "," : "")
+            }
+        }
+    '
+}
+
 # =============================================================================
 # Comandos de control (stop, status, logs)
 # =============================================================================
@@ -322,6 +336,15 @@ case "$RUN_MODE" in
         EFFECTIVE_CORS_ORIGINS="${LOCAL_ORIGIN},${INTERNAL_ORIGIN},${NGROK_ORIGIN}"
         ;;
 esac
+
+REQUIRED_EXTERNAL_ORIGIN="${REQUIRED_EXTERNAL_ORIGIN:-https://xubio.madygraf.com}"
+EFFECTIVE_CORS_ORIGINS="$(
+    printf "%s,%s,%s\n" \
+        "$EFFECTIVE_CORS_ORIGINS" \
+        "${FRONTEND_CORS_ORIGINS:-}" \
+        "$REQUIRED_EXTERNAL_ORIGIN" \
+    | merge_csv_unique
+)"
 
 log_info "Modo seleccionado: $RUN_MODE"
 log_info "APP_HOST efectivo: $EFFECTIVE_APP_HOST"
