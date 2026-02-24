@@ -25,7 +25,6 @@ from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .app import app
 from .deps import get_token_gateway
-from .middleware import block_mutations_when_read_only
 from .frontend_proxy import build_frontend_proxy_middleware
 from .frontend_proxy_ws import build_frontend_ws_proxy_handler
 from .remito_utils import resolve_remito_transaccion_id
@@ -133,7 +132,6 @@ def api_health(request: Request) -> Dict[str, Any]:
     }
 
 
-app.middleware("http")(block_mutations_when_read_only)
 if FRONTEND_DEV_PROXY_ENABLED:
     app.middleware("http")(build_frontend_proxy_middleware(FRONTEND_DEV_PROXY_URL))
 if FRONTEND_DEV_PROXY_ENABLED and FRONTEND_DEV_PROXY_WS_ENABLED:
