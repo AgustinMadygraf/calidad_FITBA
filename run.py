@@ -115,6 +115,9 @@ def main() -> int:
                 "Acceso LAN detectado (usar desde fábrica): %s",
                 ", ".join(f"http://{ip}:{port}" for ip in lan_ips),
             )
+            logger.info(
+                "Recomendación fábrica: usar una IP fija/reservada para este servidor."
+            )
         else:
             logger.warning(
                 "No se pudieron detectar IPs LAN automaticamente. "
