@@ -19,6 +19,9 @@ Operar en modo complementario:
 - `NGROK_DOMAIN=https://confined-unexcused-garland.ngrok-free.dev`.
 8. El segmento `192.168.x.x` tiene restricciones y no llega a toda la fábrica.
 9. El segmento `10.176.61.x` sí tiene alcance desde toda la fábrica.
+10. `http://10.176.61.33:8000` es acceso por IP privada de red interna (RFC1918), no IP pública de Internet.
+11. Con el estado actual (`run.py --mode red-interna`) el backend expone HTTP en puerto `8000`; no hay TLS nativo en Uvicorn.
+12. Para HTTPS interno, el patrón recomendado es terminar TLS en un reverse proxy (Nginx/Caddy) en `443` y reenviar al backend en `127.0.0.1:8000`.
 
 ## Configuración base sugerida
 ```bash
@@ -108,3 +111,40 @@ curl -i "https://confined-unexcused-garland.ngrok-free.dev/health"
 4. ¿Qué orígenes de frontend se deben permitir en producción (lista cerrada)?
 5. ¿Quién gestiona firewall de host y firewall corporativo?
 6. ¿Se requiere HTTPS interno adicional al HTTPS de ngrok?
+7. ¿IT puede asignar reserva DHCP o IP fija para `10.176.61.33` en el servidor de fábrica?
+8. ¿El frontend productivo consumirá `https://<dominio-interno>` (recomendado) o `https://10.176.61.33` (certificados más complejos)?
+
+## Actualización operativa (2026-02-24)
+Escenario observado:
+- Arranque: `python run.py --mode red-interna`
+- Bind: `0.0.0.0:8000`
+- Acceso LAN detectado: `http://10.176.61.33:8000`
+- Frontend dev proxy no disponible (`127.0.0.1:5173`), backend sirve estáticos como fallback.
+
+Implicancias:
+- Si cambia la IP LAN del servidor, cambiará la URL por IP.
+- Para evitar depender de IP en frontend, usar hostname interno estable (DNS corporativo o `hosts`) y apuntar siempre a ese nombre.
+- HTTPS no implica obligatoriamente "mover FastAPI a 443"; normalmente se publica `443` en proxy y FastAPI sigue en `8000` interno.
+
+Objetivo recomendado:
+```text
+Frontend -> https://api-interna.empresa.local:443 -> Nginx/Caddy (TLS) -> http://127.0.0.1:8000 (FastAPI)
+```
+
+## Automatización parcial
+Script disponible:
+```bash
+./scripts/setup_modo_hibrido.sh [ngrok|red-interna|full]
+```
+
+Ejemplos:
+```bash
+./scripts/setup_modo_hibrido.sh full
+./scripts/setup_modo_hibrido.sh red-interna
+IP_HINT_PREFIX=10.176.61. BACKEND_PORT=8000 NGROK_DOMAIN=confined-unexcused-garland.ngrok-free.dev ./scripts/setup_modo_hibrido.sh full
+```
+
+Arranque automático con variables calculadas:
+```bash
+START_SERVER=true ./scripts/setup_modo_hibrido.sh full
+```

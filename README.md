@@ -78,6 +78,13 @@ Entry point recomendado (`run.sh`) con selector de modo:
 ./run.sh --mode full        # ngrok + LAN interna
 ```
 
+Asistente de configuración automática (modo híbrido):
+```bash
+./scripts/setup_modo_hibrido.sh full
+# o arranque automático:
+START_SERVER=true ./scripts/setup_modo_hibrido.sh full
+```
+
 ## Ejecutar CLI
 ```bash
 python run_cli.py
