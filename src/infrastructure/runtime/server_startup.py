@@ -242,11 +242,11 @@ def run_optional_https_prepare(logger) -> None:
     domain = os.getenv("HTTPS_DOMAIN", "api.madygraf.local").strip()
     cert = f".runtime/tls/{domain}.crt"
     key = f".runtime/tls/{domain}.key"
-    conf = f".runtime/nginx/{domain}.conf"
+    conf = f".runtime/apache/{domain}.conf"
 
-    nginx_installed = (
+    apache_installed = (
         subprocess.run(
-            ["bash", "-lc", "command -v nginx >/dev/null 2>&1"],
+            ["bash", "-lc", "command -v apache2 >/dev/null 2>&1"],
             check=False,
         ).returncode
         == 0
@@ -255,7 +255,7 @@ def run_optional_https_prepare(logger) -> None:
 
     logger.info("HTTPS readiness:")
     logger.info("- domain: %s", domain)
-    logger.info("- nginx instalado: %s", "si" if nginx_installed else "no")
+    logger.info("- apache instalado: %s", "si" if apache_installed else "no")
     logger.info("- puerto 443 en uso: %s", "si" if port_443_busy else "no")
     logger.info(
         "- cert local presente: %s (%s)",
@@ -266,13 +266,13 @@ def run_optional_https_prepare(logger) -> None:
         "- key local presente: %s (%s)", "si" if os.path.exists(key) else "no", key
     )
     logger.info(
-        "- nginx conf presente: %s (%s)",
+        "- apache conf presente: %s (%s)",
         "si" if os.path.exists(conf) else "no",
         conf,
     )
     blockers: list[str] = []
-    if not nginx_installed:
-        blockers.append("Nginx no instalado")
+    if not apache_installed:
+        blockers.append("Apache no instalado")
     if port_443_busy:
         blockers.append("Puerto 443 ocupado")
     if not os.path.exists(cert):
@@ -280,7 +280,7 @@ def run_optional_https_prepare(logger) -> None:
     if not os.path.exists(key):
         blockers.append("Clave TLS ausente")
     if not os.path.exists(conf):
-        blockers.append("Configuracion Nginx ausente")
+        blockers.append("Configuracion Apache ausente")
 
     if blockers:
         logger.warning("HTTPS bloqueado por:")
@@ -289,9 +289,9 @@ def run_optional_https_prepare(logger) -> None:
         logger.info("Comandos sugeridos para resolver:")
         logger.info("- ./scripts/detect_443_owner.sh")
         logger.info("- DOMAIN=%s ./scripts/generate_local_tls_cert.sh", domain)
-        logger.info("- DOMAIN=%s ./scripts/setup_nginx_https_local.sh", domain)
-        logger.info("- sudo apt-get install -y nginx")
-        logger.info("- sudo nginx -t && sudo systemctl reload nginx")
+        logger.info("- DOMAIN=%s ./scripts/setup_apache_https_local.sh", domain)
+        logger.info("- sudo a2enmod ssl proxy proxy_http headers")
+        logger.info("- sudo apache2ctl configtest && sudo systemctl reload apache2")
     else:
         logger.info("HTTPS readiness sin bloqueantes locales detectados.")
 
@@ -309,13 +309,13 @@ def run_optional_https_prepare(logger) -> None:
             stderr=subprocess.DEVNULL,
         )
         subprocess.run(
-            ["bash", "-lc", f"DOMAIN={domain} ./scripts/setup_nginx_https_local.sh"],
+            ["bash", "-lc", f"DOMAIN={domain} ./scripts/setup_apache_https_local.sh"],
             check=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
         logger.info(
-            "AUTO_PREPARE_HTTPS=true: cert/conf local generados en .runtime para %s",
+            "AUTO_PREPARE_HTTPS=true: cert/conf Apache locales generados en .runtime para %s",
             domain,
         )
     except subprocess.CalledProcessError:

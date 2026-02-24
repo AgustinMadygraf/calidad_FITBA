@@ -16,14 +16,7 @@ else
   echo "  - resultado: NO (libre)"
 fi
 
-echo "[2] Nginx instalado"
-if command -v nginx >/dev/null 2>&1; then
-  echo "  - resultado: SI ($(nginx -v 2>&1))"
-else
-  echo "  - resultado: NO"
-fi
-
-echo "[2b] Apache instalado"
+echo "[2] Apache instalado"
 if command -v apache2 >/dev/null 2>&1; then
   echo "  - resultado: SI ($(apache2 -v | head -n1))"
 else
@@ -47,5 +40,5 @@ fi
 echo
 echo "Siguiente accion sugerida:"
 echo "- Si [1]=SI y no sabes el dueño de 443: identificar servicio antes de cambiar."
-echo "- Generar conf base: ./scripts/generate_nginx_https_conf.sh"
-echo "- Si 443 lo ocupa apache2, usar: ./scripts/setup_apache_https_local.sh"
+echo "- Generar cert local: ./scripts/generate_local_tls_cert.sh"
+echo "- Generar conf Apache: ./scripts/setup_apache_https_local.sh"
