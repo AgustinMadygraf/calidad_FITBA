@@ -24,6 +24,7 @@ APP_STATIC_DIR = r"/var/www/html/xubio-www"
 APP_FRONTEND_DEV_PROXY_URL = "http://127.0.0.1:5173"
 APP_FRONTEND_DEV_PROXY_ENABLED = True
 APP_FRONTEND_DEV_PROXY_WS_ENABLED = True
+APP_NETWORK_AUDIT_DB = ".runtime/network_audit.sqlite3"
 
 # Xubio integration defaults
 XUBIO_TOKEN_ENDPOINT = "https://xubio.com/API/1.1/TokenEndpoint"
@@ -136,6 +137,10 @@ def get_frontend_cors_origins() -> list[str]:
     if not origins:
         return FRONTEND_CORS_ORIGINS_DEFAULT.copy()
     return origins
+
+
+def get_network_audit_db_path() -> str:
+    return os.getenv("NETWORK_AUDIT_DB", APP_NETWORK_AUDIT_DB).strip() or APP_NETWORK_AUDIT_DB
 
 
 def get_cache_ttl(config_key: str, *, default: float = 60.0) -> float:

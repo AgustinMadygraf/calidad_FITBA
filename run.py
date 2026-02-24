@@ -5,8 +5,11 @@ from typing import List
 
 import uvicorn
 
-from src.shared.config import get_host, get_port, load_env
+from src.infrastructure.sqlite3.network_audit_repository import SqliteNetworkAuditRepository
+from src.infrastructure.system.network_snapshot_provider import SystemNetworkSnapshotProvider
+from src.shared.config import get_host, get_network_audit_db_path, get_port, load_env
 from src.shared.logger import get_logger
+from src.use_cases.network_audit import record_network_audit
 
 
 def _ensure_port_available(host: str, port: int) -> None:
@@ -128,6 +131,22 @@ def main() -> int:
             "Nota: run_server.py no inicia ngrok. Para túnel automático usar ./run.sh --mode %s",
             args.mode,
         )
+    if args.mode in {"red-interna", "full"}:
+        try:
+            audit = record_network_audit(
+                SystemNetworkSnapshotProvider(),
+                SqliteNetworkAuditRepository(get_network_audit_db_path()),
+            )
+            logger.info(
+                "SQLite audit guardado: db=%s lan_ip=%s changed_ip=%s changed_iface=%s changed_gw=%s",
+                audit.db_path,
+                audit.current.lan_ip,
+                "si" if audit.changed_ip else "no",
+                "si" if audit.changed_iface else "no",
+                "si" if audit.changed_gw else "no",
+            )
+        except Exception as exc:
+            logger.warning("No se pudo guardar network audit en SQLite: %s", exc)
     uvicorn.run(
         "src.infrastructure.fastapi.api:app",
         host=host,

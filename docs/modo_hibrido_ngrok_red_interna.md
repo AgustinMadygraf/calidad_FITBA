@@ -176,3 +176,31 @@ sudo lsof -i :443 -sTCP:LISTEN -P -n
 ```
 3. Definir hostname interno objetivo (`api.<empresa>.local`) y apuntar frontend a ese nombre.
 4. Implementar TLS en reverse proxy `:443 -> 127.0.0.1:8000`.
+
+## Evidencia automática para IT (IP estable)
+Script:
+```bash
+./scripts/check_ip_stability.sh
+```
+
+Qué registra:
+- interfaz por defecto, gateway, IP/CIDR LAN, MAC, IP pública.
+- si hubo cambio respecto de la ejecución anterior (`changed_ip`).
+
+Archivos:
+- estado actual: `/tmp/calidad_fitba_net/ip_state.env`
+- historial: `/tmp/calidad_fitba_net/ip_history.log`
+
+## Auditoría automática en SQLite
+Cuando el backend inicia en `--mode red-interna` o `--mode full`, guarda una muestra de red en SQLite y compara contra la anterior.
+
+DB por defecto:
+- `.runtime/network_audit.sqlite3`
+
+Override:
+```bash
+export NETWORK_AUDIT_DB="/ruta/custom/network_audit.sqlite3"
+```
+
+Consulta rápida desde CLI:
+- `NETINFO` (alias `RED`) muestra el último estado de auditoría y si detectó cambio de IP/interfaz/gateway.

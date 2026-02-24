@@ -9,9 +9,11 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional, Sequence, TypeAlias
 from urllib.parse import urlparse
 
-from ...shared.config import load_env
-from ...use_cases import terminal_cli as cli_use_case
-from ..presenter import terminal_cli_presenter as cli_presenter
+from src.infrastructure.sqlite3.network_audit_repository import SqliteNetworkAuditRepository
+from src.shared.config import get_network_audit_db_path, load_env
+from src.use_cases.network_audit import get_last_network_audit_status
+from src.use_cases import terminal_cli as cli_use_case
+from src.interface_adapter.presenter import terminal_cli_presenter as cli_presenter
 
 DEFAULT_BASE_URL = os.getenv("CLI_BASE_URL", "https://xubio.com")
 DEFAULT_TIMEOUT_SECONDS = 10.0
@@ -111,6 +113,15 @@ def _detect_lan_ips() -> list[str]:
                 ips.add(ip)
     except OSError:
         pass
+    if not ips:
+        try:
+            output = os.popen("hostname -I 2>/dev/null").read().strip()
+            if output:
+                for ip in output.split():
+                    if not ip.startswith("127."):
+                        ips.add(ip)
+        except OSError:
+            pass
     return sorted(ips)
 
 
@@ -149,6 +160,20 @@ def _handle_network_info_command(_args: list[str], context: CommandContext) -> b
         lan_summary = ", ".join(f"{ip} ({_classify_ip(ip)})" for ip in lan_ips)
     else:
         lan_summary = "No detectada"
+    audit = get_last_network_audit_status(
+        SqliteNetworkAuditRepository(get_network_audit_db_path())
+    )
+    if audit is None:
+        audit_summary = "sin registros"
+        audit_db = "no disponible"
+    else:
+        audit_summary = (
+            f"lan_ip={audit.current.lan_ip} "
+            f"changed_ip={'si' if audit.changed_ip else 'no'} "
+            f"changed_iface={'si' if audit.changed_iface else 'no'} "
+            f"changed_gw={'si' if audit.changed_gw else 'no'}"
+        )
+        audit_db = audit.db_path
 
     lines = [
         "Diagnostico de red y HTTPS",
@@ -161,6 +186,8 @@ def _handle_network_info_command(_args: list[str], context: CommandContext) -> b
         f"- Base URL puerto: {resolved_port}",
         f"- Puerto local 8000 abierto: {'si' if _is_tcp_open('127.0.0.1', 8000) else 'no'}",
         f"- Puerto local 443 abierto: {'si' if _is_tcp_open('127.0.0.1', 443) else 'no'}",
+        f"- SQLite network audit: {audit_summary}",
+        f"- SQLite network audit db: {audit_db}",
         "",
         "Sugerencias:",
         "- Publicar frontend contra un hostname estable (DNS interno), no contra IP hardcodeada.",
