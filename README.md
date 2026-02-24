@@ -63,6 +63,20 @@ python run.py
 ```
 
 Si el puerto configurado esta ocupado, `run.py` busca automaticamente el siguiente puerto disponible.
+`run.py` también soporta modo:
+```bash
+python run.py --mode ngrok
+python run.py --mode red-interna
+python run.py --mode full
+```
+
+Entry point recomendado (`run.sh`) con selector de modo:
+```bash
+./run.sh                    # default: modo ngrok
+./run.sh --mode ngrok       # solo ngrok
+./run.sh --mode red-interna # solo LAN interna
+./run.sh --mode full        # ngrok + LAN interna
+```
 
 ## Ejecutar CLI
 ```bash

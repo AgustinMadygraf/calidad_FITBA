@@ -6,8 +6,9 @@
 # Uso:
 #   ./run.sh              # Inicia en foreground (ver logs en tiempo real)
 #   ./run.sh --daemon     # Inicia en background (sin terminal abierta)
-#   ./run.sh --no-ngrok   # Solo FastAPI (útil si ngrok ya está corriendo)
-#   ./run.sh --only-api   # Alias para --no-ngrok
+#   ./run.sh --mode ngrok         # Solo canal ngrok (default)
+#   ./run.sh --mode red-interna   # Solo canal LAN interno
+#   ./run.sh --mode full          # ngrok + LAN interno
 #   ./run.sh --stop       # Detiene todos los servicios en background
 #   ./run.sh --status     # Muestra el estado de los servicios
 #   ./run.sh --logs       # Muestra los logs de FastAPI
@@ -38,6 +39,7 @@ fi
 # Variables configurables vía entorno (con valores por defecto)
 NGROK_URL="${NGROK_URL:-confined-unexcused-garland.ngrok-free.dev}"
 FASTAPI_PORT="${FASTAPI_PORT:-8000}"
+RUN_MODE="${RUN_MODE:-ngrok}"
 NGROK_PID_FILE="${NGROK_PID_FILE:-/tmp/ngrok_calidad_fitba.pid}"
 FASTAPI_PID_FILE="${FASTAPI_PID_FILE:-/tmp/fastapi_calidad_fitba.pid}"
 VENV_PATH="${VENV_PATH:-$SCRIPT_DIR/venv/bin/activate}"
@@ -256,16 +258,74 @@ DAEMON_MODE=false
 
 for arg in "$@"; do
     case "$arg" in
-        --no-ngrok|--only-api)
-            START_NGROK=false
-            log_info "Modo: Solo FastAPI (ngrok no se iniciará)"
+        --mode)
+            # Se procesa junto al próximo token en un segundo paso.
+            ;;
+        --mode=*)
+            RUN_MODE="${arg#*=}"
             ;;
         --daemon|--background)
             DAEMON_MODE=true
             log_info "Modo: Daemon (background)"
             ;;
+        --no-ngrok|--only-api)
+            RUN_MODE="red-interna"
+            ;;
     esac
 done
+
+# Procesar forma: --mode <valor>
+for ((i=1; i<=$#; i++)); do
+    if [ "${!i}" = "--mode" ]; then
+        j=$((i+1))
+        if [ $j -le $# ]; then
+            RUN_MODE="${!j}"
+        else
+            log_error "Falta valor para --mode (usar: ngrok | red-interna | full)"
+            exit 1
+        fi
+    fi
+done
+
+case "$RUN_MODE" in
+    ngrok)
+        START_NGROK=true
+        EFFECTIVE_APP_HOST="127.0.0.1"
+        ;;
+    red-interna|red_interna|interna)
+        START_NGROK=false
+        EFFECTIVE_APP_HOST="0.0.0.0"
+        ;;
+    full)
+        START_NGROK=true
+        EFFECTIVE_APP_HOST="0.0.0.0"
+        ;;
+    *)
+        log_error "Modo invalido: '$RUN_MODE'. Usar: ngrok | red-interna | full"
+        exit 1
+        ;;
+esac
+
+SERVER_LAN_IP="${SERVER_LAN_IP:-$(hostname -I | awk '{print $1}')}"
+INTERNAL_ORIGIN="${INTERNAL_ORIGIN:-http://${SERVER_LAN_IP}:${FASTAPI_PORT}}"
+NGROK_ORIGIN="https://${NGROK_URL}"
+LOCAL_ORIGIN="http://127.0.0.1:${FASTAPI_PORT}"
+
+case "$RUN_MODE" in
+    ngrok)
+        EFFECTIVE_CORS_ORIGINS="${LOCAL_ORIGIN},${NGROK_ORIGIN}"
+        ;;
+    red-interna|red_interna|interna)
+        EFFECTIVE_CORS_ORIGINS="${LOCAL_ORIGIN},${INTERNAL_ORIGIN}"
+        ;;
+    full)
+        EFFECTIVE_CORS_ORIGINS="${LOCAL_ORIGIN},${INTERNAL_ORIGIN},${NGROK_ORIGIN}"
+        ;;
+esac
+
+log_info "Modo seleccionado: $RUN_MODE"
+log_info "APP_HOST efectivo: $EFFECTIVE_APP_HOST"
+log_info "CORS orígenes: $EFFECTIVE_CORS_ORIGINS"
 
 # =============================================================================
 # Iniciar ngrok (si es necesario)
@@ -345,14 +405,17 @@ fi
 # Iniciar FastAPI
 # =============================================================================
 
-log_info "Iniciando FastAPI en localhost:$FASTAPI_PORT..."
+log_info "Iniciando FastAPI en $EFFECTIVE_APP_HOST:$FASTAPI_PORT..."
 echo ""
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 log_info "🚀 FastAPI Backend"
 log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-log_info "📍 Local:       http://localhost:$FASTAPI_PORT"
-log_info "📍 Local API:   http://localhost:$FASTAPI_PORT/API/health"
-log_info "📍 Frontend:    http://localhost:$FASTAPI_PORT/"
+log_info "📍 Local:       http://127.0.0.1:$FASTAPI_PORT"
+log_info "📍 Local API:   http://127.0.0.1:$FASTAPI_PORT/API/health"
+if [ "$EFFECTIVE_APP_HOST" = "0.0.0.0" ]; then
+    log_info "📍 LAN:         http://$SERVER_LAN_IP:$FASTAPI_PORT"
+fi
+log_info "📍 Frontend:    http://127.0.0.1:$FASTAPI_PORT/"
 
 if [ "$START_NGROK" = "true" ]; then
     log_info "📍 Public:      https://$NGROK_URL"
@@ -370,6 +433,9 @@ if [ "$DAEMON_MODE" = "true" ]; then
     echo ""
     
     # Ejecutar FastAPI en background
+    APP_HOST="$EFFECTIVE_APP_HOST" \
+    APP_PORT="$FASTAPI_PORT" \
+    FRONTEND_CORS_ORIGINS="$EFFECTIVE_CORS_ORIGINS" \
     FASTAPI_RELOAD=false nohup python run.py > "$FASTAPI_LOG_FILE" 2>&1 &
     FASTAPI_PID=$!
     echo $FASTAPI_PID > "$FASTAPI_PID_FILE"
@@ -384,7 +450,10 @@ else
     echo ""
     
     # Ejecutar FastAPI en foreground (para ver logs)
-    python run.py "$@" &
+    APP_HOST="$EFFECTIVE_APP_HOST" \
+    APP_PORT="$FASTAPI_PORT" \
+    FRONTEND_CORS_ORIGINS="$EFFECTIVE_CORS_ORIGINS" \
+    python run.py &
     FASTAPI_PID=$!
     
     # Esperar a que FastAPI termine (o Ctrl+C)
