@@ -23,6 +23,13 @@ else
   echo "  - resultado: NO"
 fi
 
+echo "[2b] Apache instalado"
+if command -v apache2 >/dev/null 2>&1; then
+  echo "  - resultado: SI ($(apache2 -v | head -n1))"
+else
+  echo "  - resultado: NO"
+fi
+
 echo "[3] Upstream FastAPI"
 if curl -fsS --max-time 3 "$UPSTREAM_URL" >/dev/null 2>&1; then
   echo "  - resultado: SI ($UPSTREAM_URL responde)"
@@ -41,3 +48,4 @@ echo
 echo "Siguiente accion sugerida:"
 echo "- Si [1]=SI y no sabes el dueño de 443: identificar servicio antes de cambiar."
 echo "- Generar conf base: ./scripts/generate_nginx_https_conf.sh"
+echo "- Si 443 lo ocupa apache2, usar: ./scripts/setup_apache_https_local.sh"

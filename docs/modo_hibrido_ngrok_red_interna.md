@@ -21,7 +21,7 @@ Operar en modo complementario:
 9. El segmento `10.176.61.x` sí tiene alcance desde toda la fábrica.
 10. `http://10.176.61.33:8000` es acceso por IP privada de red interna (RFC1918), no IP pública de Internet.
 11. Con el estado actual (`run_server.py --mode red-interna`) el backend expone HTTP en puerto `8000`; no hay TLS nativo en Uvicorn.
-12. Para HTTPS interno, el patrón recomendado es terminar TLS en un reverse proxy (Nginx/Caddy) en `443` y reenviar al backend en `127.0.0.1:8000`.
+12. Para HTTPS interno, el patrón recomendado es terminar TLS en un reverse proxy en `443` y reenviar al backend en `127.0.0.1:8000`.
 
 ## Configuración base sugerida
 ```bash
@@ -127,6 +127,8 @@ Escenario observado:
   - `Puerto local 8000 abierto=si`
   - `Puerto local 443 abierto=si`
   - `IPs LAN detectadas=No detectada`
+- HTTPS servidor validado:
+  - `curl -ik https://api.madygraf.local/health` -> `200 OK` (con entrada local en `/etc/hosts`).
 
 Implicancias:
 - Si cambia la IP LAN del servidor, cambiará la URL por IP.
@@ -137,7 +139,7 @@ Implicancias:
 
 Objetivo recomendado:
 ```text
-Frontend -> https://api-interna.empresa.local:443 -> Nginx/Caddy (TLS) -> http://127.0.0.1:8000 (FastAPI)
+Frontend -> https://api.madygraf.local:443 -> Apache (TLS) -> http://127.0.0.1:8000 (FastAPI)
 ```
 
 ## Automatización parcial
@@ -182,9 +184,11 @@ Scripts nuevos:
 ```bash
 ./scripts/check_https_readiness.sh
 ./scripts/generate_nginx_https_conf.sh
+./scripts/generate_apache_https_vhost.sh
 ./scripts/detect_443_owner.sh
 ./scripts/generate_local_tls_cert.sh
 ./scripts/setup_nginx_https_local.sh
+./scripts/setup_apache_https_local.sh
 ```
 
 Uso recomendado:
@@ -201,14 +205,16 @@ OUT_FILE=/tmp/nginx_api_empresa_local.conf \
 ```
 
 Notas:
-- En este host, `443` ya está en uso y `nginx` no está instalado.
-- Antes de activar HTTPS en este servidor hay que identificar el dueño actual de `443`.
+- En este host, `443` está en uso por `apache2` (confirmado con `ss/lsof`).
+- En este host, Nginx queda como alternativa genérica pero **no recomendada** para el despliegue actual.
+- Se mantiene Apache como terminación TLS en `443`.
 
 ## Plan acordado (implementación local)
 Parámetros confirmados:
-- reverse proxy: `nginx`
+- reverse proxy: `apache2` (ya activo en `443`)
 - dominio: `api.madygraf.local`
-- certificado: emitido localmente en este repo
+- certificado producción: **CA corporativa**
+- certificado local/self-signed: **solo pruebas internas temporales**
 - despliegue HTTPS: en esta misma máquina
 
 Flujo recomendado:
@@ -219,15 +225,15 @@ Flujo recomendado:
 # 2) Generar cert local (repo)
 DOMAIN=api.madygraf.local ./scripts/generate_local_tls_cert.sh
 
-# 3) Generar conf nginx apuntando a FastAPI :8000
-DOMAIN=api.madygraf.local ./scripts/setup_nginx_https_local.sh
+# 3) Generar conf Apache apuntando a FastAPI :8000
+DOMAIN=api.madygraf.local ./scripts/setup_apache_https_local.sh
 ```
 
 Automatización parcial al iniciar backend (`run.py --mode red-interna|full`):
-- Siempre muestra `HTTPS readiness` (nginx instalado, 443 en uso, cert/key/conf presentes).
+- Siempre muestra `HTTPS readiness` (nginx/apache, 443 en uso, cert/key/conf presentes).
 - Si `AUTO_PREPARE_HTTPS=true`, genera automáticamente:
   - cert/key local en `.runtime/tls/`
-  - conf nginx en `.runtime/nginx/`
+  - conf nginx en `.runtime/nginx/` (solo artefacto opcional; no camino principal)
 
 Ejemplo:
 ```bash
@@ -239,16 +245,16 @@ python run.py --mode red-interna
 Artefactos generados:
 - cert: `.runtime/tls/api.madygraf.local.crt`
 - key: `.runtime/tls/api.madygraf.local.key`
-- nginx conf: `.runtime/nginx/api.madygraf.local.conf`
+- apache conf: `.runtime/apache/api.madygraf.local.conf`
 
 Aplicación manual (requiere root):
-1. Instalar `nginx` si no está instalado.
-2. Copiar `.runtime/nginx/api.madygraf.local.conf` a `/etc/nginx/sites-available/api.madygraf.local.conf`.
-3. Habilitar site y ajustar el site default si corresponde.
+1. Habilitar módulos Apache: `ssl proxy proxy_http headers`.
+2. Copiar `.runtime/apache/api.madygraf.local.conf` a `/etc/apache2/sites-available/api.madygraf.local.conf`.
+3. Habilitar sitio Apache.
 4. Validar y recargar:
 ```bash
-sudo nginx -t
-sudo systemctl reload nginx
+sudo apache2ctl configtest
+sudo systemctl reload apache2
 ```
 
 ## Evidencia automática para IT (IP estable)

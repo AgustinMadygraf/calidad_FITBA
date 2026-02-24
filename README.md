@@ -32,6 +32,12 @@ Validación rápida:
 curl -i http://127.0.0.1:8000/health
 ```
 
+HTTPS interno (Apache en este host):
+```bash
+DOMAIN=api.madygraf.local ./scripts/generate_local_tls_cert.sh
+DOMAIN=api.madygraf.local ./scripts/setup_apache_https_local.sh
+```
+
 ## Comandos clave de CLI
 - `MENU`
 - `NETINFO` (alias `RED`)
@@ -50,6 +56,7 @@ pytest -q
 - `docs/api_local.md`
 - `docs/arquitectura.md`
 - `docs/modo_hibrido_ngrok_red_interna.md`
+- `docs/procedimiento_https_apache_dns_certificados.md`
 - `docs/informe_cors_backend_frontend.md`
 - `docs/informe_backend_a_frontend_cors_ngrok.md`
 - `docs/release_checklist.md`
