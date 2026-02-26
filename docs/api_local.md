@@ -6,14 +6,20 @@ Este documento describe la API local Xubio-like expuesta por el server FastAPI.
 - Local: `http://127.0.0.1:8000`
 
 ## Politica de contrato
-- API de solo lectura.
-- Solo se publican endpoints `GET`.
-- CORS declara `allow_methods=["GET", "OPTIONS"]`.
+- API mayormente de lectura para recursos Xubio-like.
+- Se publican endpoints `POST` para autenticacion de sesion.
+- CORS declara `allow_methods=["GET", "POST", "OPTIONS"]` y `allow_credentials=true`.
 - Metodos no permitidos sobre rutas de recursos (`POST`, `PUT`, `PATCH`, `DELETE`) responden `405 Method Not Allowed`.
 
 ## Salud
 - `GET /health`
 - `GET /API/health`
+
+## Autenticacion (OIDC + sesion cookie)
+- `GET /auth/session`
+- `POST /auth/login/google`
+- `POST /auth/logout`
+- `GET /auth/callback/google` (callback interno backend)
 
 ## Inspeccion de token
 - `GET /token/inspect`

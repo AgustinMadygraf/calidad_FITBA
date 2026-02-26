@@ -24,6 +24,7 @@ from .app import app
 from .deps import get_token_gateway
 from .remito_utils import resolve_remito_transaccion_id
 from .routers import (
+    auth as auth_router,
     catalogos,
     cliente as cliente_router,
     comprobante_venta as comprobante_router,
@@ -51,8 +52,8 @@ logger.debug("CORS origins configurados: %s", FRONTEND_CORS_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_CORS_ORIGINS,
-    allow_credentials=False,
-    allow_methods=["GET", "OPTIONS"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],  # Permitir todos los headers (incluyendo ngrok-skip-browser-warning)
 )
 logger.debug("CORSMiddleware agregado con origins: %s", FRONTEND_CORS_ORIGINS)
@@ -185,6 +186,7 @@ app.include_router(vendedor_router.router)
 app.include_router(comprobante_router.router)
 app.include_router(catalogos.router)
 app.include_router(observability_router.router)
+app.include_router(auth_router.router)
 
 
 def run() -> None:

@@ -106,6 +106,13 @@ def test_frontend_dev_proxy_flags(monkeypatch):
     assert config.is_frontend_dev_proxy_ws_enabled() is True
 
 
+def test_frontend_cors_origins_merges_defaults_and_env(monkeypatch):
+    monkeypatch.setenv("FRONTEND_CORS_ORIGINS", "https://api.madygraf.local")
+    origins = config.get_frontend_cors_origins()
+    assert "https://xubio.madygraf.com" in origins
+    assert "https://api.madygraf.local" in origins
+
+
 @pytest.mark.parametrize(
     "raw, expected",
     [

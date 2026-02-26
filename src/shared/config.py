@@ -133,10 +133,14 @@ def get_frontend_cors_origins() -> list[str]:
     raw = os.getenv("FRONTEND_CORS_ORIGINS", "").strip()
     if not raw:
         return FRONTEND_CORS_ORIGINS_DEFAULT.copy()
-    origins = [item.strip() for item in raw.split(",") if item.strip()]
-    if not origins:
+    extra_origins = [item.strip() for item in raw.split(",") if item.strip()]
+    if not extra_origins:
         return FRONTEND_CORS_ORIGINS_DEFAULT.copy()
-    return origins
+    merged: list[str] = []
+    for origin in FRONTEND_CORS_ORIGINS_DEFAULT + extra_origins:
+        if origin not in merged:
+            merged.append(origin)
+    return merged
 
 
 def get_network_audit_db_path() -> str:
