@@ -25,7 +25,14 @@ def _resolve_http_status(resp_status: int, payload: Dict[str, Any]) -> int:
     if isinstance(code_response, int) and 400 <= code_response <= 599:
         return code_response
     if isinstance(payload.get("error"), str) and payload.get("error") == "invalid_request":
-        return 404
+        combined_message = " ".join(
+            str(part)
+            for part in (payload.get("message"), payload.get("description"))
+            if isinstance(part, str)
+        ).lower()
+        if "no existe" in combined_message or "not found" in combined_message:
+            return 404
+        return 400
     return resp_status if 400 <= resp_status <= 599 else 502
 
 
