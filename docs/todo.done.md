@@ -25,6 +25,9 @@
 - [x] CSRF baseline por `Origin` en `POST /auth/login/google` y `POST /auth/logout`.
 - [x] Default de cookie en prod ajustado para cross-origin (`SameSite=None` cuando `IS_PROD=true`).
 - [x] Fix defensivo CORS: `get_frontend_cors_origins()` ahora fusiona defaults + `FRONTEND_CORS_ORIGINS` para no perder `https://xubio.madygraf.com`.
+- [x] Script operativo `scripts/force_backend_8000.sh`:
+  - [x] detecta y mata procesos que escuchen en `:8000`
+  - [x] arranca backend en `8000` con `run_server.py --mode red-interna`
 
 ## Definiciones confirmadas
 - [x] Frontend productivo: `https://xubio.madygraf.com`

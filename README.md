@@ -32,6 +32,11 @@ Validación rápida:
 curl -i http://127.0.0.1:8000/health
 ```
 
+Forzar backend en `8000` (mata cualquier proceso ocupando el puerto y arranca FastAPI):
+```bash
+./scripts/force_backend_8000.sh
+```
+
 HTTPS interno (Apache en este host):
 ```bash
 DOMAIN=api.madygraf.local ./scripts/generate_local_tls_cert.sh
