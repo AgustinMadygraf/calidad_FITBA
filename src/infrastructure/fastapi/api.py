@@ -3,31 +3,25 @@ Path: src/infrastructure/fastapi/api.py
 """
 
 from typing import Any, Dict
+from pathlib import Path
 
 import uvicorn
 from fastapi import HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 from ...interface_adapter.controllers import handlers
 from ...shared.config import (
-    get_frontend_dev_proxy_url,
     get_frontend_cors_origins,
     get_host,
     get_port,
-    get_static_dir,
-    is_frontend_dev_proxy_enabled,
-    is_frontend_dev_proxy_ws_enabled,
     load_env,
 )
 from ...shared.logger import get_logger
 from ...use_cases.errors import ExternalServiceError
 from .app import app
 from .deps import get_token_gateway
-from .frontend_proxy import build_frontend_proxy_middleware
-from .frontend_proxy_ws import build_frontend_ws_proxy_handler
 from .remito_utils import resolve_remito_transaccion_id
 from .routers import (
     catalogos,
@@ -46,23 +40,11 @@ logger.debug("Inicializando FastAPI app...")
 load_env()
 logger.debug("Configuración de entorno cargada")
 FRONTEND_CORS_ORIGINS = get_frontend_cors_origins()
-FRONTEND_DEV_PROXY_ENABLED = is_frontend_dev_proxy_enabled()
-FRONTEND_DEV_PROXY_URL = get_frontend_dev_proxy_url()
-FRONTEND_DEV_PROXY_WS_ENABLED = is_frontend_dev_proxy_ws_enabled()
+ROOT_INDEX_PATH = Path(__file__).with_name("static").joinpath("index.html")
 
 token_gateway = get_token_gateway()
 logger.debug("Token gateway inicializado")
 
-STATIC_DIR = get_static_dir()
-FRONTEND_INDEX = STATIC_DIR / "index.html"
-
-logger.info("Directorio estatico configurado: %s", STATIC_DIR)
-logger.info(
-    "Frontend dev proxy: enabled=%s url=%s",
-    FRONTEND_DEV_PROXY_ENABLED,
-    FRONTEND_DEV_PROXY_URL,
-)
-logger.info("Frontend dev proxy WS: enabled=%s", FRONTEND_DEV_PROXY_WS_ENABLED)
 logger.debug("CORS origins configurados: %s", FRONTEND_CORS_ORIGINS)
 
 app.add_middleware(
@@ -89,13 +71,8 @@ def _resolve_remito_transaccion_id(
 
 @app.get("/", include_in_schema=False)
 def root():
-    if FRONTEND_INDEX.exists():
-        logger.debug("Sirviendo index del frontend: %s", FRONTEND_INDEX)
-        return FileResponse(FRONTEND_INDEX)
-    logger.warning(
-        "No se encontro index del frontend en %s; devolviendo fallback API root",
-        FRONTEND_INDEX,
-    )
+    if ROOT_INDEX_PATH.exists():
+        return FileResponse(ROOT_INDEX_PATH)
     return handlers.root()
 
 
@@ -131,16 +108,6 @@ def api_health(request: Request) -> Dict[str, Any]:
         "host": request.headers.get("host", request.url.netloc),
         "content_type": "application/json",
     }
-
-
-if FRONTEND_DEV_PROXY_ENABLED:
-    app.middleware("http")(build_frontend_proxy_middleware(FRONTEND_DEV_PROXY_URL))
-if FRONTEND_DEV_PROXY_ENABLED and FRONTEND_DEV_PROXY_WS_ENABLED:
-    app.add_api_websocket_route(
-        "/{full_path:path}",
-        build_frontend_ws_proxy_handler(FRONTEND_DEV_PROXY_URL),
-        name="frontend_ws_proxy",
-    )
 
 
 @app.get("/token/inspect")
@@ -208,23 +175,6 @@ app.include_router(vendedor_router.router)
 app.include_router(comprobante_router.router)
 app.include_router(catalogos.router)
 app.include_router(observability_router.router)
-
-
-if STATIC_DIR.exists():
-    logger.debug("StaticFiles directory encontrado: %s", STATIC_DIR)
-    if not FRONTEND_INDEX.exists():
-        logger.warning(
-            "⚠️  Directorio estatico existe pero falta index.html: %s",
-            FRONTEND_INDEX,
-        )
-    else:
-        logger.debug("index.html encontrado en: %s", FRONTEND_INDEX)
-    # NOTA: html=False para evitar que StaticFiles sirva index.html como fallback
-    # a requests no coincidentes (ej: /API/1.1/*). Los routers tienen prioridad.
-    logger.debug("Montando StaticFiles con html=False (sin fallback HTML)")
-    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=False), name="static")
-else:
-    logger.error("❌ CRÍTICO: Directorio estatico no encontrado: %s", STATIC_DIR)
 
 
 def run() -> None:
