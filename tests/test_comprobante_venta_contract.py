@@ -59,3 +59,19 @@ def test_comprobante_venta_contract_exposes_both_cae_keys():
     assert output["CAE"] == "999"
     assert output["cae"] == "999"
     assert output["caefechaVto"] == [2026, 1, 10]
+
+
+def test_comprobante_venta_contract_coerces_scalar_fields_from_object():
+    replica_input = {
+        "transaccionid": 702,
+        "tipo": {"ID": 1, "nombre": "x"},
+        "condicionDePago": {"id": 2},
+    }
+    gateway_provider.comprobante_venta_gateway = InMemoryComprobanteVentaGateway(
+        items=[replica_input]
+    )
+
+    output = comprobante_venta_get(702)
+
+    assert output["tipo"] == 1
+    assert output["condicionDePago"] == 2

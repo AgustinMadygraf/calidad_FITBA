@@ -15,6 +15,7 @@ _REF_FIELDS = (
     "puntoVenta",
     "cliente",
 )
+_SCALAR_ID_FIELDS = ("tipo", "condicionDePago")
 
 _CONTRACT_FIELDS = (
     "numeroDocumento",
@@ -98,6 +99,12 @@ def _get_cae(payload: Dict[str, Any]) -> Any:
     return ""
 
 
+def _normalize_scalar_id(value: Any) -> Any:
+    if isinstance(value, dict):
+        return value.get("ID", value.get("id", 0))
+    return value
+
+
 def normalize_comprobante_venta(payload: Dict[str, Any]) -> Dict[str, Any]:
     normalized: Dict[str, Any] = {}
 
@@ -117,6 +124,8 @@ def normalize_comprobante_venta(payload: Dict[str, Any]) -> Dict[str, Any]:
             continue
 
         value = payload.get(field)
+        if field in _SCALAR_ID_FIELDS:
+            value = _normalize_scalar_id(value)
         if value is None:
             value = _DEFAULTS.get(field, "")
         normalized[field] = value
