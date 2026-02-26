@@ -21,7 +21,7 @@ def test_comprobante_venta_contract_matches_xubio_fixture():
         items=[replica_input]
     )
 
-    output = comprobante_venta_get(501)
+    output = comprobante_venta_get(expected["transaccionid"])
 
     assert output == expected
 
@@ -41,13 +41,14 @@ def test_comprobante_venta_contract_has_required_keys_and_arrays():
     assert output["transaccionProductoItems"] == []
     assert output["transaccionPercepcionItems"] == []
     assert output["transaccionCobranzaItems"] == []
+    assert output["caefechaVto"] == []
 
 
-def test_comprobante_venta_contract_only_exposes_uppercase_cae_key():
+def test_comprobante_venta_contract_exposes_both_cae_keys():
     replica_input = {
         "transaccionid": 701,
         "cae": "999",
-        "caefechaVto": "2026-01-10",
+        "caefechaVto": [2026, 1, 10],
     }
     gateway_provider.comprobante_venta_gateway = InMemoryComprobanteVentaGateway(
         items=[replica_input]
@@ -56,5 +57,5 @@ def test_comprobante_venta_contract_only_exposes_uppercase_cae_key():
     output = comprobante_venta_get(701)
 
     assert output["CAE"] == "999"
-    assert "cae" not in output
-    assert "caefechaVto" not in output
+    assert output["cae"] == "999"
+    assert output["caefechaVto"] == [2026, 1, 10]

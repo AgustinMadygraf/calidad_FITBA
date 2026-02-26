@@ -34,7 +34,7 @@ def test_get_comprobante_venta_by_id_returns_item():
     item = comprobante_venta_get(0)
 
     assert item["transaccionid"] == 0
-    assert item["nombre"] == "string"
+    assert item["numeroDocumento"] == "string"
 
 
 def test_get_comprobante_venta_by_id_route_returns_404_when_missing(monkeypatch):
