@@ -57,6 +57,12 @@ DOMAIN=api.madygraf.local ./scripts/setup_apache_https_local.sh
 pytest -q
 ```
 
+## Contrato ComprobanteVenta
+- Endpoint: `GET /API/1.1/comprobanteVentaBean/{id}` y `GET /API/1.1/comprobanteVentaBean`.
+- La salida se normaliza para cumplir el contrato Xubio (golden contract) con keys exactas, incluyendo defaults `0`, `false`, `\"\"`, `null` y arrays vacios `[]` cuando faltan datos en origen.
+- `CAE` se expone solo en mayusculas (no se devuelve `cae` ni otros aliases no contractuales).
+- `provincia` se serializa con shape `{provincia_id, codigo, nombre, pais}`.
+
 ## Documentación
 - `docs/api_local.md`
 - `docs/arquitectura.md`

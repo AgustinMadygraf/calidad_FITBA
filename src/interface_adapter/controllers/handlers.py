@@ -20,6 +20,10 @@ from ...use_cases.ports.lista_precio_gateway import ListaPrecioGateway
 from ...use_cases.ports.moneda_gateway import MonedaGateway
 from ...use_cases.ports.comprobante_venta_gateway import ComprobanteVentaGateway
 from ...use_cases.ports.vendedor_gateway import VendedorGateway
+from ...interface_adapter.mappers.comprobante_venta_contract import (
+    normalize_comprobante_venta,
+    normalize_comprobante_venta_list,
+)
 from ...interface_adapter.presenter import token_presenter
 from ...use_cases import cliente, remito_venta, token_inspect
 from ...use_cases.ports.cliente_gateway import ClienteGateway
@@ -238,13 +242,16 @@ def list_vendedores(gateway: VendedorGateway) -> Dict[str, Any]:
 
 def list_comprobantes_venta(gateway: ComprobanteVentaGateway) -> Dict[str, Any]:
     items = gateway.list()
-    return {"items": items}
+    return {"items": normalize_comprobante_venta_list(items)}
 
 
 def get_comprobante_venta(
     gateway: ComprobanteVentaGateway, comprobante_id: int
 ) -> Optional[Dict[str, Any]]:
-    return gateway.get(comprobante_id)
+    item = gateway.get(comprobante_id)
+    if item is None:
+        return None
+    return normalize_comprobante_venta(item)
 
 
 def get_vendedor(
