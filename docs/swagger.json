@@ -549,6 +549,67 @@
         }
       }
     },
+    "/API/1.1/circuitoContableBean": {
+      "get": {
+        "summary": "Circuito Contable List",
+        "operationId": "circuito_contable_list_API_1_1_circuitoContableBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Circuito Contable List Api 1 1 Circuitocontablebean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/circuitoContableBean/{circuito_contable_id}": {
+      "get": {
+        "summary": "Circuito Contable Get",
+        "operationId": "circuito_contable_get_API_1_1_circuitoContableBean__circuito_contable_id__get",
+        "parameters": [
+          {
+            "name": "circuito_contable_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Circuito Contable Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Circuito Contable Get Api 1 1 Circuitocontablebean  Circuito Contable Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/API/1.1/categoriaFiscal/{categoria_fiscal_id}": {
       "get": {
         "summary": "Categoria Fiscal Get",
@@ -792,125 +853,248 @@
       "ListaPrecioDetailResponse": {
         "properties": {
           "listaPrecioID": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Listaprecioid"
           },
           "activo": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Activo"
           },
           "nombre": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Nombre"
           },
           "descripcion": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Descripcion"
           },
           "esDefault": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Esdefault"
           },
           "moneda": {
-            "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "tipo": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Tipo"
           },
           "iva": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Iva"
           },
           "listaReferencia": {
-            "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "listaPrecioItem": {
-            "items": {
-              "$ref": "#/components/schemas/ListaPrecioItem"
-            },
-            "type": "array",
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ListaPrecioItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Listaprecioitem"
           },
           "ocultarSinPrecio": {
-            "type": "boolean",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Ocultarsinprecio"
           }
         },
+        "additionalProperties": true,
         "type": "object",
-        "required": [
-          "listaPrecioID",
-          "activo",
-          "nombre",
-          "descripcion",
-          "esDefault",
-          "moneda",
-          "tipo",
-          "iva",
-          "listaReferencia",
-          "listaPrecioItem",
-          "ocultarSinPrecio"
-        ],
         "title": "ListaPrecioDetailResponse"
       },
       "ListaPrecioItem": {
         "properties": {
           "listaPrecioID": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Listaprecioid"
           },
           "producto": {
-            "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "precio": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Precio"
           },
           "codigo": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Codigo"
           },
           "referencia": {
-            "type": "number",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Referencia"
           }
         },
+        "additionalProperties": true,
         "type": "object",
-        "required": [
-          "listaPrecioID",
-          "producto",
-          "precio",
-          "codigo",
-          "referencia"
-        ],
         "title": "ListaPrecioItem"
       },
       "ListaPrecioSimpleItem": {
         "properties": {
           "ID": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Id"
           },
           "nombre": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Nombre"
           },
           "codigo": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Codigo"
           },
           "id": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Id"
           }
         },
+        "additionalProperties": true,
         "type": "object",
-        "required": [
-          "ID",
-          "nombre",
-          "codigo",
-          "id"
-        ],
         "title": "ListaPrecioSimpleItem"
       },
       "ValidationError": {

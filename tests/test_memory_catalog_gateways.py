@@ -7,6 +7,9 @@ from src.infrastructure.memory.identificacion_tributaria_gateway_memory import (
 from src.infrastructure.memory.comprobante_venta_gateway_memory import (
     InMemoryComprobanteVentaGateway,
 )
+from src.infrastructure.memory.circuito_contable_gateway_memory import (
+    InMemoryCircuitoContableGateway,
+)
 from src.infrastructure.memory.moneda_gateway_memory import InMemoryMonedaGateway
 from src.infrastructure.memory.vendedor_gateway_memory import InMemoryVendedorGateway
 
@@ -45,6 +48,15 @@ def test_moneda_get_supports_lowercase_id_key():
 def test_moneda_get_returns_none_when_missing():
     gateway = InMemoryMonedaGateway(items=[{"id": 2, "nombre": "USD", "codigo": "USD"}])
     assert gateway.get(999) is None
+
+
+def test_circuito_contable_get_supports_custom_id_key():
+    gateway = InMemoryCircuitoContableGateway(
+        items=[{"circuitoContable_id": 7, "codigo": "CC7"}]
+    )
+    item = gateway.get(7)
+    assert item is not None
+    assert item["circuitoContable_id"] == 7
 
 
 def test_vendedor_get_supports_vendedor_id_key():

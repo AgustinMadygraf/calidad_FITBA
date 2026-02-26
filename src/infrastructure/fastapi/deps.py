@@ -3,6 +3,9 @@ from typing import Protocol
 from ...infrastructure.httpx.categoria_fiscal_gateway_xubio import (
     XubioCategoriaFiscalGateway,
 )
+from ...infrastructure.httpx.circuito_contable_gateway_xubio import (
+    XubioCircuitoContableGateway,
+)
 from ...infrastructure.httpx.cliente_gateway_xubio import XubioClienteGateway
 from ...infrastructure.httpx.comprobante_venta_gateway_xubio import (
     XubioComprobanteVentaGateway,
@@ -29,6 +32,7 @@ logger = get_logger(__name__)
 
 class Dependencies(Protocol):  # pylint: disable=too-few-public-methods
     categoria_fiscal_gateway: object
+    circuito_contable_gateway: object
     cliente_gateway: object
     producto_gateway: object
     producto_compra_gateway: object
@@ -61,6 +65,17 @@ def get_categoria_fiscal_gateway():
     gw = XubioCategoriaFiscalGateway(enable_get_cache=cache_enabled)
     logger.info(
         "Categoria fiscal gateway: %s (read cache enabled=%s)",
+        gw.__class__.__name__,
+        cache_enabled,
+    )
+    return gw
+
+
+def get_circuito_contable_gateway():
+    cache_enabled = _get_read_cache_enabled()
+    gw = XubioCircuitoContableGateway(enable_get_cache=cache_enabled)
+    logger.info(
+        "Circuito contable gateway: %s (read cache enabled=%s)",
         gw.__class__.__name__,
         cache_enabled,
     )

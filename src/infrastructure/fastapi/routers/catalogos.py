@@ -9,6 +9,8 @@ router = APIRouter()
 
 CATEGORIA_FISCAL_BASE = "/API/1.1/categoriaFiscal"
 CATEGORIA_FISCAL_BASE_SLASH = "/API/1.1/categoriaFiscal/"
+CIRCUITO_CONTABLE_BASE = "/API/1.1/circuitoContableBean"
+CIRCUITO_CONTABLE_BASE_SLASH = "/API/1.1/circuitoContableBean/"
 DEPOSITO_BASE = "/API/1.1/depositos"
 DEPOSITO_BASE_SLASH = "/API/1.1/depositos/"
 IDENTIFICACION_TRIBUTARIA_BASE = "/API/1.1/identificacionTributaria"
@@ -23,6 +25,27 @@ def categoria_fiscal_list() -> Dict[str, Any]:
     return handlers.list_categorias_fiscales(
         gateway_provider.categoria_fiscal_gateway
     )
+
+
+@router.get(CIRCUITO_CONTABLE_BASE)
+@router.get(CIRCUITO_CONTABLE_BASE_SLASH, include_in_schema=False)
+def circuito_contable_list() -> Dict[str, Any]:
+    return handlers.list_circuitos_contables(
+        gateway_provider.circuito_contable_gateway
+    )
+
+
+@router.get(f"{CIRCUITO_CONTABLE_BASE}/{{circuito_contable_id}}")
+@router.get(
+    f"{CIRCUITO_CONTABLE_BASE}/{{circuito_contable_id}}/", include_in_schema=False
+)
+def circuito_contable_get(circuito_contable_id: int) -> Dict[str, Any]:
+    item = handlers.get_circuito_contable(
+        gateway_provider.circuito_contable_gateway, circuito_contable_id
+    )
+    if item is None:
+        raise HTTPException(status_code=404, detail="circuito contable no encontrado")
+    return item
 
 
 @router.get(f"{CATEGORIA_FISCAL_BASE}/{{categoria_fiscal_id}}")

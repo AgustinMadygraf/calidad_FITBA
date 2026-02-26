@@ -2,6 +2,7 @@ from typing import Optional
 
 from .deps import (
     get_categoria_fiscal_gateway,
+    get_circuito_contable_gateway,
     get_cliente_gateway,
     get_comprobante_venta_gateway,
     get_deposito_gateway,
@@ -19,6 +20,7 @@ class GatewayProvider:
     def __init__(self) -> None:
         self._cliente_gateway: Optional[object] = None
         self._categoria_fiscal_gateway: Optional[object] = None
+        self._circuito_contable_gateway: Optional[object] = None
         self._remito_gateway: Optional[object] = None
         self._producto_gateway: Optional[object] = None
         self._producto_compra_gateway: Optional[object] = None
@@ -32,6 +34,7 @@ class GatewayProvider:
     def reset(self) -> None:
         self._cliente_gateway = None
         self._categoria_fiscal_gateway = None
+        self._circuito_contable_gateway = None
         self._remito_gateway = None
         self._producto_gateway = None
         self._producto_compra_gateway = None
@@ -66,6 +69,16 @@ class GatewayProvider:
     @categoria_fiscal_gateway.setter
     def categoria_fiscal_gateway(self, value: object) -> None:
         self._categoria_fiscal_gateway = value
+
+    @property
+    def circuito_contable_gateway(self) -> object:
+        return self._get_or_build(
+            "_circuito_contable_gateway", get_circuito_contable_gateway
+        )
+
+    @circuito_contable_gateway.setter
+    def circuito_contable_gateway(self, value: object) -> None:
+        self._circuito_contable_gateway = value
 
     @property
     def remito_gateway(self) -> object:

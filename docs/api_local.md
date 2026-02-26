@@ -37,6 +37,8 @@ Este documento describe la API local Xubio-like expuesta por el server FastAPI.
 - Catalogos:
   - `GET /API/1.1/categoriaFiscal`
   - `GET /API/1.1/categoriaFiscal/{id}`
+  - `GET /API/1.1/circuitoContableBean`
+  - `GET /API/1.1/circuitoContableBean/{id}`
   - `GET /API/1.1/depositos`
   - `GET /API/1.1/depositos/{id}`
   - `GET /API/1.1/identificacionTributaria`
