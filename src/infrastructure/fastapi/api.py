@@ -41,6 +41,7 @@ load_env()
 logger.debug("Configuración de entorno cargada")
 FRONTEND_CORS_ORIGINS = get_frontend_cors_origins()
 ROOT_INDEX_PATH = Path(__file__).with_name("static").joinpath("index.html")
+APP_JS_PATH = Path(__file__).with_name("static").joinpath("app.js")
 
 token_gateway = get_token_gateway()
 logger.debug("Token gateway inicializado")
@@ -74,6 +75,13 @@ def root():
     if ROOT_INDEX_PATH.exists():
         return FileResponse(ROOT_INDEX_PATH)
     return handlers.root()
+
+
+@app.get("/app.js", include_in_schema=False)
+def app_js():
+    if APP_JS_PATH.exists():
+        return FileResponse(APP_JS_PATH, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="app.js no encontrado")
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -126,13 +134,15 @@ def token_inspect() -> Dict[str, Any]:
 def external_service_error_handler(
     request: Request, exc: ExternalServiceError
 ) -> JSONResponse:
+    status_code = getattr(exc, "status_code", 502)
+    detail = getattr(exc, "detail", str(exc))
     logger.error(
         "⚠️  Gateway error on %s %s (External service unavailable): %s",
         request.method,
         request.url.path,
-        str(exc)[:200],
+        str(detail)[:200],
     )
-    return JSONResponse(status_code=502, content={"detail": str(exc)})
+    return JSONResponse(status_code=status_code, content={"detail": detail})
 
 
 @app.exception_handler(ValueError)
