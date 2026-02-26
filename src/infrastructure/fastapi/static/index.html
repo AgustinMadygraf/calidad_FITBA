@@ -14,7 +14,7 @@
 <body class="bg-light">
   <main class="container py-4">
     <h1 class="mb-2">Backend API</h1>
-    <p class="text-secondary mb-4">Indice simple de endpoints disponibles.</p>
+    <p class="text-secondary mb-4">Indice autogenerado desde <code>/openapi.json</code>.</p>
 
     <div class="row g-3">
       <section class="col-12 col-lg-6">
@@ -35,44 +35,15 @@
       <section class="col-12 col-lg-6">
         <div class="card h-100 shadow-sm">
           <div class="card-body">
-            <h2 class="h5 card-title">Maestros</h2>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item"><a href="/API/1.1/clienteBean">GET /API/1.1/clienteBean</a></li>
-              <li class="list-group-item"><a href="/API/1.1/ProductoVentaBean">GET /API/1.1/ProductoVentaBean</a></li>
-              <li class="list-group-item"><a href="/API/1.1/ProductoCompraBean">GET /API/1.1/ProductoCompraBean</a></li>
-              <li class="list-group-item"><a href="/API/1.1/listaPrecioBean">GET /API/1.1/listaPrecioBean</a></li>
-              <li class="list-group-item"><a href="/API/1.1/vendedorBean">GET /API/1.1/vendedorBean</a></li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="col-12 col-lg-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body">
-            <h2 class="h5 card-title">Operaciones</h2>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item"><a href="/API/1.1/comprobanteVentaBean">GET /API/1.1/comprobanteVentaBean</a></li>
-              <li class="list-group-item"><a href="/API/1.1/remitoVentaBean">GET /API/1.1/remitoVentaBean</a></li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="col-12 col-lg-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body">
-            <h2 class="h5 card-title">Catalogos</h2>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item"><a href="/API/1.1/categoriaFiscal">GET /API/1.1/categoriaFiscal</a></li>
-              <li class="list-group-item"><a href="/API/1.1/depositos">GET /API/1.1/depositos</a></li>
-              <li class="list-group-item"><a href="/API/1.1/identificacionTributaria">GET /API/1.1/identificacionTributaria</a></li>
-              <li class="list-group-item"><a href="/API/1.1/monedaBean">GET /API/1.1/monedaBean</a></li>
-            </ul>
+            <h2 class="h5 card-title">Estado</h2>
+            <p id="openapi-status" class="mb-0 text-secondary">Cargando endpoints...</p>
           </div>
         </div>
       </section>
     </div>
+
+    <div id="openapi-sections" class="row g-3 mt-1"></div>
   </main>
+  <script src="/app.js" defer></script>
 </body>
 </html>
