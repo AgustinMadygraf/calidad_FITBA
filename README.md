@@ -22,6 +22,11 @@ CLI:
 python -m src.interface_adapter.controllers.terminal_cli
 ```
 
+Autoinicio Linux (systemd, solo backend interno):
+```bash
+./scripts/install_backend_autostart_systemd.sh
+```
+
 Script de ayuda para modo híbrido:
 ```bash
 ./scripts/setup_modo_hibrido.sh red-interna
@@ -69,6 +74,7 @@ pytest -q
 - `docs/modo_hibrido_ngrok_red_interna.md`
 - `docs/procedimiento_crear_api_madygraf_local.md`
 - `docs/procedimiento_https_apache_dns_certificados.md`
+- `docs/autoinicio_backend_systemd.md`
 - `docs/informe_backend_a_frontend_cors_ngrok.md`
 - `docs/release_checklist.md`
 - `docs/swagger.json`
