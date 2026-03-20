@@ -1,0 +1,207 @@
+"""
+Path: src/infrastructure/fastapi/api.py
+"""
+
+from typing import Any, Dict
+from pathlib import Path
+
+import uvicorn
+from fastapi import HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+
+from ...interface_adapter.controllers import handlers
+from ...shared.config import (
+    get_frontend_cors_origins,
+    get_host,
+    get_port,
+    load_env,
+)
+from ...shared.logger import get_logger
+from ...use_cases.errors import ExternalServiceError
+from .app import app
+from .deps import get_token_gateway
+from .remito_utils import resolve_remito_transaccion_id
+from .routers import (
+    auth as auth_router,
+    catalogos,
+    cliente as cliente_router,
+    comprobante_venta as comprobante_router,
+    lista_precio as lista_precio_router,
+    observability as observability_router,
+    producto as producto_router,
+    remito as remito_router,
+    vendedor as vendedor_router,
+)
+
+logger = get_logger(__name__)
+
+logger.debug("Inicializando FastAPI app...")
+load_env()
+logger.debug("Configuración de entorno cargada")
+FRONTEND_CORS_ORIGINS = get_frontend_cors_origins()
+ROOT_INDEX_PATH = Path(__file__).with_name("static").joinpath("index.html")
+APP_JS_PATH = Path(__file__).with_name("static").joinpath("app.js")
+
+token_gateway = get_token_gateway()
+logger.debug("Token gateway inicializado")
+
+logger.debug("CORS origins configurados: %s", FRONTEND_CORS_ORIGINS)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=FRONTEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],  # Permitir todos los headers (incluyendo ngrok-skip-browser-warning)
+)
+logger.debug("CORSMiddleware agregado con origins: %s", FRONTEND_CORS_ORIGINS)
+
+
+# Kept for tests
+
+def _resolve_remito_transaccion_id(
+    data: Dict[str, Any],
+    *,
+    path_transaccion_id: int | None = None,
+) -> int:
+    return resolve_remito_transaccion_id(
+        data, path_transaccion_id=path_transaccion_id
+    )
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    if ROOT_INDEX_PATH.exists():
+        return FileResponse(ROOT_INDEX_PATH)
+    return handlers.root()
+
+
+@app.get("/app.js", include_in_schema=False)
+def app_js():
+    if APP_JS_PATH.exists():
+        return FileResponse(APP_JS_PATH, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="app.js no encontrado")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    return Response(status_code=204)
+
+
+@app.get("/health")
+def health() -> Dict[str, str]:
+    logger.debug("GET /health invocado")
+    return handlers.health()
+
+
+@app.get("/API/health")
+def api_health(request: Request) -> Dict[str, Any]:
+    """Health check endpoint para validación rápida de API.
+    
+    Devuelve información de diagnóstico:
+    - status: ok/error
+    - origin: origen HTTP del request
+    - content_type: application/json esperado
+    
+    Útil para detectar problemas de proxy/ngrok/caché.
+    """
+    origin = request.headers.get("origin", "no-origin-header")
+    logger.debug("GET /API/health invocado desde origen: %s", origin)
+    return {
+        "status": "ok",
+        "message": "API health check",
+        "origin": origin,
+        "referer": request.headers.get("referer", "no-referer"),
+        "host": request.headers.get("host", request.url.netloc),
+        "content_type": "application/json",
+    }
+
+
+@app.get("/token/inspect")
+def token_inspect() -> Dict[str, Any]:
+    try:
+        return handlers.inspect_token(token_gateway)
+    except ValueError as exc:
+        logger.error("Token inspect error: %s", exc)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.error("Token inspect error: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.exception_handler(ExternalServiceError)
+def external_service_error_handler(
+    request: Request, exc: ExternalServiceError
+) -> JSONResponse:
+    status_code = getattr(exc, "status_code", 502)
+    detail = getattr(exc, "detail", str(exc))
+    logger.error(
+        "⚠️  Gateway error on %s %s (External service unavailable): %s",
+        request.method,
+        request.url.path,
+        str(detail)[:200],
+    )
+    return JSONResponse(status_code=status_code, content={"detail": detail})
+
+
+@app.exception_handler(ValueError)
+def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
+    logger.warning(
+        "⚠️  Value error on %s %s (Invalid request data): %s",
+        request.method,
+        request.url.path,
+        str(exc)[:200],
+    )
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(RequestValidationError)
+def request_validation_error_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    details = exc.errors()
+    for item in details:
+        loc = item.get("loc", ())
+        if len(loc) >= 2 and loc[0] == "path":
+            param_name = str(loc[1])
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": (
+                        f"Parametro de ruta invalido: '{param_name}'. "
+                        "Debe ser entero. Ejemplo: /API/1.1/listaPrecioBean/1"
+                    )
+                },
+            )
+    return JSONResponse(status_code=422, content={"detail": details})
+
+
+app.include_router(cliente_router.router)
+app.include_router(remito_router.router)
+app.include_router(producto_router.router)
+app.include_router(lista_precio_router.router)
+app.include_router(vendedor_router.router)
+app.include_router(comprobante_router.router)
+app.include_router(catalogos.router)
+app.include_router(observability_router.router)
+app.include_router(auth_router.router)
+
+
+def run() -> None:
+    host = get_host()
+    port = get_port()
+    logger.info("Iniciando FastAPI en %s:%d", host, port)
+    logger.debug("Uvicorn configured: host=%s, port=%d, reload=True", host, port)
+    try:
+        uvicorn.run(
+            "src.infrastructure.fastapi.api:app", host=host, port=port, reload=True
+        )
+    except Exception as e:
+        logger.error("❌ Error al iniciar servidor: %s", e, exc_info=True)
+        raise
+
+
+if __name__ == "__main__":
+    run()

@@ -1,0 +1,94 @@
+"""
+Path: src/infrastructure/httpx/xubio_crud_helpers.py
+"""
+
+from typing import Any, Callable, Dict, List, Optional
+
+import httpx
+
+from ...use_cases.errors import ExternalServiceError
+from .token_client import request_with_token
+from .xubio_httpx_helpers import extract_list, raise_for_status
+
+
+def list_items(
+    *, url: str, timeout: float, label: str, logger: Any
+) -> List[Dict[str, Any]]:
+    try:
+        resp = request_with_token("GET", url, timeout=timeout)
+        logger.info("Xubio GET %s -> %s", url, resp.status_code)
+        items = extract_list(resp, label=label)
+        logger.info("Xubio lista %s: %d items", label, len(items))
+        return items
+    except httpx.HTTPError as exc:
+        raise ExternalServiceError(str(exc)) from exc
+
+
+def get_item(*, url: str, timeout: float, logger: Any) -> Optional[Dict[str, Any]]:
+    try:
+        resp = request_with_token("GET", url, timeout=timeout)
+        logger.info("Xubio GET %s -> %s", url, resp.status_code)
+        if resp.status_code == 404:
+            return None
+        raise_for_status(resp)
+        return resp.json()
+    except httpx.HTTPError as exc:
+        raise ExternalServiceError(str(exc)) from exc
+
+
+def get_item_with_fallback(
+    *,
+    url: str,
+    timeout: float,
+    logger: Any,
+    fallback: Callable[[], Optional[Dict[str, Any]]],
+) -> Optional[Dict[str, Any]]:
+    result: Optional[Dict[str, Any]] = None
+    try:
+        resp = request_with_token("GET", url, timeout=timeout)
+        logger.info("Xubio GET %s -> %s", url, resp.status_code)
+        if resp.status_code == 404:
+            result = None
+        elif resp.status_code >= 500:
+            logger.warning(
+                "Xubio GET %s failed with %s, falling back to list lookup",
+                url,
+                resp.status_code,
+            )
+            result = fallback()
+        else:
+            raise_for_status(resp)
+            result = resp.json()
+    except httpx.HTTPError as exc:
+        raise ExternalServiceError(str(exc)) from exc
+    return result
+
+
+def create_item(
+    *, url: str, timeout: float, data: Dict[str, Any], logger: Any
+) -> Dict[str, Any]:
+    raise ExternalServiceError(
+        "Modo solo lectura: create_item no esta permitido."
+    )
+
+
+def update_item(
+    *, url: str, timeout: float, data: Dict[str, Any], logger: Any
+) -> Optional[Dict[str, Any]]:
+    raise ExternalServiceError(
+        "Modo solo lectura: update_item no esta permitido."
+    )
+
+
+def patch_item(
+    *, url: str, timeout: float, data: Dict[str, Any], logger: Any
+) -> Optional[Dict[str, Any]]:
+    raise ExternalServiceError(
+        "Modo solo lectura: patch_item no esta permitido."
+    )
+
+
+def delete_item(*, url: str, timeout: float, logger: Any) -> bool:
+    raise ExternalServiceError(
+        "Modo solo lectura: delete_item no esta permitido."
+    )

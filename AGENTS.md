@@ -1,35 +1,43 @@
-﻿## Odoo-like (estructura literal, sin integracion)
+## Xubio-like (estructura base, sin integracion real)
 
 ### Decisiones acordadas
-- Operacion: Delivery Orders (entregas).
-- El peso se registra una sola vez.
-- Estructura de datos literal a Odoo (nombres de tablas y campos).
-- Minimo viable para migracion.
-- Indices unicos en `stock_picking.name` y `stock_quant_package.name`.
+- Monorepo Python con `server/` (FastAPI) y `client/` (CLI AS400).
+- MVP: PRODUCTO funcional. Otros entity_type en menu como stub.
+- Modo mock vs real por env: `IS_PROD=true|false`.
+- Tabla unica `integration_records` para iterar rapido.
 
-### Tablas (MySQL)
-- `res_partner`
-  - `id`, `name`, `email`, `phone`
-- `stock_picking`
-  - `id`, `name`, `partner_id`
-- `stock_package_type`
-  - `id`, `name`, `weight`
-- `stock_quant_package`
-  - `id`, `name`, `package_type_id`, `shipping_weight`, `picking_id`
-
-### Relacion principal
-- El cliente se modela en `res_partner`.
-- El Delivery Order es `stock_picking` y referencia a `res_partner`.
-- El paquete es `stock_quant_package` y referencia a `stock_picking` y `stock_package_type`.
+### Base de datos (MySQL)
+Tabla `integration_records`:
+- `id` (BIGINT autoincrement)
+- `created_at` (datetime UTC)
+- `updated_at` (datetime UTC)
+- `entity_type` (varchar)
+- `operation` (varchar)
+- `external_id` (varchar nullable)
+- `payload_json` (JSON)
+- `status` (varchar)
+- `last_error` (text nullable)
+Indices:
+- `index(entity_type, external_id)`
+- `index(entity_type, status)`
 
 ### API local (FastAPI)
-- `POST /api/v1/res-partners`
-- `POST /api/v1/stock-pickings`
-- `POST /api/v1/stock-package-types`
-- `POST /api/v1/stock-quant-packages`
-- CRUD completo via `GET/PUT/DELETE` en cada recurso.
+- `POST /terminal/execute`
+- `POST /sync/pull/product`
+- `POST /sync/push/product`
+- `GET /health`
+
+### Terminal commands (internos)
+- `MENU`
+- `ENTER <entity_type>`
+- `CREATE <entity_type>`
+- `UPDATE <entity_type>`
+- `DELETE <entity_type>`
+- `GET <entity_type> <id>`
+- `LIST <entity_type>`
+- `BACK`
 
 ### Restricciones
-- Sin campos custom.
-- Peso total real en `shipping_weight` del paquete.
-- Tara en `weight` del tipo de paquete.
+- No clonar toda la API de Xubio.
+- En modo real, BAJA debe tener doble confirmacion en el cliente.
+- Autenticacion real: OAuth2 client_credentials.

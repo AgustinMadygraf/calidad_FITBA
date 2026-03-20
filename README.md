@@ -1,95 +1,80 @@
-﻿# CRUD Odoo-like (Python 3.11+)
+# FITBA Xubio-like (MVP)
 
-Proyecto dividido en dos carpetas principales:
-- `servidor/`: Backend FastAPI + Clean Architecture + MySQL.
-- `cliente/`: CLI estilo AS/400 que consume la API.
+Monorepo Python con:
+- Backend FastAPI (API local Xubio-like).
+- CLI interactiva de operación.
 
-## Setup
-
-1. Crear entorno virtual e instalar dependencias
-
+## Setup rápido
 ```bash
-python -m venv venv
-```
-
-Activación según shell:
-
-PowerShell (Windows):
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-CMD (Windows):
-
-```cmd
-venv\Scripts\activate.bat
-```
-
-Git Bash / WSL / Linux / macOS:
-
-```bash
+python3 -m venv venv
 source venv/bin/activate
-```
-
-Luego instalar dependencias:
-
-```bash
 pip install -r requirements.txt
 ```
 
-2. Configurar variables de entorno (opcional `.env`)
-
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=secret
-DB_NAME=odoo_like
-NGROK_URL=your-subdomain.ngrok-free.app
-API_PORT=8000
-```
-
-## Servidor (FastAPI)
-
-El servidor crea el esquema automáticamente al iniciar (si no existe).
-
+## Operación diaria
+Servidor:
 ```bash
-python -m servidor.app
+python run_server.py --mode red-interna
 ```
 
-Health check:
-
+CLI:
 ```bash
-curl http://localhost:8000/health
+python -m src.interface_adapter.controllers.terminal_cli
 ```
 
-## Túnel ngrok
-
+Autoinicio Linux (systemd, solo backend interno):
 ```bash
-python run_ngrok_tunnel.py
+./scripts/install_backend_autostart_systemd.sh
 ```
 
-## Cliente (CLI)
-
+Script de ayuda para modo híbrido:
 ```bash
-python -m cliente.app
+./scripts/setup_modo_hibrido.sh red-interna
 ```
 
-## Documentación
-- Usuarios: `docs/usuarios/README.md`
-- Desarrolladores: `docs/desarrolladores/README.md`
-- Pendientes: `docs/todo.md`
+Validación rápida:
+```bash
+curl -i http://127.0.0.1:8000/health
+```
+
+Forzar backend en `8000` (mata cualquier proceso ocupando el puerto y arranca FastAPI):
+```bash
+./scripts/force_backend_8000.sh
+```
+
+HTTPS interno (Apache en este host):
+```bash
+DOMAIN=api.madygraf.local ./scripts/generate_local_tls_cert.sh
+DOMAIN=api.madygraf.local ./scripts/setup_apache_https_local.sh
+```
+
+## Comandos clave de CLI
+- `MENU`
+- `NETINFO` (alias `RED`)
+- `ENTER <entity_type>`
+- `GET <entity_type> <id>`
+- `LIST <entity_type>`
+- `BACK`
+- `EXIT`
 
 ## Tests
-
 ```bash
 pytest -q
 ```
 
-Para tests de integración (MySQL):
+## Contrato ComprobanteVenta
+- Endpoint: `GET /API/1.1/comprobanteVentaBean/{id}` y `GET /API/1.1/comprobanteVentaBean`.
+- La salida se normaliza para cumplir el contrato Xubio (golden contract) con keys exactas, incluyendo defaults `0`, `false`, `\"\"`, `null` y arrays vacios `[]` cuando faltan datos en origen.
+- `CAE` se expone solo en mayusculas (no se devuelve `cae` ni otros aliases no contractuales).
+- `provincia` se serializa con shape `{provincia_id, codigo, nombre, pais}`.
 
-```bash
-pytest -q -m integration
-```
-
+## Documentación
+- `docs/api_local.md`
+- `docs/arquitectura.md`
+- `docs/modo_hibrido_ngrok_red_interna.md`
+- `docs/procedimiento_crear_api_madygraf_local.md`
+- `docs/procedimiento_https_apache_dns_certificados.md`
+- `docs/autoinicio_backend_systemd.md`
+- `docs/informe_backend_a_frontend_cors_ngrok.md`
+- `docs/release_checklist.md`
+- `docs/swagger.json`

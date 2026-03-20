@@ -1,0 +1,287 @@
+"""
+Path: src/interface_adapter/controllers/handlers.py
+"""
+
+from typing import Any, Dict, Optional
+
+from ...entities.cliente import Cliente
+from ...entities.remito_venta import RemitoVenta
+from ...shared.logger import get_logger
+from ...use_cases.ports.categoria_fiscal_gateway import CategoriaFiscalGateway
+from ...use_cases.ports.circuito_contable_gateway import CircuitoContableGateway
+from ...use_cases.ports.token_gateway import TokenGateway
+from ...use_cases.ports.remito_gateway import RemitoGateway
+from ...use_cases.ports.producto_gateway import ProductoGateway
+from ...use_cases.ports.deposito_gateway import DepositoGateway
+from ...use_cases.ports.identificacion_tributaria_gateway import (
+    IdentificacionTributariaGateway,
+)
+from ...use_cases.ports.lista_precio_gateway import ListaPrecioGateway
+from ...use_cases.ports.moneda_gateway import MonedaGateway
+from ...use_cases.ports.comprobante_venta_gateway import ComprobanteVentaGateway
+from ...use_cases.ports.vendedor_gateway import VendedorGateway
+from ...interface_adapter.mappers.comprobante_venta_contract import (
+    normalize_comprobante_venta,
+    normalize_comprobante_venta_list,
+)
+from ...interface_adapter.presenter import token_presenter
+from ...use_cases import cliente, remito_venta, token_inspect
+from ...use_cases.ports.cliente_gateway import ClienteGateway
+
+logger = get_logger(__name__)
+
+
+def root() -> Dict[str, str]:
+    return {"status": "ok", "message": "Xubio-like API"}
+
+
+def health() -> Dict[str, str]:
+    return {"status": "ok"}
+
+
+def inspect_token(gateway: TokenGateway) -> Dict[str, Any]:
+    status = token_inspect.execute(gateway)
+    return token_presenter.present(status)
+
+
+def list_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
+    items = cliente.list_clientes(gateway)
+    return {"items": [x.to_dict(exclude_none=True) for x in items]}
+
+
+def debug_clientes(gateway: ClienteGateway) -> Dict[str, Any]:
+    items = cliente.list_clientes(gateway)
+    sample = [x.to_dict(exclude_none=True) for x in items[:3]]
+    return {"count": len(items), "sample": sample}
+
+
+def list_remitos(gateway: RemitoGateway) -> Dict[str, Any]:
+    logger.debug("list_remitos() - inicio de consulta")
+    try:
+        items = remito_venta.list_remitos(gateway)
+        result = {"items": [x.to_dict(exclude_none=True) for x in items]}
+        logger.info("list_remitos() - completado, devolviendo %d items", len(items))
+        return result
+    except Exception as e:
+        logger.error("❌ list_remitos() - error: %s", str(e)[:200], exc_info=True)
+        raise
+
+
+def get_remito(gateway: RemitoGateway, transaccion_id: int) -> Optional[Dict[str, Any]]:
+    logger.debug("get_remito(%d) - inicio", transaccion_id)
+    try:
+        entity = remito_venta.get_remito(gateway, transaccion_id)
+        if entity is None:
+            logger.debug("get_remito(%d) - no encontrado", transaccion_id)
+            return None
+        logger.debug("get_remito(%d) - encontrado", transaccion_id)
+        return entity.to_dict(exclude_none=True)
+    except Exception as e:
+        logger.error("❌ get_remito(%d) - error: %s", transaccion_id, str(e)[:200], exc_info=True)
+        raise
+
+
+def create_remito(
+    gateway: RemitoGateway,
+    deps: remito_venta.RemitoDependencies,
+    data: Dict[str, Any],
+) -> Dict[str, Any]:
+    logger.info("create_remito() - creando nuevo remito")
+    try:
+        entity = RemitoVenta.from_dict(data)
+        logger.debug("create_remito() - entidad validada")
+        created = remito_venta.create_remito(gateway, entity, deps)
+        logger.info("create_remito() - remito creado exitosamente")
+        return created.to_dict(exclude_none=True)
+    except Exception as e:
+        logger.error("❌ create_remito() - error: %s", str(e)[:200], exc_info=True)
+        raise
+
+
+def update_remito(
+    gateway: RemitoGateway,
+    transaccion_id: int,
+    deps: remito_venta.RemitoDependencies,
+    data: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    entity = RemitoVenta.from_dict(data)
+    updated = remito_venta.update_remito(gateway, transaccion_id, entity, deps)
+    if updated is None:
+        return None
+    return updated.to_dict(exclude_none=True)
+
+
+def delete_remito(gateway: RemitoGateway, transaccion_id: int) -> bool:
+    return remito_venta.delete_remito(gateway, transaccion_id)
+
+
+def get_cliente(gateway: ClienteGateway, cliente_id: int) -> Optional[Dict[str, Any]]:
+    entity = cliente.get_cliente(gateway, cliente_id)
+    if entity is None:
+        return None
+    return entity.to_dict(exclude_none=True)
+
+
+def list_productos(gateway: ProductoGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def list_categorias_fiscales(gateway: CategoriaFiscalGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def list_circuitos_contables(gateway: CircuitoContableGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_categoria_fiscal(
+    gateway: CategoriaFiscalGateway, categoria_fiscal_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(categoria_fiscal_id)
+
+
+def get_circuito_contable(
+    gateway: CircuitoContableGateway, circuito_contable_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(circuito_contable_id)
+
+
+def get_producto(
+    gateway: ProductoGateway, producto_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(producto_id)
+
+
+def create_producto(gateway: ProductoGateway, data: Dict[str, Any]) -> Dict[str, Any]:
+    return gateway.create(data)
+
+
+def update_producto(
+    gateway: ProductoGateway, producto_id: int, data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    return gateway.update(producto_id, data)
+
+
+def delete_producto(gateway: ProductoGateway, producto_id: int) -> bool:
+    return gateway.delete(producto_id)
+
+
+def list_depositos(gateway: DepositoGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def list_identificaciones_tributarias(
+    gateway: IdentificacionTributariaGateway,
+) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_identificacion_tributaria(
+    gateway: IdentificacionTributariaGateway, identificacion_tributaria_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(identificacion_tributaria_id)
+
+
+def get_deposito(
+    gateway: DepositoGateway, deposito_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(deposito_id)
+
+
+def list_lista_precios(gateway: ListaPrecioGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_lista_precio(
+    gateway: ListaPrecioGateway, lista_precio_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(lista_precio_id)
+
+
+def create_lista_precio(
+    gateway: ListaPrecioGateway, data: Dict[str, Any]
+) -> Dict[str, Any]:
+    return gateway.create(data)
+
+
+def update_lista_precio(
+    gateway: ListaPrecioGateway, lista_precio_id: int, data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    return gateway.update(lista_precio_id, data)
+
+
+def patch_lista_precio(
+    gateway: ListaPrecioGateway, lista_precio_id: int, data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    return gateway.patch(lista_precio_id, data)
+
+
+def delete_lista_precio(gateway: ListaPrecioGateway, lista_precio_id: int) -> bool:
+    return gateway.delete(lista_precio_id)
+
+
+def list_monedas(gateway: MonedaGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def get_moneda(gateway: MonedaGateway, moneda_id: int) -> Optional[Dict[str, Any]]:
+    return gateway.get(moneda_id)
+
+
+def list_vendedores(gateway: VendedorGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": items}
+
+
+def list_comprobantes_venta(gateway: ComprobanteVentaGateway) -> Dict[str, Any]:
+    items = gateway.list()
+    return {"items": normalize_comprobante_venta_list(items)}
+
+
+def get_comprobante_venta(
+    gateway: ComprobanteVentaGateway, comprobante_id: int
+) -> Optional[Dict[str, Any]]:
+    item = gateway.get(comprobante_id)
+    if item is None:
+        return None
+    return normalize_comprobante_venta(item)
+
+
+def get_vendedor(
+    gateway: VendedorGateway, vendedor_id: int
+) -> Optional[Dict[str, Any]]:
+    return gateway.get(vendedor_id)
+
+
+def create_cliente(
+    gateway: ClienteGateway,
+    deps: cliente.ClienteDependencies,
+    data: Dict[str, Any],
+) -> Dict[str, Any]:
+    entity = Cliente.from_dict(data)
+    created = cliente.create_cliente(gateway, entity, deps)
+    return created.to_dict(exclude_none=True)
+
+
+def update_cliente(
+    gateway: ClienteGateway,
+    cliente_id: int,
+    deps: cliente.ClienteDependencies,
+    data: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    entity = Cliente.from_dict(data)
+    updated = cliente.update_cliente(gateway, cliente_id, entity, deps)
+    if updated is None:
+        return None
+    return updated.to_dict(exclude_none=True)
+
+
+def delete_cliente(gateway: ClienteGateway, cliente_id: int) -> bool:
+    return cliente.delete_cliente(gateway, cliente_id)

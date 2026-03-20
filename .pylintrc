@@ -1,0 +1,16 @@
+[MASTER]
+ignore=venv
+
+[MESSAGES CONTROL]
+disable=
+    C0103,
+    C0114,
+    C0115,
+    C0116,
+    R0902,
+
+[DESIGN]
+max-branches=8
+max-returns=3
+max-statements=20
+max-locals=12

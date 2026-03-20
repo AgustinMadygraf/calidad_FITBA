@@ -1,0 +1,1142 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Xubio-like API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/health": {
+      "get": {
+        "summary": "Api Health",
+        "description": "Health check endpoint para validación rápida de API.\n\nDevuelve información de diagnóstico:\n- status: ok/error\n- origin: origen HTTP del request\n- content_type: application/json esperado\n\nÚtil para detectar problemas de proxy/ngrok/caché.",
+        "operationId": "api_health_API_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Api Health Api Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/token/inspect": {
+      "get": {
+        "summary": "Token Inspect",
+        "operationId": "token_inspect_token_inspect_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Token Inspect Token Inspect Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/clienteBean": {
+      "get": {
+        "summary": "Cliente List",
+        "operationId": "cliente_list_API_1_1_clienteBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Cliente List Api 1 1 Clientebean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/clienteBean/{cliente_id}": {
+      "get": {
+        "summary": "Cliente Get",
+        "operationId": "cliente_get_API_1_1_clienteBean__cliente_id__get",
+        "parameters": [
+          {
+            "name": "cliente_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Cliente Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cliente Get Api 1 1 Clientebean  Cliente Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/remitoVentaBean": {
+      "get": {
+        "summary": "Remito List",
+        "operationId": "remito_list_API_1_1_remitoVentaBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Remito List Api 1 1 Remitoventabean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/remitoVentaBean/{transaccion_id}": {
+      "get": {
+        "summary": "Remito Get",
+        "operationId": "remito_get_API_1_1_remitoVentaBean__transaccion_id__get",
+        "parameters": [
+          {
+            "name": "transaccion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Transaccion Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Remito Get Api 1 1 Remitoventabean  Transaccion Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/ProductoVentaBean": {
+      "get": {
+        "summary": "Producto List",
+        "operationId": "producto_list_API_1_1_ProductoVentaBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Producto List Api 1 1 Productoventabean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/ProductoVentaBean/{producto_id}": {
+      "get": {
+        "summary": "Producto Get",
+        "operationId": "producto_get_API_1_1_ProductoVentaBean__producto_id__get",
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Producto Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Producto Get Api 1 1 Productoventabean  Producto Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/ProductoCompraBean": {
+      "get": {
+        "summary": "Producto Compra List",
+        "operationId": "producto_compra_list_API_1_1_ProductoCompraBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Producto Compra List Api 1 1 Productocomprabean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/ProductoCompraBean/{producto_id}": {
+      "get": {
+        "summary": "Producto Compra Get",
+        "operationId": "producto_compra_get_API_1_1_ProductoCompraBean__producto_id__get",
+        "parameters": [
+          {
+            "name": "producto_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Producto Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Producto Compra Get Api 1 1 Productocomprabean  Producto Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/listaPrecioBean": {
+      "get": {
+        "summary": "Lista Precio List",
+        "operationId": "lista_precio_list_API_1_1_listaPrecioBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Lista Precio List Api 1 1 Listapreciobean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/listaPrecioBean/{lista_precio_id}": {
+      "get": {
+        "summary": "Lista Precio Get",
+        "operationId": "lista_precio_get_API_1_1_listaPrecioBean__lista_precio_id__get",
+        "parameters": [
+          {
+            "name": "lista_precio_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Lista Precio Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle de lista de precio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaPrecioDetailResponse"
+                },
+                "example": {
+                  "listaPrecioID": 0,
+                  "activo": true,
+                  "nombre": "string",
+                  "descripcion": "string",
+                  "esDefault": true,
+                  "moneda": {
+                    "ID": 0,
+                    "nombre": "Pesos Argentinos",
+                    "codigo": "string",
+                    "id": 0
+                  },
+                  "tipo": 0,
+                  "iva": 0,
+                  "listaReferencia": {
+                    "ID": 0,
+                    "nombre": "string",
+                    "codigo": "string",
+                    "id": 0
+                  },
+                  "listaPrecioItem": [
+                    {
+                      "listaPrecioID": 0,
+                      "producto": {
+                        "ID": 0,
+                        "nombre": "Producto al 21%",
+                        "codigo": "string",
+                        "id": 0
+                      },
+                      "precio": 0,
+                      "codigo": "string",
+                      "referencia": 0
+                    }
+                  ],
+                  "ocultarSinPrecio": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/vendedorBean": {
+      "get": {
+        "summary": "Vendedor List",
+        "operationId": "vendedor_list_API_1_1_vendedorBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Vendedor List Api 1 1 Vendedorbean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/vendedorBean/{vendedor_id}": {
+      "get": {
+        "summary": "Vendedor Get",
+        "operationId": "vendedor_get_API_1_1_vendedorBean__vendedor_id__get",
+        "parameters": [
+          {
+            "name": "vendedor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Vendedor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Vendedor Get Api 1 1 Vendedorbean  Vendedor Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/comprobanteVentaBean": {
+      "get": {
+        "summary": "Comprobante Venta List",
+        "operationId": "comprobante_venta_list_API_1_1_comprobanteVentaBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Comprobante Venta List Api 1 1 Comprobanteventabean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/comprobanteVentaBean/{id}": {
+      "get": {
+        "summary": "Comprobante Venta Get",
+        "operationId": "comprobante_venta_get_API_1_1_comprobanteVentaBean__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Comprobante Venta Get Api 1 1 Comprobanteventabean  Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/categoriaFiscal": {
+      "get": {
+        "summary": "Categoria Fiscal List",
+        "operationId": "categoria_fiscal_list_API_1_1_categoriaFiscal_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Categoria Fiscal List Api 1 1 Categoriafiscal Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/circuitoContableBean": {
+      "get": {
+        "summary": "Circuito Contable List",
+        "operationId": "circuito_contable_list_API_1_1_circuitoContableBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Circuito Contable List Api 1 1 Circuitocontablebean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/circuitoContableBean/{circuito_contable_id}": {
+      "get": {
+        "summary": "Circuito Contable Get",
+        "operationId": "circuito_contable_get_API_1_1_circuitoContableBean__circuito_contable_id__get",
+        "parameters": [
+          {
+            "name": "circuito_contable_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Circuito Contable Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Circuito Contable Get Api 1 1 Circuitocontablebean  Circuito Contable Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/categoriaFiscal/{categoria_fiscal_id}": {
+      "get": {
+        "summary": "Categoria Fiscal Get",
+        "operationId": "categoria_fiscal_get_API_1_1_categoriaFiscal__categoria_fiscal_id__get",
+        "parameters": [
+          {
+            "name": "categoria_fiscal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Categoria Fiscal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Categoria Fiscal Get Api 1 1 Categoriafiscal  Categoria Fiscal Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/depositos": {
+      "get": {
+        "summary": "Deposito List",
+        "operationId": "deposito_list_API_1_1_depositos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Deposito List Api 1 1 Depositos Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/depositos/{deposito_id}": {
+      "get": {
+        "summary": "Deposito Get",
+        "operationId": "deposito_get_API_1_1_depositos__deposito_id__get",
+        "parameters": [
+          {
+            "name": "deposito_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Deposito Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Deposito Get Api 1 1 Depositos  Deposito Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/identificacionTributaria": {
+      "get": {
+        "summary": "Identificacion Tributaria List",
+        "operationId": "identificacion_tributaria_list_API_1_1_identificacionTributaria_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Identificacion Tributaria List Api 1 1 Identificaciontributaria Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/identificacionTributaria/{identificacion_tributaria_id}": {
+      "get": {
+        "summary": "Identificacion Tributaria Get",
+        "operationId": "identificacion_tributaria_get_API_1_1_identificacionTributaria__identificacion_tributaria_id__get",
+        "parameters": [
+          {
+            "name": "identificacion_tributaria_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Identificacion Tributaria Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Identificacion Tributaria Get Api 1 1 Identificaciontributaria  Identificacion Tributaria Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/monedaBean": {
+      "get": {
+        "summary": "Moneda List",
+        "operationId": "moneda_list_API_1_1_monedaBean_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Moneda List Api 1 1 Monedabean Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/1.1/monedaBean/{moneda_id}": {
+      "get": {
+        "summary": "Moneda Get",
+        "operationId": "moneda_get_API_1_1_monedaBean__moneda_id__get",
+        "parameters": [
+          {
+            "name": "moneda_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Moneda Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Moneda Get Api 1 1 Monedabean  Moneda Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ListaPrecioDetailResponse": {
+        "properties": {
+          "listaPrecioID": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listaprecioid"
+          },
+          "activo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activo"
+          },
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "descripcion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descripcion"
+          },
+          "esDefault": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Esdefault"
+          },
+          "moneda": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "iva": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iva"
+          },
+          "listaReferencia": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listaPrecioItem": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ListaPrecioItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listaprecioitem"
+          },
+          "ocultarSinPrecio": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ocultarsinprecio"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ListaPrecioDetailResponse"
+      },
+      "ListaPrecioItem": {
+        "properties": {
+          "listaPrecioID": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listaprecioid"
+          },
+          "producto": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListaPrecioSimpleItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "precio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio"
+          },
+          "codigo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo"
+          },
+          "referencia": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencia"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ListaPrecioItem"
+      },
+      "ListaPrecioSimpleItem": {
+        "properties": {
+          "ID": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "codigo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ListaPrecioSimpleItem"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
